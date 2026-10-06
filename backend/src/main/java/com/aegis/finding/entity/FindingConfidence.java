@@ -1,0 +1,9 @@
+package com.aegis.finding.entity;
+
+public enum FindingConfidence {
+    VERY_HIGH,
+    HIGH,
+    MEDIUM,
+    LOW,
+    UNKNOWN
+}

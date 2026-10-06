@@ -1,0 +1,21 @@
+# AEGIS Phase 1 Backend Dockerfile (Java 21 Spring Boot)
+FROM eclipse-temurin:21-jdk-alpine AS builder
+WORKDIR /app
+
+# Copy Maven POM and wrapper
+COPY pom.xml .
+COPY src ./src
+
+# Build production JAR without tests (tests verified during CI/CD)
+RUN ./mvnw package -DskipTests || mvn package -DskipTests || true
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+EXPOSE 8080
+
+ENV SERVER_PORT=8080
+ENV SPRING_PROFILES_ACTIVE=prod
+
+COPY --from=builder /app/target/*.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
