@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
 CREATE TABLE IF NOT EXISTS ai_investigations (
     id BIGSERIAL PRIMARY KEY,
     uuid UUID NOT NULL UNIQUE,
-    assessment_id BIGINT REFERENCES assessments(id) ON DELETE SET NULL,
-    incident_id BIGINT REFERENCES incidents(id) ON DELETE SET NULL,
+    assessment_id UUID REFERENCES security_assessments(id) ON DELETE SET NULL,
+    incident_id UUID REFERENCES security_incidents(id) ON DELETE SET NULL,
     requested_by VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'QUEUED',
     provider VARCHAR(50) NOT NULL,
