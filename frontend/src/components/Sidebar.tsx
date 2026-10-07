@@ -26,12 +26,13 @@ export const Sidebar: React.FC = () => {
     { path: '/forensics', label: 'Digital Forensics', icon: Search },
     { path: '/ai', label: 'AI Security Analyst', icon: Bot },
     { path: '/knowledge', label: 'Knowledge Base', icon: FileText },
+    { path: '/defense', label: 'Defense', icon: ShieldCheck },
+    { path: '/remediation', label: 'Remediation', icon: RotateCcw },
     { path: '/audit', label: 'Audit Log', icon: FileText },
     { path: '/system', label: 'System', icon: Server },
   ];
 
   const futurePhaseItems = [
-    { label: 'Defense & Remediation', icon: ShieldCheck, phase: 'Phase 7' },
     { label: 'Controlled Retesting', icon: RotateCcw, phase: 'Phase 8' },
     { label: 'Continuous Reporting', icon: BarChart2, phase: 'Phase 10' },
   ];

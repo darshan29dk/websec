@@ -21,6 +21,8 @@ import { ForensicsPage } from './pages/ForensicsPage';
 import { ForensicDetailPage } from './pages/ForensicDetailPage';
 import { AiAnalystPage } from './pages/AiAnalystPage';
 import { KnowledgePage } from './pages/KnowledgePage';
+import { DefenseOverviewPage } from './pages/DefenseOverviewPage';
+import { RemediationWorkspacePage } from './pages/RemediationWorkspacePage';
 import { AuditPage } from './pages/AuditPage';
 import { SystemPage } from './pages/SystemPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -91,6 +93,8 @@ export const App: React.FC = () => {
             <Route path="ai/investigations" element={<AiAnalystPage />} />
             <Route path="ai/investigations/:id" element={<AiAnalystPage />} />
             <Route path="knowledge" element={<KnowledgePage />} />
+            <Route path="defense" element={<DefenseOverviewPage />} />
+            <Route path="remediation" element={<RemediationWorkspacePage />} />
             <Route path="audit" element={<AuditPage />} />
             <Route path="system" element={<SystemPage />} />
             <Route path="*" element={<NotFoundPage />} />

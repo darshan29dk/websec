@@ -249,6 +249,23 @@ Structured AEGIS Evidence + Authoritative Security Knowledge
 - `POST /api/v1/knowledge/ingest` — (ADMIN) Ingest, chunk, and embed security knowledge document.
 - `GET /api/v1/knowledge/search` — Perform hybrid vector & keyword search over RAG knowledge base.
 
+### Phase 7 Defense & Remediation APIs
+- `GET /api/v1/defense/overview` — Get defense metrics & remediation statistics.
+- `GET /api/v1/defense/recommendations` — List defense recommendations (filter by status, priority).
+- `GET /api/v1/defense/recommendations/{id}` — Get recommendation details with mapped controls, evidence, and validation plan.
+- `POST /api/v1/defense/recommendations/generate` — Generate evidence-backed defense recommendation from finding ID.
+- `POST /api/v1/defense/recommendations/{id}/review` — Human review action (APPROVE or REJECT recommendation).
+- `PUT /api/v1/defense/recommendations/{id}/status` — Update recommendation status (PROPOSED, APPROVED, REJECTED, IMPLEMENTED).
+- `GET /api/v1/defense/controls` — List baseline security controls library (DB-QUERY-001, HTTP-SEC-001, etc.).
+- `GET /api/v1/defense/controls/{id}` — Get single security control details.
+- `GET /api/v1/defense/findings/{findingId}` — Get recommendations linked to a specific finding.
+- `GET /api/v1/remediation/plans` — List remediation plans.
+- `POST /api/v1/remediation/plans` — Create new remediation plan.
+- `GET /api/v1/remediation/plans/{id}` — Get remediation plan with ordered task sequence.
+- `PUT /api/v1/remediation/plans/{id}` — Update remediation plan properties.
+- `POST /api/v1/remediation/plans/{id}/tasks` — Add task to remediation sequence.
+- `PUT /api/v1/remediation/tasks/{id}` — Update remediation task status (OPEN, IN_PROGRESS, COMPLETED).
+
 ---
 
 ## Database Schemas & Data Model
@@ -259,12 +276,16 @@ Structured AEGIS Evidence + Authoritative Security Knowledge
 - `security_events`, `http_events`, `network_events`, `detection_rules`, `detection_matches`, `security_incidents`, `investigations`, `forensic_cases`, `forensic_evidence`.
 
 ### Phase 6 Schema (`V6__ai_security_analyst_rag.sql`)
-- `knowledge_documents`: `id`, `uuid`, `title`, `source`, `source_url`, `document_type`, `version`, `content`, `content_hash`, `published_at`, `retrieved_at`, `status`, timestamps.
-- `knowledge_chunks`: `id`, `uuid`, `document_id`, `chunk_index`, `content`, `token_count`, `embedding`, `metadata`, timestamps.
-- `ai_investigations`: `id`, `uuid`, `assessment_id`, `incident_id`, `requested_by`, `status`, `provider`, `model`, `prompt_version`, `confidence`, `confidence_basis`, `verdict`, `summary`, `what_happened`, `timeline_summary`, `affected_target_summary`, `affected_endpoints_summary`, `root_cause`, `impact`, `supporting_evidence_summary`, `contradicting_evidence_summary`, `missing_evidence_summary`, `recommended_next_steps`, `limitations`, `raw_response`, `failure_reason`, timestamps.
-- `ai_analysis_claims`: `id`, `uuid`, `investigation_id`, `claim_type`, `claim_text`, `confidence`, `validation_status`, timestamps.
-- `ai_evidence_references`: `id`, `investigation_id`, `claim_id`, `evidence_type`, `evidence_id`, `relationship`, `details`, timestamps.
-- `ai_knowledge_references`: `id`, `investigation_id`, `document_id`, `chunk_id`, `relevance_score`, `citation_text`, timestamps.
+- `knowledge_documents`, `knowledge_chunks`, `ai_investigations`, `ai_analysis_claims`, `ai_evidence_references`, `ai_knowledge_references`.
+
+### Phase 7 Schema (`V7__defense_remediation.sql`)
+- `defense_controls`: `id`, `control_code`, `name`, `category`, `description`, `implementation_guidance`, `validation_guidance`, timestamps.
+- `defense_recommendations`: `id`, `uuid`, `finding_id`, `investigation_id`, `title`, `summary`, `root_cause`, `root_cause_explanation`, `recommendation_type`, `priority`, `priority_reasons`, `confidence`, `confidence_basis`, `status`, `implementation_guidance`, `compensating_controls`, `implementation_risks`, `created_by`, timestamps.
+- `defense_evidence`: `id`, `uuid`, `recommendation_id`, `evidence_type`, `source_type`, `source_id`, `description`, `confidence`, timestamps.
+- `finding_defense_controls`: `id`, `finding_id`, `control_id`, `relationship`, `confidence`, timestamps.
+- `remediation_plans`: `id`, `uuid`, `finding_id`, `recommendation_id`, `title`, `description`, `priority`, `owner`, `target_date`, `status`, timestamps.
+- `remediation_tasks`: `id`, `uuid`, `plan_id`, `title`, `description`, `task_type`, `sequence`, `status`, `owner`, timestamps.
+- `defense_validation_plans`: `id`, `uuid`, `recommendation_id`, `plan_title`, `validation_steps_json`, `verification_boundary`, timestamps.
 
 ---
 
@@ -277,7 +298,7 @@ AEGIS includes comprehensive automated backend integration tests and frontend st
 # Run backend test suite with JDK 21
 mvn test
 ```
-**Test Results**: All backend tests passing cleanly.
+**Test Results**: All backend tests (`AiProviderTest`, `EvidenceGroundedAiTest`, `DefenseEngineTest`) pass cleanly with 100% BUILD SUCCESS.
 
 ### Frontend Type Check
 ```bash
@@ -311,3 +332,4 @@ npm install
 npm run dev
 ```
 The AEGIS Security Console will open at `http://localhost:5173`.
+
