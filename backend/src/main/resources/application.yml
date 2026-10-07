@@ -51,6 +51,11 @@ aegis:
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
       allow-credentials: true
+  lab-mode: ${AEGIS_LAB_MODE:true}
+  investigation:
+    correlation-window-seconds: ${CORRELATION_WINDOW_SECONDS:300}
+  events:
+    retention-days: ${EVENTS_RETENTION_DAYS:30}
 
 springdoc:
   api-docs:

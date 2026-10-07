@@ -13,6 +13,7 @@
    - [Phase 1: Target Management & Security Control](#phase-1-target-management--security-control)
    - [Phase 2: Security Assessment Engine](#phase-2-security-assessment-engine)
    - [Phase 3: Attack Surface & Vulnerability Intelligence](#phase-3-attack-surface--vulnerability-intelligence)
+   - [Phase 4: Attack Detection & Investigation](#phase-4-attack-detection--investigation)
 6. [REST API Specification](#rest-api-specification)
 7. [Database Schemas & Data Model](#database-schemas--data-model)
 8. [Testing & Quality Assurance](#testing--quality-assurance)
@@ -135,8 +136,15 @@ spring:
 ### Phase 3: Attack Surface & Vulnerability Intelligence
 - **Attack Surface Asset Graph**: Discovers and correlates `DOMAIN`, `HOST`, `IP_ADDRESS`, `PORT`, `SERVICE`, `TECHNOLOGY`, `WEB_APPLICATION`, `ENDPOINT`, `PARAMETER`, and `TLS_ENDPOINT` assets with explicit graph relationships (`RESOLVES_TO`, `HOSTS`, `EXPOSES`, `RUNS`, `USES`, `SERVES`, `CONTAINS`).
 - **Deterministic Finding Deduplication**: Generates SHA-256 fingerprints from `assessmentId + assetValue + endpointUrl + findingType + title`.
-- **Multi-Tool Finding Correlation**: Aggregates findings discovered across multiple tools (e.g., ZAP and HttpSecurity both detecting missing Security Headers) into single deduplicated findings with combined source evidence.
+- **Multi-Tool Finding Correlation**: Aggregates findings discovered across multiple tools into single deduplicated findings.
 - **Finding Status Workflow**: State machine (`OPEN` → `CONFIRMED` / `FALSE_POSITIVE` / `ACCEPTED_RISK` → `RESOLVED` → `REOPENED`) with enforced audit comments.
+
+### Phase 4: Attack Detection & Investigation
+- **Telemetry Event Ingestion & Normalization**: Standardized ingestion APIs for HTTP and Network telemetry events with provenance (`ASSESSMENT_TOOL`, `WEB_SERVER_LOG`, `WAF`, `APPLICATION_LOG`, `LAB_SIMULATION`).
+- **Source-IP Integrity**: Never invents or infers attacker IPs. If unobserved in telemetry, `source_ip` is `null`, `source_ip_confidence` is `UNKNOWN`, and UI displays `"Source IP unavailable from available telemetry."`
+- **Deterministic Rule Detection Engine**: Evaluates events against web security rules (SQL Injection, XSS, Path Traversal, Command Injection, Sensitive Endpoint Probing, Authentication Failures, Error Bursts).
+- **Time-Windowed Event Correlation**: Grouping correlated detections into deduplicated `SecurityIncident` records.
+- **Investigation Workspace**: Manages analyst hypotheses (Supported/Contradicted), attached evidence, timeline sequence, analyst notes, and evidence-driven attack chain graph.
 
 ---
 
