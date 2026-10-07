@@ -42,7 +42,7 @@ public class SecurityEvidenceContextBuilder {
         this.secretRedactionService = secretRedactionService;
     }
 
-    public ContextResult buildContext(Long assessmentId, Long incidentId) {
+    public ContextResult buildContext(UUID assessmentId, UUID incidentId) {
         StringBuilder sb = new StringBuilder();
         Set<String> validEvidenceIds = new HashSet<>();
         Set<String> validSourceIps = new HashSet<>();

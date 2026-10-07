@@ -13,8 +13,8 @@ import java.util.UUID;
 public class AiInvestigationResponseDto {
     private Long id;
     private UUID uuid;
-    private Long assessmentId;
-    private Long incidentId;
+    private UUID assessmentId;
+    private UUID incidentId;
     private String requestedBy;
     private String status;
     private String provider;
@@ -91,11 +91,11 @@ public class AiInvestigationResponseDto {
     public UUID getUuid() { return uuid; }
     public void setUuid(UUID uuid) { this.uuid = uuid; }
 
-    public Long getAssessmentId() { return assessmentId; }
-    public void setAssessmentId(Long assessmentId) { this.assessmentId = assessmentId; }
+    public UUID getAssessmentId() { return assessmentId; }
+    public void setAssessmentId(UUID assessmentId) { this.assessmentId = assessmentId; }
 
-    public Long getIncidentId() { return incidentId; }
-    public void setIncidentId(Long incidentId) { this.incidentId = incidentId; }
+    public UUID getIncidentId() { return incidentId; }
+    public void setIncidentId(UUID incidentId) { this.incidentId = incidentId; }
 
     public String getRequestedBy() { return requestedBy; }
     public void setRequestedBy(String requestedBy) { this.requestedBy = requestedBy; }

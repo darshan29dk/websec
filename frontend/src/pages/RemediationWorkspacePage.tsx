@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { defenseApi } from '../services/api/defenseApi';
 import { RemediationPlan, RemediationTask } from '../types/defense';
 import {
-  WrenchScrewdriverIcon,
-  PlusIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  UserIcon,
-  CalendarIcon,
-  ArrowPathIcon,
-} from '@heroicons/react/24/outline';
+  Wrench,
+  Plus,
+  CheckCircle,
+  Clock,
+  User,
+  Calendar,
+  RotateCw,
+} from 'lucide-react';
 
 export const RemediationWorkspacePage: React.FC = () => {
   const [plans, setPlans] = useState<RemediationPlan[]>([]);
@@ -113,7 +113,7 @@ export const RemediationWorkspacePage: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <WrenchScrewdriverIcon className="w-7 h-7 text-purple-400" />
+            <Wrench className="w-7 h-7 text-purple-400" />
             Remediation Workspace
           </h1>
           <p className="text-sm text-slate-400 mt-1">
@@ -125,7 +125,7 @@ export const RemediationWorkspacePage: React.FC = () => {
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg shadow-lg shadow-purple-600/20 transition"
           >
-            <PlusIcon className="w-4 h-4" />
+            <Plus className="w-4 h-4" />
             New Remediation Plan
           </button>
         </div>
@@ -165,7 +165,7 @@ export const RemediationWorkspacePage: React.FC = () => {
 
                 <div className="flex items-center justify-between mt-3 text-[11px] text-slate-400 border-t border-slate-800/80 pt-2">
                   <span className="flex items-center gap-1">
-                    <UserIcon className="w-3.5 h-3.5 text-slate-500" /> {plan.owner}
+                    <User className="w-3.5 h-3.5 text-slate-500" /> {plan.owner}
                   </span>
                   <span className="font-semibold text-purple-400">{plan.status}</span>
                 </div>
@@ -220,7 +220,7 @@ export const RemediationWorkspacePage: React.FC = () => {
                                 : 'border-slate-700 hover:border-slate-500'
                             }`}
                           >
-                            {task.status === 'COMPLETED' && <CheckCircleIcon className="w-4 h-4 font-bold" />}
+                            {task.status === 'COMPLETED' && <CheckCircle className="w-4 h-4 font-bold" />}
                           </button>
                           <div>
                             <span className="text-[10px] font-mono font-bold text-slate-500 mr-2">STEP #{task.sequence}</span>

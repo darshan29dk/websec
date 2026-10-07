@@ -1,5 +1,5 @@
-import { apiClient } from './apiClient';
-import { ApiResponse, PageResponse } from '../../types/api';
+import { apiClient } from './client';
+import { ApiResponse, PageResponse } from '../../types/common';
 import {
   ForensicCase,
   ForensicEvidence,

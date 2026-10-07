@@ -16,10 +16,10 @@ public class AiInvestigation {
     private UUID uuid = UUID.randomUUID();
 
     @Column(name = "assessment_id")
-    private Long assessmentId;
+    private UUID assessmentId;
 
     @Column(name = "incident_id")
-    private Long incidentId;
+    private UUID incidentId;
 
     @Column(name = "requested_by", nullable = false)
     private String requestedBy;
@@ -102,11 +102,11 @@ public class AiInvestigation {
     public UUID getUuid() { return uuid; }
     public void setUuid(UUID uuid) { this.uuid = uuid; }
 
-    public Long getAssessmentId() { return assessmentId; }
-    public void setAssessmentId(Long assessmentId) { this.assessmentId = assessmentId; }
+    public UUID getAssessmentId() { return assessmentId; }
+    public void setAssessmentId(UUID assessmentId) { this.assessmentId = assessmentId; }
 
-    public Long getIncidentId() { return incidentId; }
-    public void setIncidentId(Long incidentId) { this.incidentId = incidentId; }
+    public UUID getIncidentId() { return incidentId; }
+    public void setIncidentId(UUID incidentId) { this.incidentId = incidentId; }
 
     public String getRequestedBy() { return requestedBy; }
     public void setRequestedBy(String requestedBy) { this.requestedBy = requestedBy; }

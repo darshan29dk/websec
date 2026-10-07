@@ -298,14 +298,25 @@ AEGIS includes comprehensive automated backend integration tests and frontend st
 # Run backend test suite with JDK 21
 mvn test
 ```
-**Test Results**: All backend tests (`AiProviderTest`, `EvidenceGroundedAiTest`, `DefenseEngineTest`) pass cleanly with 100% BUILD SUCCESS.
+**Test Results**: All backend tests (`AiProviderTest`, `EvidenceGroundedAiTest`, `DefenseEngineTest`, `ValidationDecisionEngineTest`) pass cleanly with 100% BUILD SUCCESS.
 
-### Frontend Type Check
-```bash
-cd frontend
-npx tsc --noEmit
-```
-**Type Check Results**: 0 TypeScript compilation errors.
+### Phase 8: Controlled Retesting & Defense Validation Architecture
+
+#### Core Objective & Purpose
+Phase 8 implements the controlled verification layer for AEGIS. The core purpose is answering: *"Was this previously identified security weakness actually fixed?"* using evidence-grounded retesting. A finding is marked `FIXED` only when defined validation criteria are satisfied by actual retest evidence.
+
+#### Security Boundaries & Policy Rules
+- **Scope & Target Enforcement**: Retests are permitted ONLY against registered, `ACTIVE` targets with valid scope and confirmed authorization. Arbitrary target URLs, arbitrary shell commands, arbitrary scanner flags, or LLM-generated execution commands are strictly rejected.
+- **Controlled Tool Execution**: Reuses Phase 2 tool execution framework (`AssessmentToolAdapter`, `ProcessRunner`, `ToolPolicyValidator`). Executes minimum appropriate validation check (`HEADER_VALIDATION`, `COOKIE_VALIDATION`, `TLS_CONFIGURATION_VALIDATION`, `NUCLEI_REVALIDATION`, `ZAP_ALERT_REVALIDATION`).
+- **No Automatic Production Modification**: AEGIS validates remediation and reports status. It never auto-modifies application code, website configs, firewalls, or production environments.
+
+#### Validation Decision Engine Matrix
+The `ValidationDecisionEngine` deterministically evaluates original baseline evidence vs new retest evidence:
+- **`FIXED`**: Original weakness is no longer observable; check succeeded with sufficient evidence.
+- **`PARTIALLY_FIXED`**: Some aspects of the weakness are remediated while others remain.
+- **`NOT_FIXED`**: Original condition is still observable during retest.
+- **`REGRESSED`**: Finding previously validated as `FIXED` is found to fail retest during a subsequent assessment. Historical validation records remain immutable.
+- **`INCONCLUSIVE`**: Tool unavailable, network connection failed, or evidence incomplete. Does NOT turn technical uncertainty into false positives/negatives.
 
 ---
 

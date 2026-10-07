@@ -1,14 +1,16 @@
 package com.aegis.ai.dto;
 
+import java.util.UUID;
+
 public class AiInvestigationRequestDto {
-    private Long assessmentId;
-    private Long incidentId;
+    private UUID assessmentId;
+    private UUID incidentId;
 
     public AiInvestigationRequestDto() {}
 
-    public Long getAssessmentId() { return assessmentId; }
-    public void setAssessmentId(Long assessmentId) { this.assessmentId = assessmentId; }
+    public UUID getAssessmentId() { return assessmentId; }
+    public void setAssessmentId(UUID assessmentId) { this.assessmentId = assessmentId; }
 
-    public Long getIncidentId() { return incidentId; }
-    public void setIncidentId(Long incidentId) { this.incidentId = incidentId; }
+    public UUID getIncidentId() { return incidentId; }
+    public void setIncidentId(UUID incidentId) { this.incidentId = incidentId; }
 }

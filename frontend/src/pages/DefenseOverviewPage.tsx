@@ -6,15 +6,14 @@ import {
   DefenseOverviewMetrics,
 } from '../types/defense';
 import {
-  ShieldCheckIcon,
-  ShieldExclamationIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-  BookOpenIcon,
-  KeyIcon,
-  ArrowPathIcon,
-} from '@heroicons/react/24/outline';
+  ShieldCheck,
+  ShieldAlert,
+  CheckCircle,
+  XCircle,
+  Clock,
+  BookOpen,
+  RotateCw,
+} from 'lucide-react';
 
 export const DefenseOverviewPage: React.FC = () => {
   const [metrics, setMetrics] = useState<DefenseOverviewMetrics | null>(null);
@@ -106,7 +105,7 @@ export const DefenseOverviewPage: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <ShieldCheckIcon className="w-7 h-7 text-emerald-400" />
+            <ShieldCheck className="w-7 h-7 text-emerald-400" />
             Defense & Remediation Center
           </h1>
           <p className="text-sm text-slate-400 mt-1">
@@ -118,7 +117,7 @@ export const DefenseOverviewPage: React.FC = () => {
             onClick={loadData}
             className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg border border-slate-700 transition"
           >
-            <ArrowPathIcon className="w-4 h-4" />
+            <RotateCw className="w-4 h-4" />
             Refresh Data
           </button>
         </div>
@@ -126,7 +125,7 @@ export const DefenseOverviewPage: React.FC = () => {
 
       {/* Security Safety Banner */}
       <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-xl p-4 flex items-start gap-3">
-        <ShieldExclamationIcon className="w-6 h-6 text-cyan-400 shrink-0 mt-0.5" />
+        <ShieldAlert className="w-6 h-6 text-cyan-400 shrink-0 mt-0.5" />
         <div className="text-xs text-cyan-200/90 leading-relaxed">
           <span className="font-semibold text-cyan-300">Human Control Boundary:</span> AEGIS provides evidence-backed security recommendations, control mappings, and validation plans. AEGIS does <strong className="text-cyan-200">NOT</strong> automatically modify production websites, firewalls, or application source code. All remediation activities remain under authorized human control.
         </div>
@@ -170,7 +169,7 @@ export const DefenseOverviewPage: React.FC = () => {
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
-          <ShieldCheckIcon className="w-4 h-4" />
+          <ShieldCheck className="w-4 h-4" />
           Defense Recommendations ({recommendations.length})
         </button>
         <button
@@ -181,7 +180,7 @@ export const DefenseOverviewPage: React.FC = () => {
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
-          <BookOpenIcon className="w-4 h-4" />
+          <BookOpen className="w-4 h-4" />
           Security Controls Library ({controls.length})
         </button>
       </div>
@@ -276,19 +275,19 @@ export const DefenseOverviewPage: React.FC = () => {
                     onClick={() => handleReview(selectedRec.id, 'APPROVE')}
                     className="flex-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition"
                   >
-                    <CheckCircleIcon className="w-4 h-4" /> Approve Recommendation
+                    <CheckCircle className="w-4 h-4" /> Approve Recommendation
                   </button>
                   <button
                     onClick={() => handleReview(selectedRec.id, 'REJECT')}
                     className="flex-1 bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/40 text-xs font-semibold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition"
                   >
-                    <XCircleIcon className="w-4 h-4" /> Reject
+                    <XCircle className="w-4 h-4" /> Reject
                   </button>
                   <button
                     onClick={() => handleStatusUpdate(selectedRec.id, 'IMPLEMENTED')}
                     className="flex-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 text-xs font-semibold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition"
                   >
-                    <ClockIcon className="w-4 h-4" /> Mark Implemented
+                    <Clock className="w-4 h-4" /> Mark Implemented
                   </button>
                 </div>
 

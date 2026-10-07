@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { findingApi } from '../services/api/findingApi';
+import { retestApi } from '../services/api/retestApi';
 import { FindingDetail, FindingSeverity, FindingStatus } from '../types/finding';
 import { ArrowLeft, Shield, AlertTriangle, FileText, ExternalLink, Link2, MessageSquare, CheckCircle, Clock } from 'lucide-react';
 
@@ -334,6 +335,45 @@ export const FindingDetailPage: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Remediation & Controlled Retest Validation Panel */}
+          <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle size={16} style={{ color: '#00cc88' }} /> Controlled Retesting & Defense Validation
+              </h3>
+              <button
+                onClick={async () => {
+                  try {
+                    await retestApi.createRetest(finding.id);
+                    navigate('/retests');
+                  } catch (err: any) {
+                    alert(err.message || 'Failed to queue controlled retest.');
+                  }
+                }}
+                style={{
+                  padding: '6px 14px',
+                  backgroundColor: '#00cc88',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#000',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                + Queue Controlled Retest
+              </button>
+            </div>
+
+            <div style={{ padding: '12px', backgroundColor: 'var(--bg-dark)', borderRadius: '6px', fontSize: '13px', color: 'var(--text-heading)', marginBottom: '12px' }}>
+              Current Status: <strong style={{ color: '#00cc88' }}>{finding.status}</strong>
+            </div>
+
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 12px 0' }}>
+              AEGIS validates fixes using evidence comparison (before/after observation). Findings are marked FIXED only when retest evidence satisfies criteria.
+            </p>
           </div>
 
           {/* Analyst Comments */}

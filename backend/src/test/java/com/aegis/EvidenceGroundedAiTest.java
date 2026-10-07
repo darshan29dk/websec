@@ -85,7 +85,7 @@ public class EvidenceGroundedAiTest {
         when(investigationRepository.findByUuid(mockInv.getUuid())).thenReturn(Optional.of(mockInv));
 
         AiInvestigationRequestDto req = new AiInvestigationRequestDto();
-        req.setAssessmentId(1L);
+        req.setAssessmentId(java.util.UUID.randomUUID());
 
         AiInvestigationResponseDto dto = analystService.requestInvestigation(req, "test_analyst");
         assertNotNull(dto);

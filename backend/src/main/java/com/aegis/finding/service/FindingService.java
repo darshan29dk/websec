@@ -173,11 +173,12 @@ public class FindingService {
         if (current == next) return;
 
         boolean valid = switch (current) {
-            case OPEN -> next == FindingStatus.CONFIRMED || next == FindingStatus.FALSE_POSITIVE || next == FindingStatus.ACCEPTED_RISK;
-            case CONFIRMED -> next == FindingStatus.RESOLVED || next == FindingStatus.FALSE_POSITIVE || next == FindingStatus.ACCEPTED_RISK;
+            case OPEN -> true;
+            case CONFIRMED -> true;
             case FALSE_POSITIVE, ACCEPTED_RISK -> next == FindingStatus.OPEN;
             case RESOLVED -> next == FindingStatus.REOPENED;
-            case REOPENED -> next == FindingStatus.CONFIRMED || next == FindingStatus.RESOLVED;
+            case REOPENED -> true;
+            default -> true;
         };
 
         if (!valid) {

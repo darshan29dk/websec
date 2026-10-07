@@ -24,14 +24,27 @@ export class ApiClient {
 
   public static async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { params?: Record<string, any> } = {}
   ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const { params, ...fetchOptions } = options;
+    let url = `${API_BASE_URL}${endpoint}`;
+    if (params) {
+      const query = new URLSearchParams();
+      Object.entries(params).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== '') {
+          query.append(key, String(val));
+        }
+      });
+      const queryString = query.toString();
+      if (queryString) {
+        url += (url.includes('?') ? '&' : '?') + queryString;
+      }
+    }
     const token = this.getAccessToken();
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...((options.headers as Record<string, string>) || {}),
+      ...((fetchOptions.headers as Record<string, string>) || {}),
     };
 
     if (token) {
@@ -39,7 +52,7 @@ export class ApiClient {
     }
 
     const config: RequestInit = {
-      ...options,
+      ...fetchOptions,
       headers,
     };
 
@@ -50,7 +63,7 @@ export class ApiClient {
       const refreshed = await this.tryRefreshToken();
       if (refreshed) {
         headers['Authorization'] = `Bearer ${this.getAccessToken()}`;
-        response = await fetch(url, { ...options, headers });
+        response = await fetch(url, { ...fetchOptions, headers });
       } else {
         this.clearTokens();
         window.dispatchEvent(new Event('aegis:auth:unauthorized'));
@@ -101,25 +114,30 @@ export class ApiClient {
     }
   }
 
-  public static get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+  public static get<T>(endpoint: string, options?: RequestInit & { params?: Record<string, any> }): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET', ...options });
   }
 
-  public static post<T>(endpoint: string, body?: any): Promise<T> {
+  public static post<T>(endpoint: string, body?: any, options?: RequestInit & { params?: Record<string, any> }): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
+      ...options,
     });
   }
 
-  public static put<T>(endpoint: string, body?: any): Promise<T> {
+  public static put<T>(endpoint: string, body?: any, options?: RequestInit & { params?: Record<string, any> }): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
+      ...options,
     });
   }
 
-  public static delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+  public static delete<T>(endpoint: string, options?: RequestInit & { params?: Record<string, any> }): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE', ...options });
   }
 }
+
+export default ApiClient;
+export { ApiClient as client, ApiClient as apiClient };
