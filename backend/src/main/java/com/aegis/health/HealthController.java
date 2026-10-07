@@ -1,6 +1,10 @@
 package com.aegis.health;
 
+import com.aegis.ai.embedding.EmbeddingProvider;
+import com.aegis.ai.provider.LlmProvider;
+import com.aegis.ai.provider.LlmProviderType;
 import com.aegis.common.ApiResponse;
+import com.aegis.knowledge.KnowledgeDocumentRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +28,12 @@ public class HealthController {
 
     private final DataSource dataSource;
     private final Flyway flyway;
+    private final LlmProvider llmProvider;
+    private final EmbeddingProvider embeddingProvider;
+    private final KnowledgeDocumentRepository knowledgeDocumentRepository;
 
     @GetMapping
-    @Operation(summary = "Get system health", description = "Returns application, database, and Flyway migration health status")
+    @Operation(summary = "Get system health", description = "Returns application, database, Flyway, and AI health status")
     public ResponseEntity<ApiResponse<HealthResponse>> checkHealth() {
         Map<String, Object> components = new HashMap<>();
         boolean dbOk = false;
@@ -47,6 +54,34 @@ public class HealthController {
         } catch (Exception e) {
             components.put("migrations", Map.of("status", "DOWN", "error", e.getMessage()));
         }
+
+        String aiStatus = "AVAILABLE";
+        if (llmProvider.getProviderType() == LlmProviderType.DISABLED) {
+            aiStatus = "DISABLED";
+        } else if (!llmProvider.isAvailable()) {
+            aiStatus = "UNAVAILABLE";
+        }
+        components.put("ai_provider", Map.of(
+            "status", aiStatus,
+            "provider", llmProvider.getProviderName(),
+            "model", llmProvider.getModel()
+        ));
+
+        components.put("embedding_provider", Map.of(
+            "status", embeddingProvider.isAvailable() ? "AVAILABLE" : "UNAVAILABLE",
+            "provider", embeddingProvider.getProviderName(),
+            "dimension", embeddingProvider.getDimension()
+        ));
+
+        long docCount = 0;
+        try {
+            docCount = knowledgeDocumentRepository.count();
+        } catch (Exception ignored) {}
+
+        components.put("knowledge_index", Map.of(
+            "status", "AVAILABLE",
+            "documentCount", docCount
+        ));
 
         boolean isUp = dbOk && flywayOk;
 

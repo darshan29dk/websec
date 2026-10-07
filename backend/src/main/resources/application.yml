@@ -56,6 +56,19 @@ aegis:
     correlation-window-seconds: ${CORRELATION_WINDOW_SECONDS:300}
   events:
     retention-days: ${EVENTS_RETENTION_DAYS:30}
+  ai:
+    enabled: ${AI_ENABLED:true}
+    provider: ${AI_PROVIDER:mock} # openai, ollama, mock, disabled
+    model: ${AI_MODEL:gpt-4o}
+    base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+    api-key: ${AI_API_KEY:}
+    ollama-base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    ollama-model: ${OLLAMA_MODEL:llama3}
+    timeout-seconds: ${AI_TIMEOUT_SECONDS:60}
+    max-output-tokens: ${AI_MAX_OUTPUT_TOKENS:2048}
+    embedding-provider: ${EMBEDDING_PROVIDER:mock} # mock, openai, ollama
+    embedding-model: ${EMBEDDING_MODEL:text-embedding-3-small}
+    embedding-dimension: ${EMBEDDING_DIMENSION:1536}
 
 springdoc:
   api-docs:

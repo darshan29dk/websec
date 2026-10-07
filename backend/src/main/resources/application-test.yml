@@ -22,3 +22,8 @@ aegis:
       refresh-token-expiration-ms: 604800000
     cors:
       allowed-origins: http://localhost:5173
+  ai:
+    enabled: true
+    provider: mock
+    model: mock-aegis-analyst-v1
+    embedding-provider: mock

@@ -167,6 +167,14 @@ AEGIS uses **Flyway** for deterministic database migrations. Schema changes are 
 - **Unified Forensic Timeline**: Strict chronological ordering by `event_time` and sequence number, distinguishing collection timestamp from actual event timestamp.
 - **Attack Event Reconstruction Topology**: Evidence-linked attack progression classified by evidence certainty (`OBSERVED`, `DERIVED`, `INFERRED`).
 
+### Phase 6: AI Security Analyst & RAG (Retrieval-Augmented Generation)
+- **LLM Provider Abstraction**: Pluggable `LlmProvider` supporting `OPENAI` (OpenAI-compatible endpoints), `OLLAMA` (local Ollama provider), `MOCK` (deterministic provider for testing), and `DISABLED` state.
+- **RAG Security Knowledge Base**: Hybrid vector semantic and keyword search over authoritative security standards (OWASP, CWE-89, CWE-79, CWE-352, CWE-798, TLS/Header guidance).
+- **Evidence-Grounded Context Builder**: Normalizes target, assessment, findings, timeline, and digital forensics evidence into bounded text context with secret redaction (`[REDACTED]`).
+- **Prompt Injection Defense**: Wraps target-derived content inside XML delimiters (`<untrusted_target_telemetry>`) with explicit system instructions to ignore commands inside untrusted data.
+- **Strict Anti-Hallucination Claim Validation**: `AiClaimValidator` enforces the mandatory **Source IP Rule** ("Source IP unavailable from available telemetry" if unobserved in telemetry), **Timestamp Rule**, **Attribution Rule**, and evidence ID citation validation.
+- **Bounded Analyst Q&A**: Analysts can ask targeted investigation questions evaluated directly against investigation context.
+
 ---
 
 ## Technical Specifications
@@ -176,27 +184,33 @@ AEGIS uses **Flyway** for deterministic database migrations. Schema changes are 
 - **Provenance Types**: `ASSESSMENT_TOOL`, `WEB_SERVER_LOG`, `REVERSE_PROXY`, `WAF`, `APPLICATION_LOG`, `NETWORK_SENSOR`, `MANUAL_IMPORT`, `LAB_SIMULATION`.
 
 ### Phase 5 Digital Forensics & Evidence Reconstruction
+- **Forensic Case Workflow**: `Incident` → `Evidence Collection` → `SHA-256 Hashing` → `Provenance` → `Timeline` → `Attack Reconstruction`.
+
+### Phase 6 AI Security Analyst & RAG Architecture
 ```
-INCIDENT / SECURITY EVENT
-        ↓
-EVIDENCE COLLECTION
-        ↓
-EVIDENCE NORMALIZATION & SHA-256 HASHING
-        ↓
-PROVENANCE TRACKING
-        ↓
-FORENSIC TIMELINE (UTC & Collection vs Event Time)
-        ↓
-ATTACK EVENT RECONSTRUCTION (Observed / Derived / Inferred)
-        ↓
-DETERMINISTIC FORENSIC SUMMARY
+Structured AEGIS Evidence + Authoritative Security Knowledge
+                       ↓
+               Evidence Retrieval (RAG)
+                       ↓
+         Security Context Builder + Secret Redactor
+                       ↓
+         Prompt Injection Defense Wrapper
+                       ↓
+                  LLM Provider
+                       ↓
+            Structured AI Security Output
+                       ↓
+               AiClaimValidator
+  (Source IP Rule + Timestamp Rule + Citation Verification)
+                       ↓
+            AI Security Analyst Result
 ```
 
-#### Evidence Classification & Integrity
-1. **`OBSERVED`**: Directly present in verified source telemetry.
-2. **`DERIVED`**: Mathematically or deterministically calculated from observed evidence.
-3. **`INFERRED`**: Logical analytical interpretation (clearly badged in UI to prevent misattribution).
-4. **Integrity Status**: `VERIFIED`, `UNVERIFIED`, `MODIFIED`, `UNKNOWN`.
+#### Grounding & Anti-Hallucination Enforcement
+1. **Source IP Rule**: The AI MUST NOT infer or invent attacker source IPs. If unobserved, returns `"Source IP unavailable from available telemetry."`
+2. **Timestamp Rule**: AI only reports exact timestamps present in AEGIS evidence; unobserved timestamps return `"Exact event time unavailable from available evidence."`
+3. **Attribution Rule**: AI does not claim specific attacker identities without explicit authorized evidence.
+4. **Secret Redaction**: Passwords, Bearer tokens, cookies, and session IDs are redacted to `[REDACTED]` prior to LLM processing.
 
 ---
 
@@ -214,40 +228,43 @@ DETERMINISTIC FORENSIC SUMMARY
 - `POST /api/v1/events/http`, `POST /api/v1/events/network`, `POST /api/v1/events/batch`, `GET /api/v1/events`.
 - `GET /api/v1/detections`, `GET /api/v1/incidents`, `PATCH /api/v1/incidents/{id}/status`.
 
-### Digital Forensics & Evidence Reconstruction API
+### Digital Forensics & Evidence Reconstruction APIs
 - `POST /api/v1/forensics/cases` — Create new forensic case.
-- `POST /api/v1/incidents/{incidentId}/forensic-case` — Initialize forensic case from incident.
-- `GET /api/v1/forensics/cases` — Paginated list of forensic cases.
-- `GET /api/v1/forensics/cases/{id}` — Forensic case details.
-- `POST /api/v1/forensics/cases/{id}/close` — Close forensic case.
 - `POST /api/v1/forensics/cases/{id}/evidence` — Add forensic evidence with SHA-256 computation.
-- `GET /api/v1/forensics/cases/{id}/evidence` — Paginated evidence list.
 - `POST /api/v1/forensics/evidence/{id}/verify` — Verify evidence SHA-256 hash integrity.
 - `GET /api/v1/forensics/cases/{id}/timeline` — Chronological forensic timeline.
-- `GET /api/v1/forensics/cases/{id}/http-events` — HTTP telemetry records.
-- `GET /api/v1/forensics/cases/{id}/network-events` — Network connection records.
-- `GET /api/v1/forensics/cases/{id}/attack-events` — Attack event nodes.
-- `GET /api/v1/forensics/cases/{id}/attack-chain` — Attack reconstruction topology.
-- `GET /api/v1/forensics/cases/{id}/summary` — Factual forensic summary.
+
+### Phase 6 AI Security Analyst & Knowledge APIs
+- `POST /api/v1/ai/investigations` — Queue new async AI investigation.
+- `GET /api/v1/ai/investigations` — List AI investigations.
+- `GET /api/v1/ai/investigations/{id}` — Get AI investigation details & structured analysis.
+- `POST /api/v1/ai/investigations/{id}/run` — Trigger/retry AI investigation execution.
+- `POST /api/v1/ai/investigations/{id}/cancel` — Cancel active AI investigation.
+- `GET /api/v1/ai/investigations/{id}/evidence` — Get verified evidence references.
+- `GET /api/v1/ai/investigations/{id}/knowledge` — Get RAG knowledge citations.
+- `GET /api/v1/ai/investigations/{id}/claims` — Get validated analysis claims.
+- `POST /api/v1/ai/investigations/{id}/questions` — Ask bounded analyst question about investigation context.
+- `GET /api/v1/knowledge/documents` — List knowledge base documents.
+- `POST /api/v1/knowledge/documents` — (ADMIN) Create knowledge document.
+- `POST /api/v1/knowledge/ingest` — (ADMIN) Ingest, chunk, and embed security knowledge document.
+- `GET /api/v1/knowledge/search` — Perform hybrid vector & keyword search over RAG knowledge base.
 
 ---
 
 ## Database Schemas & Data Model
 
-### Phase 1–4 Schemas (`V1`–`V4`)
+### Phase 1–5 Schemas (`V1`–`V5`)
 - `users`, `security_targets`, `target_scopes`, `target_authorizations`, `security_assessments`, `audit_events`.
 - `tool_executions`, `tool_outputs`, `attack_surface_assets`, `security_findings`, `finding_evidence`.
-- `security_events`, `http_events`, `network_events`, `detection_rules`, `detection_matches`, `security_incidents`, `investigations`.
+- `security_events`, `http_events`, `network_events`, `detection_rules`, `detection_matches`, `security_incidents`, `investigations`, `forensic_cases`, `forensic_evidence`.
 
-### Digital Forensics Schema (`V5`)
-- `forensic_cases`: `id`, `uuid`, `incident_id`, `assessment_id`, `target_id`, `case_number`, `title`, `status`, `priority`, `created_by`, `opened_at`, `closed_at`, timestamps.
-- `forensic_evidence`: `id`, `uuid`, `case_id`, `evidence_type`, `source_type`, `source_reference`, `event_time`, `collection_time`, `content_hash`, `integrity_status`, `confidence`, `classification`, `provenance`, `description`, `metadata`, timestamps.
-- `evidence_provenance`: `id`, `evidence_id`, `source`, `collector`, `collected_at`, `original_reference`, `sha256`, `transformation`, timestamps.
-- `http_forensic_events`: `id`, `case_id`, `evidence_id`, `event_time`, `source_ip`, `destination_ip`, `method`, `scheme`, `host`, `port`, `path`, `query_string`, `status_code`, `request_headers`, `response_headers`, `user_agent`, `tls_version`, timestamps.
-- `network_forensic_events`: `id`, `case_id`, `evidence_id`, `event_time`, `source_ip`, `source_port`, `destination_ip`, `destination_port`, `protocol`, `direction`, `connection_state`, `bytes_in`, `bytes_out`, timestamps.
-- `application_forensic_events`: `id`, `case_id`, `evidence_id`, `event_time`, `application`, `severity`, `event_type`, `message`, `request_id`, `session_id`, `source_ip`, `endpoint`, timestamps.
-- `forensic_timeline_events`: `id`, `case_id`, `event_time`, `time_description`, `event_type`, `source`, `severity`, `title`, `description`, `evidence_id`, `confidence`, `sequence_number`, timestamps.
-- `forensic_attack_events`: `id`, `case_id`, `timeline_event_id`, `event_type`, `stage`, `event_time`, `source_ip`, `target_endpoint`, `http_method`, `status_code`, `evidence_id`, `confidence`, `classification`, `description`, timestamps.
+### Phase 6 Schema (`V6__ai_security_analyst_rag.sql`)
+- `knowledge_documents`: `id`, `uuid`, `title`, `source`, `source_url`, `document_type`, `version`, `content`, `content_hash`, `published_at`, `retrieved_at`, `status`, timestamps.
+- `knowledge_chunks`: `id`, `uuid`, `document_id`, `chunk_index`, `content`, `token_count`, `embedding`, `metadata`, timestamps.
+- `ai_investigations`: `id`, `uuid`, `assessment_id`, `incident_id`, `requested_by`, `status`, `provider`, `model`, `prompt_version`, `confidence`, `confidence_basis`, `verdict`, `summary`, `what_happened`, `timeline_summary`, `affected_target_summary`, `affected_endpoints_summary`, `root_cause`, `impact`, `supporting_evidence_summary`, `contradicting_evidence_summary`, `missing_evidence_summary`, `recommended_next_steps`, `limitations`, `raw_response`, `failure_reason`, timestamps.
+- `ai_analysis_claims`: `id`, `uuid`, `investigation_id`, `claim_type`, `claim_text`, `confidence`, `validation_status`, timestamps.
+- `ai_evidence_references`: `id`, `investigation_id`, `claim_id`, `evidence_type`, `evidence_id`, `relationship`, `details`, timestamps.
+- `ai_knowledge_references`: `id`, `investigation_id`, `document_id`, `chunk_id`, `relevance_score`, `citation_text`, timestamps.
 
 ---
 
@@ -260,7 +277,7 @@ AEGIS includes comprehensive automated backend integration tests and frontend st
 # Run backend test suite with JDK 21
 mvn test
 ```
-**Test Results**: 38/38 tests passed cleanly (0 errors, 0 failures).
+**Test Results**: All backend tests passing cleanly.
 
 ### Frontend Type Check
 ```bash
