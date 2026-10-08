@@ -34,9 +34,20 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final AuditService auditService;
 
+    private boolean isAuthorizedEmailDomain(String email) {
+        if (email == null) return false;
+        String lower = email.toLowerCase().trim();
+        return lower.endsWith("@gmail.com") || lower.endsWith("@outlook.com") || lower.endsWith("@aegis.local");
+    }
+
     @Transactional
     public AuthResponse register(RegisterRequest request, String ipAddress, String userAgent) {
-        if (userRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
+        String email = request.getEmail().toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+        }
+
+        if (userRepository.existsByEmail(email)) {
             throw new DuplicateResourceException("User with email '" + request.getEmail() + "' already exists");
         }
 
@@ -49,7 +60,7 @@ public class AuthService {
         }
 
         User user = User.builder()
-                .email(request.getEmail().toLowerCase().trim())
+                .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .displayName(request.getDisplayName().trim())
                 .role(assignedRole)
@@ -93,6 +104,10 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
         String email = request.getEmail().toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new UnauthorizedException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized to log in.");
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, request.getPassword())

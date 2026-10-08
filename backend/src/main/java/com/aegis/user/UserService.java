@@ -1,6 +1,7 @@
 package com.aegis.user;
 
 import com.aegis.common.PageResponse;
+import com.aegis.exception.BadRequestException;
 import com.aegis.exception.DuplicateResourceException;
 import com.aegis.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private boolean isAuthorizedEmailDomain(String email) {
+        if (email == null) return false;
+        String lower = email.toLowerCase().trim();
+        return lower.endsWith("@gmail.com") || lower.endsWith("@outlook.com") || lower.endsWith("@aegis.local");
+    }
+
     @Transactional(readOnly = true)
     public PageResponse<UserResponse> getAllUsers(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -37,12 +44,17 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
-        if (userRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
+        String email = request.getEmail().toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+        }
+
+        if (userRepository.existsByEmail(email)) {
             throw new DuplicateResourceException("User with email '" + request.getEmail() + "' already exists");
         }
 
         User user = User.builder()
-                .email(request.getEmail().toLowerCase().trim())
+                .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .displayName(request.getDisplayName().trim())
                 .role(request.getRole())

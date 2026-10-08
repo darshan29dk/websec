@@ -23,6 +23,12 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     setError(null);
 
+    const cleanEmail = email.toLowerCase().trim();
+    if (!cleanEmail.endsWith('@gmail.com') && !cleanEmail.endsWith('@outlook.com') && !cleanEmail.endsWith('@aegis.local')) {
+      setError('Registration restricted: Only @gmail.com and @outlook.com email addresses are authorized.');
+      return;
+    }
+
     if (!displayName || !email || !password) {
       setError('Please fill out all required fields.');
       return;
@@ -52,18 +58,18 @@ export const RegisterPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'var(--bg-dark)',
+        backgroundColor: '#090d16',
         padding: '20px',
       }}
     >
       <div
         style={{
           width: '440px',
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '8px',
+          backgroundColor: '#0f172a',
+          border: '1px solid #1e293b',
+          borderRadius: '10px',
           padding: '32px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -74,19 +80,20 @@ export const RegisterPage: React.FC = () => {
               justifyContent: 'center',
               width: '48px',
               height: '48px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--accent-light)',
-              color: 'var(--accent-primary)',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(59, 130, 246, 0.12)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              color: '#3b82f6',
               marginBottom: '12px',
             }}
           >
-            <Shield size={28} />
+            <Shield size={26} />
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-heading)' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#f8fafc' }}>
             Register Account
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            AEGIS Authorized Security Analyst Registration
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+            GLOBALSHIELD Security Console Access Registration
           </p>
         </div>
 
@@ -96,23 +103,23 @@ export const RegisterPage: React.FC = () => {
           <Input
             label="Full Display Name"
             type="text"
-            placeholder="Jane Doe"
+            placeholder="Darshan Reddy"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             required
           />
 
           <Input
-            label="Email Address"
+            label="Authorized Email Address (@gmail.com / @outlook.com)"
             type="email"
-            placeholder="analyst@aegis.local"
+            placeholder="darshanreddy5822@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
 
           <Input
-            label="Password"
+            label="Password (SHA-512 Encrypted)"
             type="password"
             placeholder="Minimum 8 characters"
             value={password}
@@ -121,19 +128,19 @@ export const RegisterPage: React.FC = () => {
           />
 
           <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-heading)' }}>
-              Requested Role
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1' }}>
+              Requested Platform Role
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
               style={{
                 width: '100%',
-                backgroundColor: 'var(--bg-input)',
-                border: '1px solid var(--border-color)',
+                backgroundColor: '#020617',
+                border: '1px solid #1e293b',
                 borderRadius: '6px',
                 padding: '8px 12px',
-                color: 'var(--text-main)',
+                color: '#f8fafc',
                 fontSize: '13px',
                 outline: 'none',
               }}
@@ -149,9 +156,9 @@ export const RegisterPage: React.FC = () => {
           </Button>
         </form>
 
-        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>
+        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: '#64748b' }}>
           Already registered?{' '}
-          <Link to="/login" style={{ fontWeight: 600 }}>
+          <Link to="/login" style={{ fontWeight: 600, color: '#3b82f6' }}>
             Sign In
           </Link>
         </div>
