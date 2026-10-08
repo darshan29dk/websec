@@ -27,9 +27,17 @@ export class ApiClient {
     options: RequestInit & { params?: Record<string, any> } = {}
   ): Promise<T> {
     const { params, ...fetchOptions } = options;
-    let url = endpoint.startsWith('/api/v1')
-      ? endpoint
-      : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+    let url = endpoint;
+    if (!endpoint.startsWith('http://') && !endpoint.startsWith('https://')) {
+      if (endpoint.startsWith('/api/v1')) {
+        const baseUrlNoPath = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+        url = `${baseUrlNoPath}${endpoint}`;
+      } else {
+        const cleanBase = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+        const cleanEp = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        url = `${cleanBase}${cleanEp}`;
+      }
+    }
     if (params) {
       const query = new URLSearchParams();
       Object.entries(params).forEach(([key, val]) => {
