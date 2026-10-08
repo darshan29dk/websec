@@ -15,6 +15,7 @@ export const findingApi = {
     page = 0,
     size = 20,
     assessmentId?: string,
+    targetId?: string,
     severity?: FindingSeverity,
     status?: FindingStatus,
     confidence?: FindingConfidence,
@@ -23,6 +24,7 @@ export const findingApi = {
   ): Promise<PageResponse<SecurityFinding>> => {
     const params: Record<string, any> = { page, size };
     if (assessmentId) params.assessmentId = assessmentId;
+    if (targetId) params.targetId = targetId;
     if (severity) params.severity = severity;
     if (status) params.status = status;
     if (confidence) params.confidence = confidence;

@@ -1,5 +1,6 @@
 package com.globalshield.notification.controller;
 
+import com.globalshield.common.ApiResponse;
 import com.globalshield.common.PageResponse;
 import com.globalshield.notification.dto.NotificationDto;
 import com.globalshield.notification.service.NotificationService;
@@ -19,30 +20,30 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public ResponseEntity<PageResponse<NotificationDto>> getNotifications(
+    public ResponseEntity<ApiResponse<PageResponse<NotificationDto>>> getNotifications(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size,
         Authentication authentication
     ) {
         String email = authentication != null ? authentication.getName() : "admin@aegis.local";
-        return ResponseEntity.ok(notificationService.getUserNotifications(email, page, size));
+        return ResponseEntity.ok(ApiResponse.success(notificationService.getUserNotifications(email, page, size)));
     }
 
     @GetMapping("/unread")
-    public ResponseEntity<List<NotificationDto>> getUnreadNotifications(Authentication authentication) {
+    public ResponseEntity<ApiResponse<List<NotificationDto>>> getUnreadNotifications(Authentication authentication) {
         String email = authentication != null ? authentication.getName() : "admin@aegis.local";
-        return ResponseEntity.ok(notificationService.getUnreadNotifications(email));
+        return ResponseEntity.ok(ApiResponse.success(notificationService.getUnreadNotifications(email)));
     }
 
     @PostMapping("/{id}/read")
-    public ResponseEntity<NotificationDto> markAsRead(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(notificationService.markAsRead(id));
+    public ResponseEntity<ApiResponse<NotificationDto>> markAsRead(@PathVariable("id") UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(notificationService.markAsRead(id)));
     }
 
     @PostMapping("/read-all")
-    public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
+    public ResponseEntity<ApiResponse<Void>> markAllAsRead(Authentication authentication) {
         String email = authentication != null ? authentication.getName() : "admin@aegis.local";
         notificationService.markAllAsRead(email);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.success("All notifications marked as read", null));
     }
 }

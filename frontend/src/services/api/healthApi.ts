@@ -8,6 +8,7 @@ export interface HealthData {
   components: {
     database?: { status: string; databaseProduct?: string; error?: string };
     migrations?: { status: string; currentVersion?: string; appliedCount?: number; error?: string };
+    [key: string]: any;
   };
 }
 

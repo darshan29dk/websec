@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   RotateCcw,
@@ -10,7 +11,8 @@ import {
   ShieldAlert,
   Target as TargetIcon,
   RefreshCw,
-  FileText
+  FileText,
+  XCircle,
 } from 'lucide-react';
 import { postureApi } from '../services/api/postureApi';
 import { targetApi } from '../services/api/targetApi';
@@ -24,8 +26,11 @@ import {
 } from '../types/posture';
 
 export const RegressionCenterPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const targetIdFromUrl = searchParams.get('targetId') || '';
+
   const [targets, setTargets] = useState<SecurityTarget[]>([]);
-  const [selectedTargetId, setSelectedTargetId] = useState<string>('');
+  const [selectedTargetId, setSelectedTargetId] = useState<string>(targetIdFromUrl);
   const [summary, setSummary] = useState<RegressionSummaryDto | null>(null);
   const [regressions, setRegressions] = useState<SecurityRegressionDto[]>([]);
   const [selectedRegression, setSelectedRegression] = useState<SecurityRegressionDto | null>(null);
@@ -49,7 +54,11 @@ export const RegressionCenterPage: React.FC = () => {
       const res = await targetApi.listTargets();
       setTargets(res);
       if (res.length > 0) {
-        setSelectedTargetId(res[0].id);
+        if (targetIdFromUrl && res.some((t) => t.id === targetIdFromUrl)) {
+          setSelectedTargetId(targetIdFromUrl);
+        } else {
+          setSelectedTargetId(res[0].id);
+        }
       } else {
         setLoading(false);
       }
@@ -79,116 +88,204 @@ export const RegressionCenterPage: React.FC = () => {
   const getTypeBadge = (type: RegressionType) => {
     switch (type) {
       case 'REOPENED':
-        return <span className="px-2.5 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-xs font-semibold">REOPENED</span>;
+        return { bg: '#fef2f2', text: '#dc2626', border: '#fca5a5', label: 'REOPENED' };
       case 'REGRESSED':
-        return <span className="px-2.5 py-0.5 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-semibold">REGRESSED</span>;
+        return { bg: '#fff1f2', text: '#e11d48', border: '#fecdd3', label: 'REGRESSED' };
       case 'DEFENSE_REGRESSION':
-        return <span className="px-2.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-semibold">DEFENSE REGRESSION</span>;
+        return { bg: '#fefce8', text: '#d97706', border: '#fde047', label: 'DEFENSE REGRESSION' };
       default:
-        return <span className="px-2.5 py-0.5 bg-slate-500/20 text-slate-400 border border-slate-500/30 rounded text-xs font-semibold">{type}</span>;
+        return { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0', label: type };
     }
   };
 
   const getStatusBadge = (status: RegressionStatus) => {
     switch (status) {
       case 'CONFIRMED':
-        return <span className="px-2.5 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-xs font-semibold">CONFIRMED</span>;
+        return { bg: '#fef2f2', text: '#dc2626', border: '#fca5a5', label: 'CONFIRMED' };
       case 'POTENTIAL':
-        return <span className="px-2.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-semibold">POTENTIAL</span>;
+        return { bg: '#fefce8', text: '#d97706', border: '#fde047', label: 'POTENTIAL' };
       case 'RESOLVED':
-        return <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold">RESOLVED</span>;
+        return { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0', label: 'RESOLVED' };
       default:
-        return <span className="px-2.5 py-0.5 bg-slate-500/20 text-slate-400 border border-slate-500/30 rounded text-xs font-semibold">INCONCLUSIVE</span>;
+        return { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0', label: 'INCONCLUSIVE' };
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-xl border border-slate-800 backdrop-blur-md">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400">
-            <RotateCcw className="w-6 h-6" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '32px' }}>
+      {/* Header Banner */}
+      <div
+        style={{
+          background: 'var(--surface-primary)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: '#e0f2fe',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <RotateCcw size={22} style={{ color: 'var(--brand-primary)' }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Vulnerability Regression Center</h1>
-            <p className="text-slate-400 text-sm">Historical re-appearance tracking & fingerprint-matched regression detection</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+              Vulnerability Regression Center
+            </h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Historical re-appearance tracking, cryptographic vulnerability fingerprint matching, and retest verification.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-2 rounded-lg border border-slate-700">
-            <TargetIcon className="w-4 h-4 text-slate-400" />
-            <select
-              value={selectedTargetId}
-              onChange={(e) => setSelectedTargetId(e.target.value)}
-              className="bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer"
-            >
-              {targets.map((t) => (
-                <option key={t.id} value={t.id} className="bg-slate-900 text-slate-200">
-                  {t.name} ({t.primaryUrl})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {targets.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TargetIcon size={16} style={{ color: 'var(--brand-primary)' }} />
+              <select
+                value={selectedTargetId}
+                onChange={(e) => {
+                  setSelectedTargetId(e.target.value);
+                  setSearchParams({ targetId: e.target.value });
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                  background: '#ffffff',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {targets.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.primaryUrl})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <button
             onClick={() => loadRegressionData(selectedTargetId)}
-            className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition-colors"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '7px 14px',
+              borderRadius: '8px',
+              background: '#f0f7ff',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--brand-primary)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-rose-400 text-sm flex items-center space-x-2">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '10px',
+            padding: '14px 18px',
+            color: '#dc2626',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <AlertTriangle size={16} />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Regression Summary Banner */}
+      {/* Regression KPI Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-            <div className="text-2xl font-black text-white">{summary.totalRegressions}</div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Total Events</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+          <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Events</div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>{summary.totalRegressions}</div>
           </div>
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-            <div className="text-2xl font-black text-rose-400">{summary.confirmedRegressions}</div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Confirmed</div>
+          <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Confirmed</div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: '#dc2626', marginTop: '4px' }}>{summary.confirmedRegressions}</div>
           </div>
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-            <div className="text-2xl font-black text-amber-400">{summary.potentialRegressions}</div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Potential</div>
+          <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Potential</div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: '#d97706', marginTop: '4px' }}>{summary.potentialRegressions}</div>
           </div>
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-            <div className="text-2xl font-black text-emerald-400">{summary.resolvedRegressions}</div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Resolved</div>
+          <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Resolved</div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: '#059669', marginTop: '4px' }}>{summary.resolvedRegressions}</div>
           </div>
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-            <div className="text-2xl font-black text-indigo-400">
+          <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Regression Rate</div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--brand-primary)', marginTop: '4px' }}>
               {summary.regressionRate >= 0 ? `${summary.regressionRate}%` : 'N/A'}
             </div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Regression Rate</div>
           </div>
         </div>
       )}
 
       {/* Regressions List & Filters */}
-      <div className="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h3 className="text-base font-bold text-white flex items-center space-x-2">
-            <ShieldAlert className="w-5 h-5 text-rose-400" />
-            <span>Detected Vulnerability Regressions</span>
-          </h3>
+      <div
+        style={{
+          background: 'var(--surface-primary)',
+          borderRadius: '12px',
+          border: '1px solid var(--border-subtle)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border-subtle)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShieldAlert size={16} style={{ color: '#dc2626' }} />
+            Detected Vulnerability Regressions ({regressions.length})
+          </div>
 
-          <div className="flex items-center space-x-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none"
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid var(--border-subtle)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
+                fontSize: '12px',
+              }}
             >
               <option value="">All Types</option>
               <option value="REOPENED">REOPENED</option>
@@ -199,7 +296,14 @@ export const RegressionCenterPage: React.FC = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none"
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid var(--border-subtle)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
+                fontSize: '12px',
+              }}
             >
               <option value="">All Statuses</option>
               <option value="CONFIRMED">CONFIRMED</option>
@@ -210,51 +314,82 @@ export const RegressionCenterPage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-400">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-400" />
-            <span>Fetching regression records...</span>
+          <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <RefreshCw size={24} className="spin" style={{ margin: '0 auto 12px', color: 'var(--brand-primary)' }} />
+            <div>Fetching regression audit records...</div>
           </div>
         ) : regressions.length === 0 ? (
-          <div className="p-12 text-center">
-            <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-            <h4 className="text-slate-200 font-semibold">No Vulnerability Regressions Detected</h4>
-            <p className="text-slate-500 text-xs mt-1">None of the previously fixed findings have reappeared on this target.</p>
+          <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+            <CheckCircle2 size={36} style={{ color: '#059669', margin: '0 auto 12px' }} />
+            <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+              No Vulnerability Regressions Detected
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto' }}>
+              None of the previously fixed findings or defense controls have reappeared on this target.
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="p-4">Finding Title</th>
-                  <th className="p-4">Fingerprint</th>
-                  <th className="p-4">Type</th>
-                  <th className="p-4">Confidence</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Detected At</th>
-                  <th className="p-4 text-right">Action</th>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Finding Title</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Fingerprint</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Type</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Confidence</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Detected At</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {regressions.map((reg) => (
-                  <tr key={reg.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 font-medium text-white">{reg.findingTitle}</td>
-                    <td className="p-4 font-mono text-[11px] text-slate-400">
-                      {reg.findingFingerprint.substring(0, 12)}...
-                    </td>
-                    <td className="p-4">{getTypeBadge(reg.regressionType)}</td>
-                    <td className="p-4 font-semibold text-slate-300">{reg.confidence}</td>
-                    <td className="p-4">{getStatusBadge(reg.status)}</td>
-                    <td className="p-4 text-slate-400">{new Date(reg.detectedAt).toLocaleString()}</td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => setSelectedRegression(reg)}
-                        className="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 rounded text-xs transition-colors"
-                      >
-                        Inspect
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                {regressions.map((reg) => {
+                  const typeB = getTypeBadge(reg.regressionType);
+                  const statusB = getStatusBadge(reg.status);
+                  return (
+                    <tr key={reg.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {reg.findingTitle}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {reg.findingFingerprint ? `${reg.findingFingerprint.substring(0, 12)}...` : 'N/A'}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: typeB.bg, color: typeB.text, border: `1px solid ${typeB.border}` }}>
+                          {typeB.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        {reg.confidence}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: statusB.bg, color: statusB.text, border: `1px solid ${statusB.border}` }}>
+                          {statusB.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '11px' }}>
+                        {new Date(reg.detectedAt).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => setSelectedRegression(reg)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            background: '#e0f2fe',
+                            border: '1px solid #bae6fd',
+                            color: '#0369a1',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Inspect
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -263,62 +398,104 @@ export const RegressionCenterPage: React.FC = () => {
 
       {/* Regression Detail Inspector Modal */}
       {selectedRegression && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <RotateCcw className="w-5 h-5 text-rose-400" />
-                <span>Regression Details</span>
-              </h3>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              borderRadius: '12px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '24px',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <RotateCcw size={18} style={{ color: '#dc2626' }} />
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Regression Details
+                </h3>
+              </div>
               <button
                 onClick={() => setSelectedRegression(null)}
-                className="text-slate-400 hover:text-white text-sm"
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
               >
-                ✕
+                <XCircle size={18} />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12px' }}>
               <div>
-                <label className="text-xs text-slate-400 uppercase font-semibold">Finding Title</label>
-                <div className="text-base font-bold text-white mt-0.5">{selectedRegression.findingTitle}</div>
+                <label style={{ display: 'block', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '2px' }}>Finding Title</label>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{selectedRegression.findingTitle}</div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 uppercase font-semibold">Finding Fingerprint (SHA-256)</label>
-                <div className="text-xs font-mono bg-slate-800/80 p-2 rounded border border-slate-700 text-slate-300 break-all mt-0.5">
+                <label style={{ display: 'block', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '2px' }}>Fingerprint (SHA-256)</label>
+                <div style={{ fontFamily: 'monospace', fontSize: '11px', background: '#f8fafc', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', wordBreak: 'break-all' }}>
                   {selectedRegression.findingFingerprint}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label className="text-xs text-slate-400 uppercase font-semibold">Type</label>
-                  <div className="mt-1">{getTypeBadge(selectedRegression.regressionType)}</div>
+                  <label style={{ display: 'block', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Type</label>
+                  {(() => {
+                    const b = getTypeBadge(selectedRegression.regressionType);
+                    return <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: b.bg, color: b.text, border: `1px solid ${b.border}` }}>{b.label}</span>;
+                  })()}
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 uppercase font-semibold">Status</label>
-                  <div className="mt-1">{getStatusBadge(selectedRegression.status)}</div>
+                  <label style={{ display: 'block', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Status</label>
+                  {(() => {
+                    const b = getStatusBadge(selectedRegression.status);
+                    return <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: b.bg, color: b.text, border: `1px solid ${b.border}` }}>{b.label}</span>;
+                  })()}
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 uppercase font-semibold">Explanation</label>
-                <div className="text-xs text-slate-300 bg-slate-800/40 p-3 rounded border border-slate-800 mt-1">
+                <label style={{ display: 'block', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '2px' }}>Explanation / Evidence</label>
+                <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   {selectedRegression.explanation}
                 </div>
               </div>
 
-              <div className="text-xs text-slate-500 pt-2 border-t border-slate-800 flex justify-between">
-                <span>Detected At: {new Date(selectedRegression.detectedAt).toLocaleString()}</span>
-                <span>Confidence: {selectedRegression.confidence}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '8px', color: 'var(--text-muted)', fontSize: '11px' }}>
+                <span>Detected: {new Date(selectedRegression.detectedAt).toLocaleString()}</span>
+                <span>Confidence: <strong>{selectedRegression.confidence}</strong></span>
               </div>
             </div>
 
-            <div className="flex justify-end pt-3">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px' }}>
               <button
                 onClick={() => setSelectedRegression(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm"
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '6px',
+                  background: 'var(--brand-primary)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
               >
                 Close
               </button>

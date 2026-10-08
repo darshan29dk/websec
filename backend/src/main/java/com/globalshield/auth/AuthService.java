@@ -43,7 +43,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void requestRegistrationOtp(String emailStr) {
+    public String requestRegistrationOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
             throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
@@ -53,11 +53,11 @@ public class AuthService {
             throw new DuplicateResourceException("User with email '" + email + "' already exists");
         }
 
-        otpService.generateAndSendOtp(email, "Account Registration", "REGISTRATION");
+        return otpService.generateAndSendOtp(email, "Account Registration", "REGISTRATION");
     }
 
     @Transactional
-    public void requestForgotPasswordOtp(String emailStr) {
+    public String requestForgotPasswordOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
             throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
@@ -70,7 +70,7 @@ public class AuthService {
             throw new BadRequestException("User account is disabled.");
         }
 
-        otpService.generateAndSendOtp(email, "Password Reset", "PASSWORD_RESET");
+        return otpService.generateAndSendOtp(email, "Password Reset", "PASSWORD_RESET");
     }
 
     @Transactional
@@ -118,10 +118,11 @@ public class AuthService {
             throw new DuplicateResourceException("User with email '" + request.getEmail() + "' already exists");
         }
 
-        // Verify registration OTP if provided or required
-        if (request.getOtp() != null && !request.getOtp().trim().isEmpty()) {
-            otpService.verifyOtp(email, request.getOtp(), "REGISTRATION");
+        // Verify registration OTP - mandatory for all new account registrations
+        if (request.getOtp() == null || request.getOtp().trim().isEmpty()) {
+            throw new BadRequestException("Verification OTP is required to complete account registration. Please request an OTP code sent to your email.");
         }
+        otpService.verifyOtp(email, request.getOtp().trim(), "REGISTRATION");
 
         // If no users exist yet, make the first user ADMIN; otherwise respect request role or default to ANALYST
         UserRole assignedRole = request.getRole();

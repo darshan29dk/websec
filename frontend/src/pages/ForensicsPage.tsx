@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { forensicApi } from '../services/api/forensicApi';
 import { ForensicCase, CaseStatus } from '../types/forensic';
-import { FolderGit2, Search, Filter, ShieldAlert, Plus, CheckCircle, Clock } from 'lucide-react';
+import { FolderGit2, Search, Filter, ShieldAlert, Plus, CheckCircle, Clock, ExternalLink } from 'lucide-react';
+import { StatusBadge } from '../components/StatusBadge';
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
+import { Table } from '../components/Table';
 
 export const ForensicsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetId = searchParams.get('targetId') || '';
+
   const [cases, setCases] = useState<ForensicCase[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -14,19 +21,20 @@ export const ForensicsPage: React.FC = () => {
 
   useEffect(() => {
     loadCases();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, targetId]);
 
   const loadCases = async () => {
     setLoading(true);
     try {
       const res = await forensicApi.getCases({
+        targetId: targetId || undefined,
         status: statusFilter || undefined,
         page,
-        size: 15
+        size: 15,
       });
       if (res && res.content) {
         setCases(res.content);
-        setTotalPages(res.totalPages);
+        setTotalPages(res.totalPages || 1);
       }
     } catch (err) {
       console.error('Failed to load forensic cases:', err);
@@ -38,55 +46,99 @@ export const ForensicsPage: React.FC = () => {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900/40 text-red-300 border border-red-700/50">CRITICAL</span>;
+        return (
+          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', backgroundColor: '#fee2e2', color: '#dc2626' }}>
+            CRITICAL
+          </span>
+        );
       case 'HIGH':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-900/40 text-amber-300 border border-amber-700/50">HIGH</span>;
+        return (
+          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', backgroundColor: '#ffedd5', color: '#ea580c' }}>
+            HIGH
+          </span>
+        );
       case 'MEDIUM':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/40 text-blue-300 border border-blue-700/50">MEDIUM</span>;
+        return (
+          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', backgroundColor: '#fef3c7', color: '#d97706' }}>
+            MEDIUM
+          </span>
+        );
       default:
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">LOW</span>;
-    }
-  };
-
-  const getStatusBadge = (status: CaseStatus) => {
-    switch (status) {
-      case 'OPEN':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">OPEN</span>;
-      case 'INVESTIGATING':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-900/40 text-indigo-300 border border-indigo-700/50">INVESTIGATING</span>;
-      case 'EVIDENCE_COMPLETE':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-900/40 text-purple-300 border border-purple-700/50">EVIDENCE COMPLETE</span>;
-      case 'CLOSED':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">CLOSED</span>;
-      default:
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-900/30 text-amber-400 border border-amber-700/50">INCONCLUSIVE</span>;
+        return (
+          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#64748b' }}>
+            LOW
+          </span>
+        );
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '40px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <FolderGit2 className="w-7 h-7 text-cyan-400" />
-            Digital Forensics Cases
+          <h1
+            style={{
+              fontSize: '22px',
+              fontWeight: 700,
+              color: 'var(--text-heading)',
+              margin: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+            <FolderGit2 size={24} color="var(--accent-primary)" /> Digital Forensic Cases
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Evidence-driven reconstruction, hash integrity verification, and forensic case timelines.
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Evidence-driven reconstruction, SHA-256 hash integrity verification, and forensic attack event timelines
           </p>
         </div>
+
+        {targetId && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Filtered by target:</span>
+            <code style={{ fontSize: '12px', color: 'var(--accent-primary)', backgroundColor: 'var(--accent-light)', padding: '2px 6px', borderRadius: '4px' }}>
+              {targetId.substring(0, 8)}...
+            </code>
+            <Button size="sm" variant="secondary" onClick={() => navigate('/forensics')}>
+              Clear Filter
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Filters Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Filter className="w-4 h-4 text-slate-400" />
+      {/* Filter Toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '8px',
+          marginBottom: '20px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Filter size={14} color="var(--accent-primary)" />
           <select
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
-            className="bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(0);
+            }}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid var(--border-color)',
+              fontSize: '12px',
+              backgroundColor: '#ffffff',
+              color: 'var(--text-main)',
+            }}
           >
-            <option value="">All Statuses</option>
+            <option value="">All Case Statuses</option>
             <option value="OPEN">Open</option>
             <option value="INVESTIGATING">Investigating</option>
             <option value="EVIDENCE_COMPLETE">Evidence Complete</option>
@@ -94,86 +146,123 @@ export const ForensicsPage: React.FC = () => {
             <option value="INCONCLUSIVE">Inconclusive</option>
           </select>
         </div>
+
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          Showing {cases.length} forensic cases
+        </span>
       </div>
 
-      {/* Cases Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+      {/* Main Table or Empty State (Requirement 8) */}
+      <Card title="Forensic Case Inventory" subtitle="Immutable chain of custody and case records">
         {loading ? (
-          <div className="p-8 text-center text-slate-400">Loading forensic cases...</div>
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            Loading forensic investigation records...
+          </div>
         ) : cases.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">
-            No forensic cases found. Convert an Incident or create a new case to start digital evidence collection.
+          <div style={{ padding: '60px 20px', textAlign: 'center', maxWidth: '520px', margin: '0 auto' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+              }}
+            >
+              <FolderGit2 size={28} color="var(--accent-primary)" />
+            </div>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-heading)', margin: '0 0 6px 0' }}>
+              No Forensic Cases Have Been Created
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 20px 0', lineHeight: '1.5' }}>
+              Investigate an active incident to create or associate a formal forensic case with SHA-256 evidence integrity chains.
+            </p>
+            <Button variant="primary" onClick={() => navigate('/incidents')}>
+              View Incidents to Investigate
+            </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
-                <tr>
-                  <th className="px-4 py-3">Case Number</th>
-                  <th className="px-4 py-3">Title</th>
-                  <th className="px-4 py-3">Target</th>
-                  <th className="px-4 py-3">Priority</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Evidence Items</th>
-                  <th className="px-4 py-3">Opened At</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {cases.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-800/40 transition">
-                    <td className="px-4 py-3 font-mono font-medium text-cyan-400">{c.caseNumber}</td>
-                    <td className="px-4 py-3 font-medium text-slate-200">{c.title}</td>
-                    <td className="px-4 py-3 text-slate-300">{c.targetName}</td>
-                    <td className="px-4 py-3">{getPriorityBadge(c.priority)}</td>
-                    <td className="px-4 py-3">{getStatusBadge(c.status)}</td>
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-slate-200">{c.evidenceCount}</span>
-                      {c.unverifiedEvidenceCount > 0 && (
-                        <span className="ml-2 text-xs text-amber-400 font-semibold">({c.unverifiedEvidenceCount} unverified)</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-slate-400 text-xs font-mono">
-                      {new Date(c.openedAt).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => navigate(`/forensics/${c.id}`)}
-                        className="px-3 py-1 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded text-xs transition font-medium"
-                      >
-                        Investigate Case
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            data={cases}
+            keyExtractor={(c) => c.id}
+            columns={[
+              {
+                header: 'Case ID',
+                render: (c) => (
+                  <Link
+                    to={`/forensics/${c.id}`}
+                    style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 600, color: 'var(--accent-primary)' }}
+                  >
+                    {c.caseNumber || c.id.substring(0, 8)}
+                  </Link>
+                ),
+              },
+              {
+                header: 'Title',
+                render: (c) => (
+                  <Link to={`/forensics/${c.id}`} style={{ fontWeight: 600, color: 'var(--text-heading)' }}>
+                    {c.title}
+                  </Link>
+                ),
+              },
+              {
+                header: 'Target',
+                render: (c) => (
+                  <Link to={`/targets/${c.targetId}`} style={{ fontSize: '12px' }}>
+                    {c.targetName || 'Scope'}
+                  </Link>
+                ),
+              },
+              {
+                header: 'Incident',
+                render: (c) =>
+                  c.incidentId ? (
+                    <Link to={`/incidents/${c.incidentId}`} style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
+                      Incident #{c.incidentId.substring(0, 8)}
+                    </Link>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)' }}>None</span>
+                  ),
+              },
+              {
+                header: 'Severity',
+                render: (c) => getPriorityBadge(c.priority),
+              },
+              {
+                header: 'Status',
+                render: (c) => <StatusBadge status={c.status} />,
+              },
+              {
+                header: 'Evidence Items',
+                render: (c) => (
+                  <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                    {c.evidenceCount || 0}
+                  </span>
+                ),
+              },
+              {
+                header: 'Created',
+                render: (c) => new Date(c.openedAt).toLocaleDateString(),
+              },
+              {
+                header: 'Assigned Analyst',
+                render: (c) => c.createdByEmail || 'Unassigned',
+              },
+              {
+                header: 'Action',
+                render: (c) => (
+                  <Link to={`/forensics/${c.id}`} style={{ fontSize: '12px', fontWeight: 600 }}>
+                    Examine Case →
+                  </Link>
+                ),
+              },
+            ]}
+          />
         )}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-between items-center text-sm text-slate-400">
-          <div>Page {page + 1} of {totalPages}</div>
-          <div className="flex gap-2">
-            <button
-              disabled={page === 0}
-              onClick={() => setPage(page - 1)}
-              className="px-3 py-1 bg-slate-900 border border-slate-800 rounded disabled:opacity-50 text-slate-300"
-            >
-              Previous
-            </button>
-            <button
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(page + 1)}
-              className="px-3 py-1 bg-slate-900 border border-slate-800 rounded disabled:opacity-50 text-slate-300"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      </Card>
     </div>
   );
 };

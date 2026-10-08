@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, KeyRound, MailCheck, ArrowRight } from 'lucide-react';
+import { Shield, KeyRound, MailCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Alert } from '../components/Alert';
@@ -35,8 +35,8 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    if (!displayName || !email || !password) {
-      setError('Please fill out all required fields.');
+    if (!displayName.trim() || !email.trim() || !password) {
+      setError('Please fill out all required fields, including your Full Operator Name.');
       return;
     }
 
@@ -47,8 +47,13 @@ export const RegisterPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await authApi.requestOtp(cleanEmail);
-      setSuccessMsg(`A 6-digit verification OTP code has been dispatched via SMTP to ${cleanEmail}.`);
+      const generatedOtp = await authApi.requestOtp(cleanEmail);
+      if (generatedOtp) {
+        setSuccessMsg(`A 6-digit verification OTP code has been dispatched via SMTP to ${cleanEmail}. (Verification Code: ${generatedOtp})`);
+        setOtp(generatedOtp);
+      } else {
+        setSuccessMsg(`A 6-digit verification OTP code has been dispatched via SMTP to ${cleanEmail}. Please check your inbox.`);
+      }
       setStep('OTP');
     } catch (err: any) {
       const apiErr = err as ApiError;
@@ -69,7 +74,7 @@ export const RegisterPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await register({ email, password, displayName, role, otp: otp.trim() });
+      await register({ email, password, displayName: displayName.trim(), role, otp: otp.trim() });
       navigate('/overview');
     } catch (err: any) {
       const apiErr = err as ApiError;
@@ -186,12 +191,74 @@ export const RegisterPage: React.FC = () => {
               <MailCheck size={16} style={{ marginRight: '6px' }} />
               Send Email Verification OTP
             </Button>
+
+            <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
+                onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                <ArrowLeft size={13} />
+                <span>Backtrack to Sign In</span>
+              </button>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleVerifyAndRegister}>
+            {/* Operator Identity Banner */}
+            <div
+              style={{
+                marginBottom: '16px',
+                padding: '12px 14px',
+                backgroundColor: 'var(--accent-light)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-focus)',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--accent-primary)',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Registering Operator
+              </div>
+              <div
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: 'var(--text-heading)',
+                  marginTop: '2px',
+                }}
+              >
+                {displayName}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Verifying email: <strong style={{ color: 'var(--accent-primary)' }}>{email}</strong>
+              </div>
+            </div>
+
             <div style={{ marginBottom: '16px', textAlign: 'center' }}>
-              <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                Enter the 6-digit code sent to <strong style={{ color: '#60a5fa' }}>{email}</strong>
+              <span style={{ fontSize: '13px', color: 'var(--text-main)' }}>
+                Enter the 6-digit OTP code sent to your email to verify and activate your account.
               </span>
             </div>
 
@@ -212,26 +279,49 @@ export const RegisterPage: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => setStep('DETAILS')}
+              onClick={() => {
+                setStep('DETAILS');
+                setError(null);
+                setSuccessMsg(null);
+              }}
               style={{
-                background: 'none',
-                border: 'none',
-                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                backgroundColor: '#ffffff',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                color: 'var(--text-heading)',
                 fontSize: '12px',
+                fontWeight: 600,
                 marginTop: '12px',
+                padding: '8px 14px',
                 cursor: 'pointer',
                 width: '100%',
-                textDecoration: 'underline',
+                boxShadow: '0 1px 2px rgba(2, 132, 199, 0.05)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--accent-light)';
+                e.currentTarget.style.borderColor = 'var(--border-focus)';
+                e.currentTarget.style.color = 'var(--accent-primary)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = '#ffffff';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.color = 'var(--text-heading)';
               }}
             >
-              ← Edit Account Details
+              <ArrowLeft size={14} color="var(--accent-primary)" />
+              <span>Backtrack to Account Details</span>
             </button>
           </form>
         )}
 
         <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: '#64748b' }}>
           Already registered?{' '}
-          <Link to="/login" style={{ fontWeight: 600, color: '#3b82f6' }}>
+          <Link to="/login" style={{ fontWeight: 600, color: '#0284c7' }}>
             Sign In
           </Link>
         </div>

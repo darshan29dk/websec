@@ -1,12 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, LogOut, User as UserIcon, Search, Bell, Activity } from 'lucide-react';
+import { Shield, LogOut, User as UserIcon, Search, Bell, Activity, CheckCircle2 } from 'lucide-react';
 import { GlobalSearchModal } from './GlobalSearchModal';
+import { NotificationDropdown } from './NotificationDropdown';
+import { UserProfileModal } from './UserProfileModal';
+import { notificationApi } from '../services/api/notificationApi';
+import { NotificationDto } from '../types/notification';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    try {
+      setIsLoadingNotifications(true);
+      const res = await notificationApi.getNotifications(0, 15);
+      if (res && res.content) {
+        setNotifications(res.content);
+      } else if (Array.isArray(res)) {
+        setNotifications(res);
+      }
+    } catch {
+      // Keep existing state if fetch fails temporarily
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Click outside to close notification dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await notificationApi.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch {
+      // Ignore
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationApi.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch {
+      // Ignore
+    }
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'GS';
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <>
@@ -25,9 +104,12 @@ export const Navbar: React.FC = () => {
           boxShadow: '0 2px 8px rgba(2, 132, 199, 0.08)',
         }}
       >
-        {/* Brand & Tagline */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+        {/* Brand & Environment */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            onClick={() => navigate('/overview')}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+          >
             <div
               style={{
                 width: '32px',
@@ -143,7 +225,9 @@ export const Navbar: React.FC = () => {
           onMouseOut={(e) => (e.currentTarget.style.borderColor = 'var(--border-color)')}
         >
           <Search size={14} color="var(--accent-primary)" />
-          <span style={{ flex: 1, textAlign: 'left', color: 'var(--text-main)' }}>Search targets, findings, incidents...</span>
+          <span style={{ flex: 1, textAlign: 'left', color: 'var(--text-main)' }}>
+            Search targets, findings, incidents...
+          </span>
           <kbd
             style={{
               fontSize: '10px',
@@ -163,102 +247,143 @@ export const Navbar: React.FC = () => {
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             {/* Notification Bell */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative' }} ref={notifRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
+                title="Security Notifications"
                 style={{
                   background: 'transparent',
                   border: '1px solid var(--border-color)',
                   borderRadius: '6px',
-                  padding: '6px',
+                  padding: '6px 8px',
                   color: 'var(--accent-primary)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  gap: '6px',
                   position: 'relative',
+                  backgroundColor: showNotifications ? 'var(--accent-light)' : 'transparent',
+                  transition: 'all 0.15s ease',
                 }}
+                onMouseOver={(e) => (e.currentTarget.style.borderColor = 'var(--border-focus)')}
+                onMouseOut={(e) => (e.currentTarget.style.borderColor = 'var(--border-color)')}
               >
                 <Bell size={16} />
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '3px',
-                    right: '3px',
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    backgroundColor: '#ef4444',
-                  }}
-                />
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      backgroundColor: '#dc2626',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '1px 5px',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               {/* Notification Popover */}
               {showNotifications && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: '40px',
-                    width: '300px',
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 25px -3px rgba(2, 132, 199, 0.15)',
-                    padding: '12px',
-                    zIndex: 200,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: 'var(--text-heading)',
-                      marginBottom: '8px',
-                      paddingBottom: '6px',
-                      borderBottom: '1px solid var(--border-color)',
-                    }}
-                  >
-                    Security Alerts &amp; Notifications
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-main)', padding: '6px 0' }}>
-                    <div style={{ fontWeight: 600, color: '#ea580c' }}>Retest Pending</div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
-                      Controlled retest requested for target scope
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-main)', padding: '6px 0', borderTop: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 600, color: '#0284c7' }}>Continuous Monitoring Active</div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>All target schedules verified</div>
-                  </div>
-                </div>
+                <NotificationDropdown
+                  notifications={notifications}
+                  unreadCount={unreadCount}
+                  isLoading={isLoadingNotifications}
+                  onClose={() => setShowNotifications(false)}
+                  onMarkAsRead={handleMarkAsRead}
+                  onMarkAllAsRead={handleMarkAllAsRead}
+                />
               )}
             </div>
 
-            {/* User Profile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* User Profile Area (Clickable to open profile modal) */}
+            <div
+              id="navbar-user-profile-trigger"
+              onClick={() => setShowProfileModal(true)}
+              title="Click to view operator profile and account details"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                cursor: 'pointer',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: '#ffffff',
+                boxShadow: '0 1px 2px rgba(2, 132, 199, 0.05)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--accent-light)';
+                e.currentTarget.style.borderColor = 'var(--border-focus)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = '#ffffff';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+              }}
+            >
               <div
                 style={{
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
                   backgroundColor: 'var(--accent-light)',
-                  border: '1px solid var(--border-focus)',
+                  border: '1.5px solid var(--border-focus)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'var(--accent-primary)',
+                  fontWeight: 700,
+                  fontSize: '12px',
                 }}
               >
-                <UserIcon size={16} />
+                {getInitials(user.displayName)}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-heading)', lineHeight: '1.2' }}>
-                  {user.displayName}
-                </span>
-                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                  {user.role || 'SECURITY_ANALYST'}
-                </span>
+              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: 'var(--text-heading)',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    {user.displayName || 'Security Operator'}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      backgroundColor: '#dcfce7',
+                      color: '#15803d',
+                      padding: '1px 5px',
+                      borderRadius: '3px',
+                    }}
+                  >
+                    Active
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      color: 'var(--accent-primary)',
+                      fontWeight: 600,
+                      backgroundColor: 'var(--accent-light)',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {user.role || 'SECURITY ANALYST'}
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                    • Profile
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -297,6 +422,19 @@ export const Navbar: React.FC = () => {
 
       {/* Global Search Modal */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* User Profile Modal */}
+      {user && (
+        <UserProfileModal
+          user={user}
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          onLogout={() => {
+            setShowProfileModal(false);
+            logout();
+          }}
+        />
+      )}
     </>
   );
 };

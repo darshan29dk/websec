@@ -8,17 +8,29 @@ export const FindingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const assessmentId = searchParams.get('assessmentId') || '';
+  const targetId = searchParams.get('targetId') || '';
 
   const [findings, setFindings] = useState<SecurityFinding[]>([]);
-  const [severityFilter, setSeverityFilter] = useState<FindingSeverity | ''>('');
-  const [statusFilter, setStatusFilter] = useState<FindingStatus | ''>('');
+  const [severityFilter, setSeverityFilter] = useState<FindingSeverity | ''>(
+    (searchParams.get('severity') as FindingSeverity) || ''
+  );
+  const [statusFilter, setStatusFilter] = useState<FindingStatus | ''>(
+    (searchParams.get('status') as FindingStatus) || ''
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const sevParam = searchParams.get('severity') as FindingSeverity;
+    if (sevParam) setSeverityFilter(sevParam);
+    const statParam = searchParams.get('status') as FindingStatus;
+    if (statParam) setStatusFilter(statParam);
+  }, [searchParams]);
+
+  useEffect(() => {
     loadFindings();
-  }, [assessmentId, severityFilter, statusFilter, searchQuery]);
+  }, [assessmentId, targetId, severityFilter, statusFilter, searchQuery]);
 
   const loadFindings = async () => {
     setIsLoading(true);
@@ -27,6 +39,7 @@ export const FindingsPage: React.FC = () => {
       const res = await findingApi.getFindings(
         0, 50,
         assessmentId || undefined,
+        targetId || undefined,
         severityFilter || undefined,
         statusFilter || undefined,
         undefined,

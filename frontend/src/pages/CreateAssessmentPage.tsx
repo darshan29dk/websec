@@ -82,22 +82,60 @@ export const CreateAssessmentPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-      <button
-        onClick={() => navigate('/assessments')}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          fontSize: '13px',
-          marginBottom: '16px',
-        }}
-      >
-        <ArrowLeft size={16} /> Back to Assessments
-      </button>
+      {/* Backtrack Navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+        <button
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/assessments');
+            }
+          }}
+          title="Backtrack: Go back to last step"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border-color)',
+            borderRadius: '6px',
+            padding: '5px 12px',
+            color: 'var(--text-heading)',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(2, 132, 199, 0.05)',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--accent-light)';
+            e.currentTarget.style.borderColor = 'var(--border-focus)';
+            e.currentTarget.style.color = 'var(--accent-primary)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#ffffff';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+            e.currentTarget.style.color = 'var(--text-heading)';
+          }}
+        >
+          <ArrowLeft size={14} color="var(--accent-primary)" />
+          <span>Backtrack to Last Step</span>
+        </button>
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/</span>
+        <button
+          onClick={() => navigate('/assessments')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '12px',
+          }}
+        >
+          Assessments
+        </button>
+      </div>
 
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700 }}>Web Security Assessment Setup</h1>

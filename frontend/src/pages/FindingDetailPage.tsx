@@ -127,23 +127,60 @@ export const FindingDetailPage: React.FC = () => {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          backgroundColor: 'transparent',
-          border: 'none',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          marginBottom: '16px',
-          fontSize: '13px',
-        }}
-      >
-        <ArrowLeft size={14} /> Back to Findings
-      </button>
+      {/* Backtrack Navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+        <button
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/findings');
+            }
+          }}
+          title="Backtrack: Go back to last step"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border-color)',
+            borderRadius: '6px',
+            padding: '5px 12px',
+            color: 'var(--text-heading)',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(2, 132, 199, 0.05)',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--accent-light)';
+            e.currentTarget.style.borderColor = 'var(--border-focus)';
+            e.currentTarget.style.color = 'var(--accent-primary)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#ffffff';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+            e.currentTarget.style.color = 'var(--text-heading)';
+          }}
+        >
+          <ArrowLeft size={14} color="var(--accent-primary)" />
+          <span>Backtrack to Last Step</span>
+        </button>
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/</span>
+        <button
+          onClick={() => navigate('/findings')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '12px',
+          }}
+        >
+          Findings Repository
+        </button>
+      </div>
 
       {/* Header card */}
       <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '24px', marginBottom: '24px' }}>

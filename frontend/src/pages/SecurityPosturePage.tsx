@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
   TrendingUp,
@@ -12,7 +13,8 @@ import {
   Activity,
   History,
   ArrowRight,
-  Target as TargetIcon
+  Target as TargetIcon,
+  Zap,
 } from 'lucide-react';
 import { postureApi } from '../services/api/postureApi';
 import { targetApi } from '../services/api/targetApi';
@@ -27,8 +29,11 @@ import {
 } from '../types/posture';
 
 export const SecurityPosturePage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const targetIdFromUrl = searchParams.get('targetId') || '';
+
   const [targets, setTargets] = useState<SecurityTarget[]>([]);
-  const [selectedTargetId, setSelectedTargetId] = useState<string>('');
+  const [selectedTargetId, setSelectedTargetId] = useState<string>(targetIdFromUrl);
   const [posture, setPosture] = useState<SecurityPostureSnapshotDto | null>(null);
   const [trends, setTrends] = useState<PostureTrendPointDto[]>([]);
   const [history, setHistory] = useState<SecurityPostureSnapshotDto[]>([]);
@@ -52,7 +57,11 @@ export const SecurityPosturePage: React.FC = () => {
       const res = await targetApi.listTargets();
       setTargets(res);
       if (res.length > 0) {
-        setSelectedTargetId(res[0].id);
+        if (targetIdFromUrl && res.some((t) => t.id === targetIdFromUrl)) {
+          setSelectedTargetId(targetIdFromUrl);
+        } else {
+          setSelectedTargetId(res[0].id);
+        }
       } else {
         setLoading(false);
       }
@@ -101,203 +110,416 @@ export const SecurityPosturePage: React.FC = () => {
   const getRiskBadge = (risk: PostureRiskLevel) => {
     switch (risk) {
       case 'EXCELLENT':
-        return <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold">EXCELLENT</span>;
+        return { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0', label: 'EXCELLENT' };
       case 'GOOD':
-        return <span className="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-xs font-semibold">GOOD</span>;
+        return { bg: '#eff6ff', text: '#0284c7', border: '#bae6fd', label: 'GOOD' };
       case 'MODERATE':
-        return <span className="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-semibold">MODERATE</span>;
+        return { bg: '#fefce8', text: '#d97706', border: '#fde047', label: 'MODERATE' };
       case 'HIGH_RISK':
-        return <span className="px-3 py-1 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-full text-xs font-semibold">HIGH RISK</span>;
+        return { bg: '#fff7ed', text: '#ea580c', border: '#fed7aa', label: 'HIGH RISK' };
       case 'CRITICAL_RISK':
-        return <span className="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-full text-xs font-semibold">CRITICAL RISK</span>;
+        return { bg: '#fef2f2', text: '#dc2626', border: '#fca5a5', label: 'CRITICAL RISK' };
       default:
-        return <span className="px-3 py-1 bg-slate-500/20 text-slate-400 border border-slate-500/30 rounded-full text-xs font-semibold">INSUFFICIENT DATA</span>;
+        return { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0', label: 'INSUFFICIENT DATA' };
     }
   };
 
   const formatDimensionName = (dim: PostureDimensionType) => {
     switch (dim) {
-      case 'VULNERABILITY_RISK': return 'Vulnerability Risk';
-      case 'ATTACK_SURFACE_RISK': return 'Attack Surface Risk';
-      case 'CONFIGURATION_SECURITY': return 'Configuration Security';
-      case 'REMEDIATION_HEALTH': return 'Remediation Health';
-      case 'DEFENSE_VALIDATION': return 'Defense Validation';
-      case 'REGRESSION_RISK': return 'Regression Risk';
-      default: return dim;
+      case 'VULNERABILITY_RISK':
+        return 'Vulnerability Risk';
+      case 'ATTACK_SURFACE_RISK':
+        return 'Attack Surface Risk';
+      case 'CONFIGURATION_SECURITY':
+        return 'Configuration Security';
+      case 'REMEDIATION_HEALTH':
+        return 'Remediation Health';
+      case 'DEFENSE_VALIDATION':
+        return 'Defense Validation';
+      case 'REGRESSION_RISK':
+        return 'Regression Risk';
+      default:
+        return dim;
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header & Target Selector */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-xl border border-slate-800 backdrop-blur-md">
-        <div>
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-indigo-400">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Security Posture & Score</h1>
-              <p className="text-slate-400 text-sm">Deterministic evidence-backed posture evaluation and trend analysis</p>
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '32px' }}>
+      {/* Header Banner & Target Selector */}
+      <div
+        style={{
+          background: 'var(--surface-primary)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: '#e0f2fe',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ShieldCheck size={22} style={{ color: 'var(--brand-primary)' }} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+              Security Posture & Score
+            </h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Deterministic evidence-backed posture evaluation, explainable score factors, and historical drift.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-2 rounded-lg border border-slate-700">
-            <TargetIcon className="w-4 h-4 text-slate-400" />
-            <select
-              value={selectedTargetId}
-              onChange={(e) => setSelectedTargetId(e.target.value)}
-              className="bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer"
-            >
-              {targets.map((t) => (
-                <option key={t.id} value={t.id} className="bg-slate-900 text-slate-200">
-                  {t.name} ({t.primaryUrl})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {targets.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TargetIcon size={16} style={{ color: 'var(--brand-primary)' }} />
+              <select
+                value={selectedTargetId}
+                onChange={(e) => {
+                  setSelectedTargetId(e.target.value);
+                  setSearchParams({ targetId: e.target.value });
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                  background: '#ffffff',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {targets.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.primaryUrl})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <button
             onClick={handleRecalculate}
             disabled={recalculating || !selectedTargetId}
-            className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-indigo-600/20"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '7px 16px',
+              borderRadius: '8px',
+              background: 'var(--brand-primary)',
+              color: '#ffffff',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: recalculating ? 'not-allowed' : 'pointer',
+              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+            }}
           >
-            <RefreshCw className={`w-4 h-4 ${recalculating ? 'animate-spin' : ''}`} />
-            <span>{recalculating ? 'Recalculating...' : 'Recalculate Posture'}</span>
+            <RefreshCw size={14} className={recalculating ? 'spin' : ''} />
+            {recalculating ? 'Computing...' : 'Recalculate Posture'}
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-rose-400 text-sm flex items-center space-x-2">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '10px',
+            padding: '14px 18px',
+            color: '#dc2626',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <AlertTriangle size={16} />
           <span>{error}</span>
         </div>
       )}
 
       {loading ? (
-        <div className="p-12 text-center text-slate-400 flex items-center justify-center space-x-3">
-          <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
-          <span>Computing target security posture...</span>
+        <div
+          style={{
+            background: 'var(--surface-primary)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '40px',
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <RefreshCw size={24} className="spin" style={{ margin: '0 auto 12px', color: 'var(--brand-primary)' }} />
+          <div>Computing target security posture score and factors...</div>
         </div>
       ) : !posture ? (
-        <div className="p-12 bg-slate-900/40 rounded-xl border border-slate-800 text-center">
-          <ShieldCheck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-slate-300">No Posture Snapshot Available</h3>
-          <p className="text-slate-500 text-sm mt-1">Run an assessment or trigger recalculation to generate security posture metrics.</p>
+        <div
+          style={{
+            background: 'var(--surface-primary)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '48px 24px',
+            textAlign: 'center',
+          }}
+        >
+          <ShieldCheck size={36} style={{ color: 'var(--brand-primary)', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+            No Posture Snapshot Available
+          </h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '460px', margin: '0 auto 16px auto' }}>
+            Run an assessment or trigger recalculation to generate security posture metrics and evidence factors.
+          </p>
+          <button
+            onClick={handleRecalculate}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '8px',
+              background: 'var(--brand-primary)',
+              color: '#ffffff',
+              border: 'none',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
+          >
+            Compute Posture Now
+          </button>
         </div>
       ) : (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Main Score Hero Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 bg-slate-900/80 p-6 rounded-xl border border-slate-800 flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '20px' }}>
+            {/* Score Left Card */}
+            <div
+              style={{
+                background: 'var(--surface-primary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '12px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Overall Security Score</span>
-                <div className="flex items-baseline space-x-3 mt-3">
-                  <span className="text-6xl font-extrabold text-white tracking-tight">{posture.overallScore}</span>
-                  <span className="text-slate-500 font-medium text-lg">/ 100</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Overall Security Posture Score
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginTop: '12px' }}>
+                  <span style={{ fontSize: '56px', fontWeight: 900, color: 'var(--brand-primary)', lineHeight: 1 }}>
+                    {posture.overallScore}
+                  </span>
+                  <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-muted)' }}>/ 100</span>
                 </div>
-                <div className="mt-4 flex items-center space-x-3">
-                  {getRiskBadge(posture.riskLevel)}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
+                  {(() => {
+                    const badge = getRiskBadge(posture.riskLevel);
+                    return (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          background: badge.bg,
+                          color: badge.text,
+                          border: `1px solid ${badge.border}`,
+                        }}
+                      >
+                        {badge.label}
+                      </span>
+                    );
+                  })()}
+
                   {posture.scoreDelta != null && (
-                    <span className={`flex items-center text-xs font-semibold px-2.5 py-1 rounded-md border ${
-                      posture.scoreDelta > 0
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : posture.scoreDelta < 0
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        : 'bg-slate-800 text-slate-400 border-slate-700'
-                    }`}>
-                      {posture.scoreDelta > 0 ? <TrendingUp className="w-3.5 h-3.5 mr-1" /> : posture.scoreDelta < 0 ? <TrendingDown className="w-3.5 h-3.5 mr-1" /> : null}
-                      {posture.scoreDelta > 0 ? `+${posture.scoreDelta}` : posture.scoreDelta} from prev
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        background: posture.scoreDelta >= 0 ? '#ecfdf5' : '#fef2f2',
+                        color: posture.scoreDelta >= 0 ? '#059669' : '#dc2626',
+                        border: `1px solid ${posture.scoreDelta >= 0 ? '#a7f3d0' : '#fca5a5'}`,
+                      }}
+                    >
+                      {posture.scoreDelta > 0 ? <TrendingUp size={12} /> : posture.scoreDelta < 0 ? <TrendingDown size={12} /> : null}
+                      {posture.scoreDelta > 0 ? `+${posture.scoreDelta}` : posture.scoreDelta} shift
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-1">
-                <div>Calculated: <span className="text-slate-200">{new Date(posture.calculatedAt).toLocaleString()}</span></div>
-                <div>Algorithm Version: <span className="text-slate-300 font-mono">{posture.scoreVersion}</span></div>
+              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', fontSize: '11px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div>Calculated: <strong style={{ color: 'var(--text-secondary)' }}>{new Date(posture.calculatedAt).toLocaleString()}</strong></div>
+                <div>Algorithm Version: <strong style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{posture.scoreVersion}</strong></div>
               </div>
             </div>
 
-            {/* Explanation Factor Highlights */}
-            <div className="lg:col-span-2 bg-slate-900/80 p-6 rounded-xl border border-slate-800">
-              <h3 className="text-base font-semibold text-white mb-3 flex items-center space-x-2">
-                <Activity className="w-4 h-4 text-indigo-400" />
-                <span>Why did the score change? (Explainable Factors)</span>
-              </h3>
-              <div className="space-y-2.5 max-h-[200px] overflow-y-auto pr-2">
+            {/* Explanation Factor Highlights: Why this score? */}
+            <div
+              style={{
+                background: 'var(--surface-primary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '12px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Activity size={16} style={{ color: 'var(--brand-primary)' }} />
+                  Why This Score? (Contributing Evidence Factors)
+                </h3>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  Grounded strictly in observed findings & configs
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
                 {posture.factors && posture.factors.length > 0 ? (
                   posture.factors.map((f, i) => (
-                    <div key={i} className="flex items-start justify-between p-2.5 bg-slate-800/40 rounded-lg border border-slate-800/60">
-                      <div className="flex items-start space-x-2.5">
-                        <span className={`px-2 py-0.5 rounded text-xs font-mono font-bold mt-0.5 ${
-                          f.impact > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                          f.impact < 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-                          'bg-slate-700 text-slate-300'
-                        }`}>
+                    <div
+                      key={i}
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            background: f.impact >= 0 ? '#ecfdf5' : '#fef2f2',
+                            color: f.impact >= 0 ? '#059669' : '#dc2626',
+                            border: `1px solid ${f.impact >= 0 ? '#a7f3d0' : '#fca5a5'}`,
+                          }}
+                        >
                           {f.impact > 0 ? `+${f.impact}` : f.impact}
                         </span>
                         <div>
-                          <div className="text-xs font-medium text-slate-200">{f.factorName}</div>
-                          <div className="text-xs text-slate-400 mt-0.5">{f.explanation}</div>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{f.factorName}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{f.explanation}</div>
                         </div>
                       </div>
-                      <span className="text-[10px] text-slate-500 font-mono uppercase px-2 py-0.5 bg-slate-800 rounded">
-                        {f.dimension.replace('_', ' ')}
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: '#f1f5f9',
+                          color: 'var(--text-muted)',
+                          fontFamily: 'monospace',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {f.dimension.replace(/_/g, ' ')}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 text-xs italic">No specific factor adjustments recorded.</p>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                    Baseline posture evaluated with standard zero-offset factors.
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
           {/* Security Posture Dimensions Grid */}
-          <div>
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
-              <Layers className="w-5 h-5 text-indigo-400" />
-              <span>Security Posture Dimensions</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Layers size={16} style={{ color: 'var(--brand-primary)' }} />
+              Security Posture Dimensions
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
               {posture.dimensions.map((dim) => {
                 const isSelected = selectedDimension?.id === dim.id;
                 return (
                   <div
                     key={dim.id}
                     onClick={() => setSelectedDimension(dim)}
-                    className={`p-5 rounded-xl border transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-slate-900 border-indigo-500 shadow-lg shadow-indigo-500/10'
-                        : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                    }`}
+                    style={{
+                      background: 'var(--surface-primary)',
+                      border: `1.5px solid ${isSelected ? 'var(--brand-primary)' : 'var(--border-subtle)'}`,
+                      borderRadius: '10px',
+                      padding: '16px',
+                      cursor: 'pointer',
+                      boxShadow: isSelected ? '0 2px 8px rgba(2, 132, 199, 0.12)' : 'none',
+                      transition: 'border 0.15s, box-shadow 0.15s',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                    }}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        {formatDimensionName(dim.dimension)}
-                      </span>
-                      <span className={`text-lg font-extrabold ${
-                        dim.score === null ? 'text-slate-500' :
-                        dim.score >= 80 ? 'text-emerald-400' :
-                        dim.score >= 60 ? 'text-amber-400' : 'text-rose-400'
-                      }`}>
-                        {dim.score != null ? `${dim.score}/100` : 'N/A'}
-                      </span>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                          {formatDimensionName(dim.dimension)}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 800,
+                            color:
+                              dim.score === null
+                                ? 'var(--text-muted)'
+                                : dim.score >= 80
+                                ? '#059669'
+                                : dim.score >= 60
+                                ? '#d97706'
+                                : '#dc2626',
+                          }}
+                        >
+                          {dim.score != null ? `${dim.score}/100` : 'N/A'}
+                        </span>
+                      </div>
+
+                      <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        {dim.explanation}
+                      </p>
                     </div>
 
-                    <p className="text-xs text-slate-400 line-clamp-2 mb-3">{dim.explanation}</p>
-
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-3 border-t border-slate-800/80">
-                      <span>Evidence Count: <strong className="text-slate-300">{dim.evidenceCount}</strong></span>
-                      <span className="text-indigo-400 hover:underline flex items-center space-x-1">
-                        <span>Details</span>
-                        <ArrowRight className="w-3 h-3" />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      <span>Evidence Count: <strong style={{ color: 'var(--text-primary)' }}>{dim.evidenceCount}</strong></span>
+                      <span style={{ color: 'var(--brand-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        Details <ArrowRight size={12} />
                       </span>
                     </div>
                   </div>
@@ -306,68 +528,135 @@ export const SecurityPosturePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Dimension Inspector Panel */}
+          {/* Selected Dimension Detail Inspector */}
           {selectedDimension && (
-            <div className="bg-slate-900/90 p-6 rounded-xl border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div
+              style={{
+                background: 'var(--surface-primary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '12px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
                 <div>
-                  <h4 className="text-base font-bold text-white flex items-center space-x-2">
-                    <span>Dimension Detail: {formatDimensionName(selectedDimension.dimension)}</span>
+                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Dimension Inspector: {formatDimensionName(selectedDimension.dimension)}
                   </h4>
-                  <p className="text-xs text-slate-400 mt-1">{selectedDimension.explanation}</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    {selectedDimension.explanation}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-black text-indigo-400">{selectedDimension.score ?? 'N/A'}</span>
-                  <span className="text-slate-500 text-xs font-medium"> / 100</span>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '24px', fontWeight: 800, color: 'var(--brand-primary)' }}>
+                    {selectedDimension.score ?? 'N/A'}
+                  </span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}> / 100</span>
                 </div>
               </div>
 
               <div>
-                <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Contributing Score Factors</h5>
-                <div className="space-y-2">
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Contributing Dimension Factors
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {selectedDimension.factors && selectedDimension.factors.length > 0 ? (
                     selectedDimension.factors.map((fac, idx) => (
-                      <div key={idx} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50 flex items-start justify-between">
+                      <div
+                        key={idx}
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          padding: '10px 14px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
                         <div>
-                          <div className="text-xs font-semibold text-slate-200">{fac.factorName}</div>
-                          <div className="text-xs text-slate-400 mt-0.5">{fac.explanation}</div>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{fac.factorName}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{fac.explanation}</div>
                         </div>
-                        <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
-                          fac.impact > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                        }`}>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            background: fac.impact >= 0 ? '#ecfdf5' : '#fef2f2',
+                            color: fac.impact >= 0 ? '#059669' : '#dc2626',
+                            border: `1px solid ${fac.impact >= 0 ? '#a7f3d0' : '#fca5a5'}`,
+                          }}
+                        >
                           {fac.impact > 0 ? `+${fac.impact}` : fac.impact}
                         </span>
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-slate-500 italic">No individual factor penalties or bonuses registered for this dimension.</p>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                      Standard baseline weights applied for this dimension.
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Historical Trend */}
-          <div className="bg-slate-900/60 p-6 rounded-xl border border-slate-800">
-            <h3 className="text-base font-bold text-white mb-4 flex items-center space-x-2">
-              <History className="w-4 h-4 text-indigo-400" />
-              <span>Historical Score Trend</span>
+          {/* Historical Score Trend Points */}
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '12px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <History size={16} style={{ color: 'var(--brand-primary)' }} />
+              Historical Posture Score Drift ({trends.length} recorded checkpoints)
             </h3>
+
             {trends.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
                 {trends.map((t, i) => (
-                  <div key={i} className="p-3 bg-slate-800/40 rounded-lg border border-slate-800 text-center">
-                    <div className="text-2xl font-bold text-white">{t.score}</div>
-                    <div className="text-[11px] text-slate-400 mt-1">{new Date(t.timestamp).toLocaleDateString()}</div>
-                    <div className="text-[10px] text-indigo-400 font-mono mt-1">Regressions: {t.regressionCount}</div>
+                  <div
+                    key={i}
+                    style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--brand-primary)' }}>
+                      {t.score}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                      {new Date(t.timestamp).toLocaleDateString()}
+                    </div>
+                    <div style={{ fontSize: '10px', color: t.regressionCount > 0 ? '#dc2626' : '#059669', fontWeight: 600, marginTop: '2px' }}>
+                      {t.regressionCount > 0 ? `${t.regressionCount} Regressions` : 'Stable'}
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 text-xs italic">Not enough historical data for trend chart.</p>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                Historical drift timeline will expand automatically as assessments conclude over time.
+              </div>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

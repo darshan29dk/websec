@@ -4,15 +4,13 @@ import {
   Search,
   Plus,
   FileText,
-  Hash,
   ExternalLink,
-  Shield,
   Layers,
-  Filter,
   CheckCircle2,
   XCircle,
   RefreshCw,
-  Database
+  Database,
+  AlertTriangle,
 } from 'lucide-react';
 import { knowledgeApi } from '../services/api/knowledgeApi';
 import { KnowledgeDocument, KnowledgeSearchResult, KnowledgeIngestRequest } from '../types/knowledge';
@@ -25,7 +23,7 @@ export const KnowledgePage: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ingestion Modal State (ADMIN)
+  // Ingestion Modal State
   const [showIngestModal, setShowIngestModal] = useState(false);
   const [title, setTitle] = useState('');
   const [source, setSource] = useState('OWASP');
@@ -42,6 +40,7 @@ export const KnowledgePage: React.FC = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await knowledgeApi.getAllDocuments();
       setDocuments(data);
     } catch (err: any) {
@@ -63,7 +62,7 @@ export const KnowledgePage: React.FC = () => {
       const results = await knowledgeApi.searchKnowledge(searchQuery);
       setSearchResults(results);
     } catch (err: any) {
-      alert('Search failed: ' + err.message);
+      alert('Search failed: ' + (err?.message || 'Error executing knowledge search'));
     } finally {
       setSearching(false);
     }
@@ -81,7 +80,7 @@ export const KnowledgePage: React.FC = () => {
         sourceUrl,
         documentType,
         version,
-        content
+        content,
       };
       await knowledgeApi.ingestDocument(req);
       setShowIngestModal(false);
@@ -89,79 +88,201 @@ export const KnowledgePage: React.FC = () => {
       setContent('');
       fetchDocuments();
     } catch (err: any) {
-      alert('Failed to ingest knowledge document: ' + err.message);
+      alert('Failed to ingest knowledge document: ' + (err?.message || 'Check database permissions.'));
     } finally {
       setIngesting(false);
     }
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '32px' }}>
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-2xl backdrop-blur">
-        <div className="flex items-center space-x-4">
-          <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-xl border border-cyan-500/30 text-cyan-400">
-            <BookOpen className="w-8 h-8" />
+      <div
+        style={{
+          background: 'var(--surface-primary)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: '#e0f2fe',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <BookOpen size={22} style={{ color: 'var(--brand-primary)' }} />
           </div>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white tracking-tight">SECURITY KNOWLEDGE BASE</h1>
-              <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">RAG Vector Store</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                Security Knowledge Base
+              </h1>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: '#e0f2fe',
+                  color: 'var(--brand-primary)',
+                  border: '1px solid #bae6fd',
+                }}
+              >
+                RAG Vector Store
+              </span>
             </div>
-            <p className="text-sm text-slate-400 mt-1">Authoritative OWASP, CWE, CVSS, and Hardening Standards for Grounded Reasoning</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Authoritative OWASP, CWE, CVSS, and Hardening Standards used for evidence-grounded AI synthesis.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
             onClick={() => setShowIngestModal(true)}
-            className="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition text-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              background: 'var(--brand-primary)',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+            }}
           >
-            <Plus className="w-4 h-4" /> Add Knowledge Document
+            <Plus size={14} /> Add Document
           </button>
         </div>
       </div>
 
-      {/* RAG Search Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl">
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-3.5 text-slate-500" />
+      {/* RAG Semantic Search Bar */}
+      <div
+        style={{
+          background: 'var(--surface-primary)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+        }}
+      >
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search
+              size={16}
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-muted)',
+              }}
+            />
             <input
               type="text"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search security knowledge (e.g. SQL Injection, XSS, CSRF, TLS headers)..."
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search knowledge documents (e.g. SQL Injection, HSTS, XSS, TLS, CSRF)..."
+              style={{
+                width: '100%',
+                padding: '9px 12px 9px 36px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
+                fontSize: '13px',
+              }}
             />
           </div>
           <button
             type="submit"
             disabled={searching}
-            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm rounded-lg shadow flex items-center justify-center gap-2 transition"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 18px',
+              borderRadius: '8px',
+              background: 'var(--brand-primary)',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: searching ? 'not-allowed' : 'pointer',
+            }}
           >
-            {searching ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Search RAG Base
+            {searching ? <RefreshCw size={14} className="spin" /> : <Search size={14} />} Search
           </button>
         </form>
       </div>
 
       {/* Search Results */}
       {searchResults.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Database className="w-5 h-5 text-cyan-400" /> RAG Search Results ({searchResults.length})
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Database size={16} style={{ color: 'var(--brand-primary)' }} />
+            Semantic Search Results ({searchResults.length})
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '12px' }}>
             {searchResults.map((res, idx) => (
-              <div key={idx} className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-cyan-400">{res.source}</span>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+              <div
+                key={idx}
+                style={{
+                  background: 'var(--surface-primary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '10px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-primary)' }}>{res.source}</span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      background: '#e0f2fe',
+                      color: '#0369a1',
+                      border: '1px solid #bae6fd',
+                    }}
+                  >
                     {Math.round(res.relevanceScore * 100)}% match
                   </span>
                 </div>
-                <h3 className="text-sm font-bold text-white">{res.title}</h3>
-                <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed font-mono">
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{res.title}</h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '12px',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.5,
+                    background: '#f8fafc',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    fontFamily: 'monospace',
+                  }}
+                >
                   "{res.contentExcerpt}"
                 </p>
               </div>
@@ -170,103 +291,271 @@ export const KnowledgePage: React.FC = () => {
         </div>
       )}
 
-      {/* Documents Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-cyan-400" /> Ingested Knowledge Documents ({documents.length})
-          </h2>
+      {/* Main Documents List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Layers size={16} style={{ color: 'var(--brand-primary)' }} />
+            Ingested Authoritative Documents ({documents.length})
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-2" />
-            <p className="text-slate-400 text-sm">Loading security knowledge documents...</p>
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '12px',
+              padding: '40px',
+              textAlign: 'center',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <RefreshCw size={24} className="spin" style={{ margin: '0 auto 12px', color: 'var(--brand-primary)' }} />
+            <div>Loading security knowledge documents...</div>
           </div>
-        ) : documents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        ) : error ? (
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fca5a5',
+              borderRadius: '12px',
+              padding: '24px',
+              textAlign: 'center',
+              color: '#dc2626',
+            }}
+          >
+            <AlertTriangle size={24} style={{ margin: '0 auto 8px' }} />
+            <div style={{ fontWeight: 600 }}>Error loading knowledge documents</div>
+            <div style={{ fontSize: '13px', marginTop: '4px' }}>{error}</div>
+          </div>
+        ) : documents.length === 0 ? (
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '12px',
+              padding: '48px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <BookOpen size={36} style={{ color: 'var(--brand-primary)', margin: '0 auto 12px' }} />
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+              No Security Knowledge Documents Available
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '480px', margin: '0 auto 18px auto' }}>
+              The knowledge base feeds authoritative standards into the RAG pipeline. Click "Add Document" to ingest OWASP, CWE, or custom security baseline guidance.
+            </p>
+            <button
+              onClick={() => setShowIngestModal(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                background: 'var(--brand-primary)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={14} /> Add Document
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
             {documents.map((doc, idx) => (
-              <div key={idx} className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl space-y-3 flex flex-col justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">{doc.source}</span>
-                    <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+              <div
+                key={doc.id || idx}
+                style={{
+                  background: 'var(--surface-primary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '10px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-primary)', textTransform: 'uppercase' }}>
+                      {doc.source}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: '#ecfdf5',
+                        color: '#059669',
+                        border: '1px solid #a7f3d0',
+                      }}
+                    >
                       {doc.status}
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-white line-clamp-2">{doc.title}</h3>
-                  <p className="text-xs text-slate-400 line-clamp-3 bg-slate-950/60 p-2.5 rounded border border-slate-800/80">
+
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {doc.title}
+                  </h3>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.5,
+                      background: '#f8fafc',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      maxHeight: '90px',
+                      overflowY: 'auto',
+                    }}
+                  >
                     {doc.content}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Chunks: {doc.chunkCount}</span>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: '1px solid #f1f5f9',
+                    paddingTop: '8px',
+                    fontSize: '11px',
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  <span>Chunks: {doc.chunkCount ?? 1}</span>
                   {doc.sourceUrl && (
-                    <a href={doc.sourceUrl} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1">
-                      Source <ExternalLink className="w-3 h-3" />
+                    <a
+                      href={doc.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        color: 'var(--brand-primary)',
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Source <ExternalLink size={12} />
                     </a>
                   )}
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12 bg-slate-900/60 border border-slate-800 rounded-xl">
-            <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-slate-400 text-sm">No knowledge documents ingested yet.</p>
-          </div>
         )}
       </div>
 
-      {/* ADMIN Ingestion Modal */}
+      {/* Ingestion Modal */}
       {showIngestModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-cyan-400" /> Ingest Authoritative Security Knowledge
-              </h3>
-              <button onClick={() => setShowIngestModal(false)} className="text-slate-400 hover:text-white">
-                <XCircle className="w-5 h-5" />
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              borderRadius: '12px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '24px',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={18} style={{ color: 'var(--brand-primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Ingest Security Knowledge
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowIngestModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                <XCircle size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleIngest} className="space-y-4 text-xs">
+            <form onSubmit={handleIngest} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px', fontSize: '12px' }}>
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Document Title *</label>
+                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>Document Title *</label>
                 <input
                   type="text"
                   required
                   value={title}
-                  onChange={e => setTitle(e.target.value)}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. OWASP Top 10 A03:2021 - Injection"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-cyan-500"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    background: '#ffffff',
+                    color: 'var(--text-primary)',
+                  }}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">Source Organization *</label>
+                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>Source *</label>
                   <select
                     value={source}
-                    onChange={e => setSource(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-cyan-500"
+                    onChange={(e) => setSource(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-subtle)',
+                      background: '#ffffff',
+                      color: 'var(--text-primary)',
+                    }}
                   >
                     <option value="OWASP">OWASP Foundation</option>
                     <option value="CWE / MITRE">CWE / MITRE</option>
                     <option value="CVE / NVD">CVE / NVD</option>
                     <option value="CISA">CISA Guidance</option>
-                    <option value="TLS / Security Headers">TLS / Security Headers</option>
+                    <option value="Hardening Standard">Hardening Standard</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">Document Type *</label>
+                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>Document Type *</label>
                   <select
                     value={documentType}
-                    onChange={e => setDocumentType(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-cyan-500"
+                    onChange={(e) => setDocumentType(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-subtle)',
+                      background: '#ffffff',
+                      color: 'var(--text-primary)',
+                    }}
                   >
                     <option value="SECURITY_STANDARD">Security Standard</option>
                     <option value="VULNERABILITY_GUIDANCE">Vulnerability Guidance</option>
@@ -276,42 +565,78 @@ export const KnowledgePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Source URL</label>
+                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>Source URL</label>
                 <input
                   type="url"
                   value={sourceUrl}
-                  onChange={e => setSourceUrl(e.target.value)}
+                  onChange={(e) => setSourceUrl(e.target.value)}
                   placeholder="https://owasp.org/..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-cyan-500"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    background: '#ffffff',
+                    color: 'var(--text-primary)',
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Content Text *</label>
+                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>Content Guidance Text *</label>
                 <textarea
                   required
-                  rows={5}
+                  rows={4}
                   value={content}
-                  onChange={e => setContent(e.target.value)}
+                  onChange={(e) => setContent(e.target.value)}
                   placeholder="Paste the authoritative security standard guidance text here..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-cyan-500"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    background: '#ffffff',
+                    color: 'var(--text-primary)',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                  }}
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-3">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setShowIngestModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg"
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: '6px',
+                    background: '#f1f5f9',
+                    color: 'var(--text-secondary)',
+                    border: 'none',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={ingesting}
-                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow flex items-center gap-2"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '7px 18px',
+                    borderRadius: '6px',
+                    background: 'var(--brand-primary)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 600,
+                    cursor: ingesting ? 'not-allowed' : 'pointer',
+                  }}
                 >
-                  {ingesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Ingest Document
+                  {ingesting ? <RefreshCw size={13} className="spin" /> : <Plus size={13} />}
+                  Ingest Document
                 </button>
               </div>
             </form>

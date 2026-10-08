@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { forensicApi } from '../services/api/forensicApi';
 import {
   ForensicCase,
@@ -9,12 +9,30 @@ import {
   NetworkForensicEvent,
   AttackEvent,
   ForensicSummary,
-  EvidenceVerification
+  EvidenceVerification,
 } from '../types/forensic';
 import {
-  FolderGit2, ShieldAlert, CheckCircle2, Clock, Hash, FileCode, Network,
-  Activity, Lock, AlertTriangle, FileText, ArrowLeft, RefreshCw, Plus
+  FolderGit2,
+  ShieldAlert,
+  CheckCircle2,
+  Clock,
+  Hash,
+  FileCode,
+  Network,
+  Activity,
+  Lock,
+  AlertTriangle,
+  FileText,
+  ArrowLeft,
+  RefreshCw,
+  Plus,
+  Target as TargetIcon,
+  ExternalLink,
 } from 'lucide-react';
+import { Card } from '../components/Card';
+import { StatusBadge } from '../components/StatusBadge';
+import { Button } from '../components/Button';
+import { Alert } from '../components/Alert';
 
 export const ForensicDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +46,7 @@ export const ForensicDetailPage: React.FC = () => {
   const [networkEvents, setNetworkEvents] = useState<NetworkForensicEvent[]>([]);
   const [attackEvents, setAttackEvents] = useState<AttackEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'timeline' | 'evidence' | 'http' | 'network' | 'reconstruction' | 'integrity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'evidence' | 'timeline' | 'http' | 'network' | 'reconstruction'>('overview');
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [verificationResult, setVerificationResult] = useState<EvidenceVerification | null>(null);
 
@@ -41,23 +59,23 @@ export const ForensicDetailPage: React.FC = () => {
   const loadAllCaseData = async (caseId: string) => {
     setLoading(true);
     try {
-      const [caseRes, summaryRes, evRes, timelineRes, httpRes, netRes, attackRes] = await Promise.all([
+      const [caseRes, summaryRes, evRes, timelineRes, httpRes, netRes, attackRes] = await Promise.allSettled([
         forensicApi.getCaseById(caseId),
         forensicApi.getSummary(caseId),
         forensicApi.getEvidence(caseId, { size: 50 }),
         forensicApi.getTimeline(caseId, { size: 100 }),
         forensicApi.getHttpEvents(caseId, { size: 50 }),
         forensicApi.getNetworkEvents(caseId, { size: 50 }),
-        forensicApi.getAttackEvents(caseId)
+        forensicApi.getAttackEvents(caseId),
       ]);
 
-      if (caseRes) setForensicCase(caseRes);
-      if (summaryRes) setSummary(summaryRes);
-      if (evRes?.content) setEvidenceList(evRes.content);
-      if (timelineRes?.content) setTimelineEvents(timelineRes.content);
-      if (httpRes?.content) setHttpEvents(httpRes.content);
-      if (netRes?.content) setNetworkEvents(netRes.content);
-      if (attackRes) setAttackEvents(attackRes);
+      if (caseRes.status === 'fulfilled' && caseRes.value) setForensicCase(caseRes.value);
+      if (summaryRes.status === 'fulfilled' && summaryRes.value) setSummary(summaryRes.value);
+      if (evRes.status === 'fulfilled' && evRes.value?.content) setEvidenceList(evRes.value.content);
+      if (timelineRes.status === 'fulfilled' && timelineRes.value?.content) setTimelineEvents(timelineRes.value.content);
+      if (httpRes.status === 'fulfilled' && httpRes.value?.content) setHttpEvents(httpRes.value.content);
+      if (netRes.status === 'fulfilled' && netRes.value?.content) setNetworkEvents(netRes.value.content);
+      if (attackRes.status === 'fulfilled' && attackRes.value) setAttackEvents(attackRes.value);
     } catch (err) {
       console.error('Failed to load forensic case detail:', err);
     } finally {
@@ -80,264 +98,471 @@ export const ForensicDetailPage: React.FC = () => {
     }
   };
 
-  const getClassBadge = (classification: string) => {
-    switch (classification) {
-      case 'OBSERVED':
-        return <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800">OBSERVED</span>;
-      case 'DERIVED':
-        return <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-950 text-blue-300 border border-blue-800">DERIVED</span>;
-      default:
-        return <span className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-950 text-amber-300 border border-amber-800">INFERRED</span>;
-    }
-  };
-
   if (loading || !forensicCase) {
-    return <div className="p-8 text-center text-slate-400">Loading forensic investigation workspace...</div>;
+    return <div style={{ padding: '32px', color: 'var(--text-muted)' }}>Loading forensic investigation workspace...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '40px' }}>
+      {/* Backtrack Navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+        <button
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/forensics');
+            }
+          }}
+          title="Backtrack: Go back to last step"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border-color)',
+            borderRadius: '6px',
+            padding: '5px 12px',
+            color: 'var(--text-heading)',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(2, 132, 199, 0.05)',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--accent-light)';
+            e.currentTarget.style.borderColor = 'var(--border-focus)';
+            e.currentTarget.style.color = 'var(--accent-primary)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#ffffff';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+            e.currentTarget.style.color = 'var(--text-heading)';
+          }}
+        >
+          <ArrowLeft size={14} color="var(--accent-primary)" />
+          <span>Backtrack to Last Step</span>
+        </button>
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/</span>
+        <button
+          onClick={() => navigate('/forensics')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '12px',
+          }}
+        >
+          Forensic Cases
+        </button>
+      </div>
+
+      {/* Case Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <button
-            onClick={() => navigate('/forensics')}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-xs mb-2 transition"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Cases
-          </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-100">{forensicCase.title}</h1>
-            <span className="font-mono text-xs px-2.5 py-1 bg-slate-800 text-cyan-400 border border-slate-700 rounded">
-              {forensicCase.caseNumber}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-heading)' }}>
+              Case #{forensicCase.caseNumber || forensicCase.id.substring(0, 8)}: {forensicCase.title}
+            </h1>
+            <StatusBadge status={forensicCase.status} />
           </div>
-          <p className="text-slate-400 text-sm mt-1">
-            Target: <span className="text-slate-200 font-medium">{forensicCase.targetName}</span>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Target: {forensicCase.targetName} • Forensic investigation & chain of custody analysis
           </p>
         </div>
+
+        <Button variant="secondary" icon={<RefreshCw size={14} />} onClick={() => id && loadAllCaseData(id)}>
+          Refresh Case
+        </Button>
       </div>
 
-      {/* Source IP Warning Banner */}
-      {!summary?.observedSourceIp ? (
-        <div className="bg-amber-950/40 border border-amber-800/60 rounded-lg p-4 flex items-start gap-3 text-amber-300">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-semibold text-sm">Source IP Notice</h4>
-            <p className="text-xs text-amber-200/80 mt-0.5">
-              Source IP unavailable from available telemetry. AEGIS strictly refrains from inferring attacker source IP without explicit observed telemetry.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-cyan-400" />
-            <span className="text-slate-400">Observed Source IP:</span>
-            <span className="font-mono font-bold text-slate-200">{summary.observedSourceIp}</span>
-          </div>
-          <span className="text-xs text-slate-400">Origin: <span className="font-mono text-slate-300">{summary.sourceIpOrigin}</span></span>
-        </div>
-      )}
-
-      {/* Verification Result Modal Banner */}
-      {verificationResult && (
-        <div className="bg-emerald-950/50 border border-emerald-700/60 rounded-lg p-4 flex items-center justify-between text-emerald-200 text-sm">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-            <span>Integrity Status: <strong>{verificationResult.status}</strong> — {verificationResult.message}</span>
-          </div>
-          <button onClick={() => setVerificationResult(null)} className="text-xs text-emerald-400 hover:underline">Dismiss</button>
-        </div>
-      )}
+      {/* RELATIONSHIPS BAR (Requirement 8) */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '12px 16px',
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          fontSize: '12px',
+        }}
+      >
+        <span style={{ fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '10px' }}>
+          Correlated Resources:
+        </span>
+        {forensicCase.targetId && (
+          <Link
+            to={`/targets/${forensicCase.targetId}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid var(--border-color)',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontWeight: 600,
+            }}
+          >
+            <TargetIcon size={12} color="var(--accent-primary)" /> Target: {forensicCase.targetName || 'Scope'}
+          </Link>
+        )}
+        {forensicCase.incidentId && (
+          <Link
+            to={`/incidents/${forensicCase.incidentId}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fca5a5',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontWeight: 600,
+              color: '#dc2626',
+            }}
+          >
+            <AlertTriangle size={12} color="#dc2626" /> Incident #{forensicCase.incidentId.substring(0, 8)}
+          </Link>
+        )}
+        <Link
+          to={`/investigations`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            backgroundColor: '#f8fafc',
+            border: '1px solid var(--border-color)',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            fontWeight: 600,
+          }}
+        >
+          <FileText size={12} color="var(--accent-primary)" /> Investigation Workspace
+        </Link>
+        <Link
+          to={`/findings`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            backgroundColor: '#f8fafc',
+            border: '1px solid var(--border-color)',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            fontWeight: 600,
+            color: '#ea580c',
+          }}
+        >
+          <Lock size={12} color="#ea580c" /> Related Findings
+        </Link>
+      </div>
 
       {/* Tabs */}
-      <div className="border-b border-slate-800 flex gap-6">
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
         {[
-          { key: 'overview', label: 'Overview', icon: FileText },
-          { key: 'timeline', label: 'Forensic Timeline', icon: Clock },
-          { key: 'evidence', label: 'Evidence & Integrity', icon: Hash },
-          { key: 'http', label: 'HTTP Telemetry', icon: FileCode },
-          { key: 'network', label: 'Network Streams', icon: Network },
-          { key: 'reconstruction', label: 'Attack Reconstruction', icon: Activity },
-          { key: 'integrity', label: 'SHA-256 Audit', icon: Lock }
-        ].map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
-              className={`pb-3 text-sm font-medium flex items-center gap-2 border-b-2 transition ${
-                activeTab === tab.key
-                  ? 'border-cyan-500 text-cyan-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          );
-        })}
+          { key: 'overview', label: 'Case Summary' },
+          { key: 'evidence', label: `Evidence Items (${evidenceList.length})` },
+          { key: 'timeline', label: `Chronological Timeline (${timelineEvents.length})` },
+          { key: 'http', label: `HTTP Telemetry (${httpEvents.length})` },
+          { key: 'network', label: `Network Signals (${networkEvents.length})` },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: 'transparent',
+              fontSize: '13px',
+              fontWeight: activeTab === tab.key ? 700 : 500,
+              color: activeTab === tab.key ? 'var(--accent-primary)' : 'var(--text-muted)',
+              borderBottom: activeTab === tab.key ? '2px solid var(--accent-primary)' : '2px solid transparent',
+              cursor: 'pointer',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Tab Contents */}
+      {/* TAB: OVERVIEW */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-slate-100 border-b border-slate-800 pb-2">Case Metadata</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+          <Card title="Case Summary Attributes">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
-                <span className="text-slate-400 text-xs block">Case Status</span>
-                <span className="font-semibold text-slate-200">{forensicCase.status}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-xs block">Priority</span>
-                <span className="font-semibold text-slate-200">{forensicCase.priority}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-xs block">Opened At</span>
-                <span className="font-mono text-xs text-slate-300">{new Date(forensicCase.openedAt).toLocaleString()}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-xs block">Investigator</span>
-                <span className="text-slate-300">{forensicCase.createdByEmail || 'System'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-slate-100 border-b border-slate-800 pb-2">Factual Findings & Summary</h3>
-            <ul className="space-y-2 text-sm text-slate-300">
-              {summary?.factualFindings.map((finding, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">•</span>
-                  <span>{finding}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 pt-3 border-t border-slate-800/80">
-              <span className="text-xs text-slate-400 block font-semibold">Attribution Status:</span>
-              <p className="text-xs font-mono text-amber-300/90 mt-1">{summary?.attributionStatus}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'timeline' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">Unified Forensic Timeline</h3>
-          <div className="space-y-4">
-            {timelineEvents.map((ev, idx) => (
-              <div key={ev.id} className="flex gap-4 items-start border-l-2 border-slate-800 pl-4 py-1 relative">
-                <div className="w-3 h-3 bg-cyan-500 rounded-full absolute -left-[7px] top-2 border-2 border-slate-900" />
-                <div className="flex-1 bg-slate-950/60 border border-slate-800/80 rounded p-3 text-sm">
-                  <div className="flex justify-between items-center text-xs text-slate-400 font-mono mb-1">
-                    <span>{ev.eventTime ? new Date(ev.eventTime).toISOString() : ev.timeDescription}</span>
-                    <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">Seq #{ev.sequenceNumber}</span>
-                  </div>
-                  <h4 className="font-semibold text-slate-200">{ev.title}</h4>
-                  <p className="text-xs text-slate-400 mt-1">{ev.description}</p>
-                  <div className="mt-2 flex gap-3 text-xs text-slate-400">
-                    <span>Source: <strong className="text-slate-300">{ev.source}</strong></span>
-                    <span>Confidence: <strong className="text-slate-300">{ev.confidence}</strong></span>
-                  </div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Case ID</span>
+                <div style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', fontWeight: 600, marginTop: '2px' }}>
+                  {forensicCase.id}
                 </div>
               </div>
-            ))}
-          </div>
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Target Scope</span>
+                <div style={{ fontSize: '13px', fontWeight: 600, marginTop: '2px' }}>
+                  {forensicCase.targetName || 'Scope'}
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Case Status</span>
+                <div style={{ marginTop: '2px' }}>
+                  <StatusBadge status={forensicCase.status} />
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Priority Level</span>
+                <div style={{ fontSize: '13px', fontWeight: 700, marginTop: '2px', color: forensicCase.priority === 'CRITICAL' ? '#dc2626' : '#ea580c' }}>
+                  {forensicCase.priority}
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Opened Timestamp</span>
+                <div style={{ fontSize: '12px', marginTop: '2px' }}>
+                  {new Date(forensicCase.openedAt).toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Assigned Analyst</span>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginTop: '2px' }}>
+                  {forensicCase.createdByEmail || 'Unassigned'}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Chain of Custody &amp; Integrity">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Evidence Count:</span>
+                <span style={{ fontSize: '14px', fontWeight: 700 }}>{forensicCase.evidenceCount} Items</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Unverified Items:</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: forensicCase.unverifiedEvidenceCount > 0 ? '#ea580c' : '#15803d' }}>
+                  {forensicCase.unverifiedEvidenceCount} Unverified
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Hash Standard:</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>SHA-256</span>
+              </div>
+              <div style={{ marginTop: '8px', paddingTop: '10px', borderTop: '1px solid var(--border-color)', fontSize: '11px', color: 'var(--text-muted)' }}>
+                Evidence cannot be altered once sealed into the case record. Hashes are cross-checked against raw payloads.
+              </div>
+            </div>
+          </Card>
         </div>
       )}
 
+      {/* TAB: EVIDENCE */}
       {activeTab === 'evidence' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">Forensic Evidence & Integrity</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
-                <tr>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Source</th>
-                  <th className="px-4 py-3">Classification</th>
-                  <th className="px-4 py-3">SHA-256 Hash</th>
-                  <th className="px-4 py-3">Integrity</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {evidenceList.map((e) => (
-                  <tr key={e.id}>
-                    <td className="px-4 py-3 font-semibold text-slate-200">{e.evidenceType}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs font-mono">{e.sourceType}</td>
-                    <td className="px-4 py-3">{getClassBadge(e.classification)}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-cyan-300">{e.contentHash.substring(0, 16)}...</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800">
-                        {e.integrityStatus}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleVerifyIntegrity(e.id)}
-                        disabled={verifyingId === e.id}
-                        className="px-2.5 py-1 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded text-xs transition"
-                      >
-                        {verifyingId === e.id ? 'Verifying...' : 'Verify SHA-256'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'http' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">HTTP Telemetry Records</h3>
-          {httpEvents.length === 0 ? (
-            <div className="text-center text-slate-400 py-6">No HTTP telemetry linked to this forensic case.</div>
+        <Card title="Digital Evidence Ledger" subtitle="SHA-256 hash verified artifacts, logs, and payloads">
+          {evidenceList.length === 0 ? (
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No evidence artifacts collected for this case yet.
+            </div>
           ) : (
-            <div className="space-y-4">
-              {httpEvents.map((h) => (
-                <div key={h.id} className="bg-slate-950 border border-slate-800 rounded p-4 text-sm font-mono space-y-2">
-                  <div className="flex justify-between items-center text-xs text-slate-400">
-                    <span className="text-cyan-400 font-bold">{h.method} {h.path}</span>
-                    <span>Status: <strong className="text-emerald-400">{h.statusCode || 200}</strong></span>
-                  </div>
-                  <div className="text-xs text-slate-400">Host: {h.host} | Source IP: {h.sourceIp || 'Unavailable'}</div>
-                  {h.requestHeaders && (
-                    <div className="text-xs bg-slate-900 p-2 rounded text-slate-300 overflow-x-auto">
-                      {h.requestHeaders}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {evidenceList.map((ev) => (
+                <div
+                  key={ev.id}
+                  style={{
+                    padding: '16px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-heading)' }}>
+                          {ev.evidenceType}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            backgroundColor: ev.integrityStatus === 'VERIFIED' ? '#ecfdf5' : '#fffbeb',
+                            color: ev.integrityStatus === 'VERIFIED' ? '#047857' : '#b45309',
+                          }}
+                        >
+                          {ev.integrityStatus === 'VERIFIED' ? 'HASH VERIFIED' : 'PENDING VERIFICATION'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Source: <strong>{ev.sourceType}</strong> • Collected: {new Date(ev.collectionTime).toLocaleString()}
+                      </div>
                     </div>
+
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={verifyingId === ev.id}
+                      onClick={() => handleVerifyIntegrity(ev.id)}
+                    >
+                      {verifyingId === ev.id ? 'Checking...' : 'Verify SHA-256'}
+                    </Button>
+                  </div>
+
+                  {/* SHA-256 Hash */}
+                  <div style={{ marginTop: '10px', fontSize: '11px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>SHA-256 Hash: </span>
+                    <code style={{ fontSize: '11px', color: 'var(--accent-primary)', backgroundColor: 'var(--accent-light)', padding: '2px 6px', borderRadius: '4px' }}>
+                      {ev.contentHash || 'Hash pending'}
+                    </code>
+                  </div>
+
+                  {/* Payload / Description */}
+                  {ev.description && (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                      {ev.description}
+                    </div>
+                  )}
+
+                  {ev.provenance && (
+                    <pre
+                      style={{
+                        backgroundColor: '#0f172a',
+                        color: '#f8fafc',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        marginTop: '8px',
+                        maxHeight: '160px',
+                        overflowX: 'auto',
+                      }}
+                    >
+                      {ev.provenance}
+                    </pre>
                   )}
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       )}
 
-      {activeTab === 'reconstruction' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">Attack Event Reconstruction Topology</h3>
-          <div className="space-y-4">
-            {attackEvents.map((att, idx) => (
-              <div key={att.id} className="bg-slate-950 border border-slate-800 rounded p-4 flex justify-between items-center">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-sm text-cyan-300">{att.stage}</span>
-                    {getClassBadge(att.classification)}
+      {/* TAB: TIMELINE */}
+      {activeTab === 'timeline' && (
+        <Card title="Chronological Event Timeline" subtitle="Correlated digital forensic sequence of events">
+          {timelineEvents.length === 0 ? (
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No timeline events recorded.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {timelineEvents.map((t, idx) => (
+                <div
+                  key={t.id || idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '10px 14px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                  }}
+                >
+                  <Clock size={16} color="var(--accent-primary)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-heading)' }}>
+                        {t.title || t.eventType}
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {t.eventTime ? new Date(t.eventTime).toLocaleString() : (t.timeDescription || 'N/A')}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-main)', marginTop: '2px' }}>
+                      {t.description}
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-300">{att.description || 'Observed telemetry event'}</p>
                 </div>
-                <div className="text-xs font-mono text-slate-400">
-                  Confidence: <strong className="text-slate-200">{att.confidence}</strong>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* TAB: HTTP TELEMETRY */}
+      {activeTab === 'http' && (
+        <Card title="HTTP Forensic Events" subtitle="Captured HTTP request/response exchanges">
+          {httpEvents.length === 0 ? (
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No HTTP forensic events recorded for this case.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {httpEvents.map((h, idx) => (
+                <div
+                  key={h.id || idx}
+                  style={{
+                    padding: '10px 14px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '12px' }}>
+                      {h.method} {h.host ? `${h.scheme || 'http'}://${h.host}${h.path}` : h.path}
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: (h.statusCode && h.statusCode >= 400) ? '#dc2626' : '#15803d' }}>
+                      Status: {h.statusCode !== undefined ? h.statusCode : 'N/A'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Timestamp: {h.eventTime ? new Date(h.eventTime).toLocaleString() : 'N/A'}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* TAB: NETWORK SIGNALS */}
+      {activeTab === 'network' && (
+        <Card title="Network Forensic Signals" subtitle="Layer 3/4 network connections, ports, and protocols">
+          {networkEvents.length === 0 ? (
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No network forensic signals captured for this case.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {networkEvents.map((n, idx) => (
+                <div
+                  key={n.id || idx}
+                  style={{
+                    padding: '10px 14px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                      {n.protocol} {n.sourceIp}:{n.sourcePort} → {n.destinationIp}:{n.destinationPort}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {n.eventTime ? new Date(n.eventTime).toLocaleString() : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       )}
     </div>
   );

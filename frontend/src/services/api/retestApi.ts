@@ -20,6 +20,10 @@ export const retestApi = {
     return client.get<Retest[]>(`/findings/${findingId}/retests`);
   },
 
+  listAllRetests: async (targetId?: string): Promise<Retest[]> => {
+    return client.get<Retest[]>('/retests', targetId ? { params: { targetId } } : undefined);
+  },
+
   getRetestById: async (id: string): Promise<Retest> => {
     return client.get<Retest>(`/retests/${id}`);
   },

@@ -96,8 +96,11 @@ export class ApiClient {
       throw errorData;
     }
 
-    const body: ApiResponse<T> = await response.json();
-    return body.data;
+    const body: any = await response.json();
+    if (body !== null && typeof body === 'object' && 'data' in body && ('success' in body || 'message' in body)) {
+      return body.data;
+    }
+    return body as T;
   }
 
   private static async tryRefreshToken(): Promise<boolean> {

@@ -104,19 +104,27 @@ export const App: React.FC = () => {
             <Route path="ai/investigations/:id" element={<AiAnalystPage />} />
             <Route path="knowledge" element={<KnowledgePage />} />
             <Route path="defense" element={<DefenseOverviewPage />} />
+            <Route path="defense/:id" element={<DefenseOverviewPage />} />
             <Route path="remediation" element={<RemediationWorkspacePage />} />
+            <Route path="remediation/:id" element={<RemediationWorkspacePage />} />
             <Route path="retests" element={<RetestWorkspacePage />} />
+            <Route path="retests/:id" element={<RetestWorkspacePage />} />
+            <Route path="retest" element={<RetestWorkspacePage />} />
+            <Route path="retest/:id" element={<RetestWorkspacePage />} />
             <Route path="posture" element={<SecurityPosturePage />} />
             <Route path="regressions" element={<RegressionCenterPage />} />
+            <Route path="regression" element={<RegressionCenterPage />} />
             <Route path="compare" element={<AssessmentComparePage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="reports/:id" element={<ReportsPage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
+            <Route path="monitoring/:id" element={<MonitoringPage />} />
             <Route path="security-history" element={<SecurityHistoryPage />} />
             <Route path="audit" element={<AuditPage />} />
 
-
             <Route path="system" element={<SystemPage />} />
             <Route path="system/tools" element={<SecurityToolsPage />} />
+            <Route path="security-tools" element={<SecurityToolsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

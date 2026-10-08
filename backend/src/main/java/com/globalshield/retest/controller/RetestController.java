@@ -34,6 +34,11 @@ public class RetestController {
         return ResponseEntity.ok(retestService.listRetestsForFinding(findingId));
     }
 
+    @GetMapping("/retests")
+    public ResponseEntity<List<RetestResponseDto>> listAllRetests(@RequestParam(required = false) UUID targetId) {
+        return ResponseEntity.ok(retestService.listAllRetests(targetId));
+    }
+
     @GetMapping("/retests/{id}")
     public ResponseEntity<RetestResponseDto> getRetestById(@PathVariable UUID id) {
         return retestService.getRetestById(id)

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   GitCompare,
   ArrowRight,
@@ -8,18 +9,21 @@ import {
   CheckCircle2,
   Layers,
   RefreshCw,
-  Target as TargetIcon
+  Target as TargetIcon,
 } from 'lucide-react';
 import { postureApi } from '../services/api/postureApi';
 import { targetApi } from '../services/api/targetApi';
 import { assessmentApi } from '../services/api/assessmentApi';
-import { Target } from '../types/target';
+import { SecurityTarget } from '../types/target';
 import { Assessment } from '../types/assessment';
 import { AssessmentComparisonDto } from '../types/posture';
 
 export const AssessmentComparePage: React.FC = () => {
-  const [targets, setTargets] = useState<Target[]>([]);
-  const [selectedTargetId, setSelectedTargetId] = useState<string>('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const targetIdFromUrl = searchParams.get('targetId') || '';
+
+  const [targets, setTargets] = useState<SecurityTarget[]>([]);
+  const [selectedTargetId, setSelectedTargetId] = useState<string>(targetIdFromUrl);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [prevAssessmentId, setPrevAssessmentId] = useState<string>('');
   const [currAssessmentId, setCurrAssessmentId] = useState<string>('');
@@ -42,7 +46,11 @@ export const AssessmentComparePage: React.FC = () => {
       const res = await targetApi.listTargets();
       setTargets(res);
       if (res.length > 0) {
-        setSelectedTargetId(res[0].id);
+        if (targetIdFromUrl && res.some((t) => t.id === targetIdFromUrl)) {
+          setSelectedTargetId(targetIdFromUrl);
+        } else {
+          setSelectedTargetId(res[0].id);
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load targets');
@@ -88,39 +96,89 @@ export const AssessmentComparePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header & Selectors */}
-      <div className="bg-slate-900/60 p-6 rounded-xl border border-slate-800 backdrop-blur-md space-y-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-indigo-400">
-            <GitCompare className="w-6 h-6" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '32px' }}>
+      {/* Header Banner */}
+      <div
+        style={{
+          background: 'var(--surface-primary)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: '#e0f2fe',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <GitCompare size={22} style={{ color: 'var(--brand-primary)' }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Assessment-to-Assessment Comparison</h1>
-            <p className="text-slate-400 text-sm">Compare security finding states, posture score deltas, and attack surface shifts</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+              Assessment-to-Assessment Comparison
+            </h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Deterministic delta comparison across findings, posture score movements, and attack surface alterations.
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-800/80">
+        {/* Selectors Bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
           <div>
-            <label className="text-xs text-slate-400 uppercase font-semibold">Target</label>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>
+              Target Scope
+            </label>
             <select
               value={selectedTargetId}
-              onChange={(e) => setSelectedTargetId(e.target.value)}
-              className="mt-1 w-full bg-slate-800 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700"
+              onChange={(e) => {
+                setSelectedTargetId(e.target.value);
+                setSearchParams({ targetId: e.target.value });
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
+                fontSize: '12px',
+              }}
             >
               {targets.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.primaryUrl})
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 uppercase font-semibold">Previous Assessment (Baseline)</label>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>
+              Previous Assessment (Baseline)
+            </label>
             <select
               value={prevAssessmentId}
               onChange={(e) => setPrevAssessmentId(e.target.value)}
-              className="mt-1 w-full bg-slate-800 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
+                fontSize: '12px',
+              }}
             >
               <option value="">(None - Initial Baseline)</option>
               {assessments.map((a) => (
@@ -132,11 +190,21 @@ export const AssessmentComparePage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 uppercase font-semibold">Current Assessment</label>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>
+              Current Assessment
+            </label>
             <select
               value={currAssessmentId}
               onChange={(e) => setCurrAssessmentId(e.target.value)}
-              className="mt-1 w-full bg-slate-800 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
+                fontSize: '12px',
+              }}
             >
               {assessments.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -146,13 +214,28 @@ export const AssessmentComparePage: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex items-end">
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             <button
               onClick={handleCompare}
               disabled={loading || !currAssessmentId}
-              className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-lg shadow-indigo-600/20 flex items-center justify-center space-x-2"
+              style={{
+                width: '100%',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                background: 'var(--brand-primary)',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: loading || !currAssessmentId ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+              }}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw size={13} className={loading ? 'spin' : ''} />
               <span>Compare Assessments</span>
             </button>
           </div>
@@ -160,104 +243,173 @@ export const AssessmentComparePage: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-rose-400 text-sm flex items-center space-x-2">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '10px',
+            padding: '14px 18px',
+            color: '#dc2626',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <AlertTriangle size={16} />
           <span>{error}</span>
         </div>
       )}
 
       {/* Comparison Results */}
       {comparison && (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Metrics summary */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-              <div className="text-2xl font-extrabold text-white">
-                {comparison.previousScore != null ? comparison.previousScore : 'N/A'} → {comparison.currentScore != null ? comparison.currentScore : 'N/A'}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+            <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Score Shift</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--brand-primary)', marginTop: '4px' }}>
+                {comparison.previousScore ?? 'N/A'} → {comparison.currentScore ?? 'N/A'}
               </div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Score Transition</div>
             </div>
 
-            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-              <div className="text-2xl font-extrabold text-indigo-400">
+            <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>New Findings</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#dc2626', marginTop: '4px' }}>
                 {comparison.newFindings.length}
               </div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">New Findings</div>
             </div>
 
-            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-              <div className="text-2xl font-extrabold text-emerald-400">
+            <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Fixed Findings</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#059669', marginTop: '4px' }}>
                 {comparison.fixedFindings.length}
               </div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Fixed Findings</div>
             </div>
 
-            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-              <div className="text-2xl font-extrabold text-slate-300">
+            <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Unchanged</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-secondary)', marginTop: '4px' }}>
                 {comparison.unchangedFindings.length}
               </div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Unchanged</div>
             </div>
 
-            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
-              <div className="text-2xl font-extrabold text-rose-400">
+            <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Reopened</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#e11d48', marginTop: '4px' }}>
                 {comparison.reopenedFindings.length}
               </div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Reopened / Regressed</div>
             </div>
           </div>
 
-          <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 text-xs text-slate-300">
-            <strong>Explanation:</strong> {comparison.summaryExplanation}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <strong style={{ color: 'var(--text-primary)' }}>Delta Analysis:</strong> {comparison.summaryExplanation}
           </div>
 
           {/* New Findings Matrix */}
-          <div className="bg-slate-900/60 rounded-xl border border-slate-800 p-5 space-y-3">
-            <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-wider flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span>Newly Introduced Findings ({comparison.newFindings.length})</span>
-            </h3>
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              borderRadius: '12px',
+              border: '1px solid var(--border-subtle)',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
+              <AlertTriangle size={15} />
+              Newly Introduced Findings ({comparison.newFindings.length})
+            </div>
+
             {comparison.newFindings.length > 0 ? (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {comparison.newFindings.map((item, i) => (
-                  <div key={i} className="p-3 bg-slate-800/40 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
+                  <div
+                    key={i}
+                    style={{
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <div>
-                      <div className="font-semibold text-white">{item.title}</div>
-                      <div className="text-slate-400 font-mono text-[11px] mt-0.5">{item.endpoint}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{item.title}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'monospace', marginTop: '2px' }}>{item.endpoint}</div>
                     </div>
-                    <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded font-semibold">
+                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#dc2626', color: '#ffffff' }}>
                       {item.severity}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 italic">No new findings introduced in current assessment.</p>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                No newly introduced findings identified in current assessment.
+              </div>
             )}
           </div>
 
-          {/* Fixed Findings Matrix */}
-          <div className="bg-slate-900/60 rounded-xl border border-slate-800 p-5 space-y-3">
-            <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-2">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Remediated / Fixed Findings ({comparison.fixedFindings.length})</span>
-            </h3>
+          {/* Remediated Findings Matrix */}
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              borderRadius: '12px',
+              border: '1px solid var(--border-subtle)',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#059669', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
+              <CheckCircle2 size={15} />
+              Remediated / Fixed Findings ({comparison.fixedFindings.length})
+            </div>
+
             {comparison.fixedFindings.length > 0 ? (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {comparison.fixedFindings.map((item, i) => (
-                  <div key={i} className="p-3 bg-slate-800/40 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
+                  <div
+                    key={i}
+                    style={{
+                      background: '#ecfdf5',
+                      border: '1px solid #a7f3d0',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <div>
-                      <div className="font-semibold text-white">{item.title}</div>
-                      <div className="text-slate-400 font-mono text-[11px] mt-0.5">{item.endpoint}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{item.title}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'monospace', marginTop: '2px' }}>{item.endpoint}</div>
                     </div>
-                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded font-semibold">
+                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#059669', color: '#ffffff' }}>
                       FIXED
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 italic">No previous findings fixed in current assessment.</p>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                No previous findings resolved in this assessment.
+              </div>
             )}
           </div>
         </div>

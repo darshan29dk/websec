@@ -18,6 +18,15 @@
   --accent-hover: #0369a1;
   --accent-light: #e0f2fe;
 
+  --brand-primary: #0284c7;
+  --brand-hover: #0369a1;
+  --brand-light: #e0f2fe;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --border-subtle: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+
   --status-active-bg: #ecfdf5;
   --status-active-border: #a7f3d0;
   --status-active-text: #047857;

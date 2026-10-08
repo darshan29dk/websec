@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Activity,
   Plus,
@@ -9,7 +10,11 @@ import {
   Power,
   ShieldCheck,
   Calendar,
-  Lock
+  Lock,
+  X,
+  Target as TargetIcon,
+  Check,
+  Zap,
 } from 'lucide-react';
 import { monitoringApi } from '../services/api/monitoringApi';
 import { targetApi } from '../services/api/targetApi';
@@ -21,6 +26,10 @@ import {
 } from '../types/monitoring';
 
 export const MonitoringPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status') || '';
+  const targetIdFilter = searchParams.get('targetId') || '';
+
   const [configs, setConfigs] = useState<MonitoringConfigurationDto[]>([]);
   const [targets, setTargets] = useState<SecurityTarget[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,21 +37,28 @@ export const MonitoringPage: React.FC = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedTargetId, setSelectedTargetId] = useState<string>('');
+  const [selectedTargetId, setSelectedTargetId] = useState<string>(targetIdFilter);
   const [frequency, setFrequency] = useState<MonitoringFrequency>('WEEKLY');
   const [submitting, setSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     loadMonitoringData();
     loadTargets();
-  }, []);
+  }, [statusFilter, targetIdFilter]);
 
   const loadMonitoringData = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await monitoringApi.getAllConfigurations();
-      setConfigs(res);
+      let filtered = res;
+      if (statusFilter === 'ACTIVE') {
+        filtered = filtered.filter((c) => c.enabled);
+      }
+      if (targetIdFilter) {
+        filtered = filtered.filter((c) => c.targetId === targetIdFilter);
+      }
+      setConfigs(filtered);
     } catch (err: any) {
       setError(err.message || 'Failed to load monitoring configurations');
     } finally {
@@ -54,8 +70,8 @@ export const MonitoringPage: React.FC = () => {
     try {
       const res = await targetApi.listTargets();
       setTargets(res);
-      if (res.length > 0) {
-        setSelectedTargetId(res[0].id);
+      if (res.length > 0 && !selectedTargetId) {
+        setSelectedTargetId(targetIdFilter || res[0].id);
       }
     } catch (err: any) {
       console.error(err);
@@ -74,7 +90,7 @@ export const MonitoringPage: React.FC = () => {
       setIsModalOpen(false);
       await loadMonitoringData();
     } catch (err: any) {
-      setError(err.message || 'Failed to configure monitoring schedule');
+      alert('Failed to configure monitoring schedule: ' + (err?.message || 'Check target status.'));
     } finally {
       setSubmitting(false);
     }
@@ -96,122 +112,635 @@ export const MonitoringPage: React.FC = () => {
   const getStatusBadge = (status: MonitoringStatus) => {
     switch (status) {
       case 'SUCCESS':
-        return <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold">SUCCESS</span>;
+        return {
+          bg: '#ecfdf5',
+          text: '#059669',
+          border: '#a7f3d0',
+          label: 'Healthy / Passed',
+          icon: <CheckCircle2 size={12} />,
+        };
       case 'RUNNING':
-        return <span className="px-2.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-semibold flex items-center space-x-1"><RefreshCw className="w-3 h-3 animate-spin mr-1" />RUNNING</span>;
+        return {
+          bg: '#eff6ff',
+          text: '#0284c7',
+          border: '#bae6fd',
+          label: 'Executing Now',
+          icon: <RefreshCw size={12} className="spin" />,
+        };
       case 'BLOCKED_AUTHORIZATION_EXPIRED':
-        return <span className="px-2.5 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-xs font-semibold flex items-center space-x-1"><Lock className="w-3 h-3 mr-1" />BLOCKED (EXPIRED AUTH)</span>;
+        return {
+          bg: '#fff1f2',
+          text: '#e11d48',
+          border: '#fecdd3',
+          label: 'Blocked (Auth Expired)',
+          icon: <Lock size={12} />,
+        };
       case 'FAILED':
-        return <span className="px-2.5 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-xs font-semibold">FAILED</span>;
+        return {
+          bg: '#fef2f2',
+          text: '#dc2626',
+          border: '#fca5a5',
+          label: 'Scan Failed',
+          icon: <AlertTriangle size={12} />,
+        };
       default:
-        return <span className="px-2.5 py-0.5 bg-slate-500/20 text-slate-400 border border-slate-500/30 rounded text-xs font-semibold">IDLE</span>;
+        return {
+          bg: '#f8fafc',
+          text: '#64748b',
+          border: '#e2e8f0',
+          label: 'Scheduled Idle',
+          icon: <Clock size={12} />,
+        };
     }
   };
 
+  const activeCount = configs.filter((c) => c.enabled).length;
+  const uniqueTargetsCount = new Set(configs.map((c) => c.targetId)).size;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-xl border border-slate-800 backdrop-blur-md">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-indigo-400">
-            <Activity className="w-6 h-6" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', paddingBottom: '36px' }}>
+      {/* Top Header Card */}
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '22px 26px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          boxShadow: '0 2px 10px rgba(2, 132, 199, 0.04)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div
+            style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
+              border: '1px solid #7dd3fc',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.15)',
+            }}
+          >
+            <Activity size={24} style={{ color: '#0284c7' }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Continuous Authorized Monitoring</h1>
-            <p className="text-slate-400 text-sm">Automated recurring security assessment schedules with mandatory authorization checks</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                Continuous Monitoring
+              </h1>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: '#ecfdf5',
+                  color: '#059669',
+                  border: '1px solid #a7f3d0',
+                }}
+              >
+                LIVE AUTONOMOUS
+              </span>
+            </div>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Scheduled recurring vulnerability evaluations with automated pre-flight scope and certificate verification.
+            </p>
           </div>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-indigo-600/20"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Monitoring Schedule</span>
-        </button>
+        {/* Right Corner Buttons */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            onClick={loadMonitoringData}
+            title="Refresh Monitoring State"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              background: '#ffffff',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-primary)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = 'var(--brand-primary)';
+              e.currentTarget.style.color = 'var(--brand-primary)';
+              e.currentTarget.style.backgroundColor = '#f0f9ff';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+              e.currentTarget.style.backgroundColor = '#ffffff';
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'spin' : ''} />
+            <span>Refresh</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            id="add-monitoring-schedule-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '9px 18px',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              color: '#ffffff',
+              border: '1px solid #0284c7',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 18px rgba(2, 132, 199, 0.45)';
+              e.currentTarget.style.filter = 'brightness(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(2, 132, 199, 0.35)';
+              e.currentTarget.style.filter = 'brightness(1)';
+            }}
+          >
+            <Plus size={16} /> Add Schedule
+          </button>
+        </div>
       </div>
 
+      {/* Metric KPI Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '10px',
+            padding: '16px 18px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.03)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Schedules
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
+              {configs.length}
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Configured automated routines
+            </div>
+          </div>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#0284c7',
+            }}
+          >
+            <Calendar size={18} />
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '10px',
+            padding: '16px 18px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.03)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Active Schedules
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#059669', marginTop: '4px' }}>
+              {activeCount}
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Recurring scans triggered on cadence
+            </div>
+          </div>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#059669',
+            }}
+          >
+            <Zap size={18} />
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '10px',
+            padding: '16px 18px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.03)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Monitored Targets
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#0284c7', marginTop: '4px' }}>
+              {uniqueTargetsCount}
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Distinct web target hosts covered
+            </div>
+          </div>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#0284c7',
+            }}
+          >
+            <TargetIcon size={18} />
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '10px',
+            padding: '16px 18px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.03)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Policy Enforcement
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#0284c7', marginTop: '4px' }}>
+              Strict (100%)
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Scope & cert re-verified before run
+            </div>
+          </div>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#059669',
+            }}
+          >
+            <ShieldCheck size={18} />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter notice if active */}
+      {(statusFilter || targetIdFilter) && (
+        <div
+          style={{
+            background: '#e0f2fe',
+            border: '1px solid #bae6fd',
+            borderRadius: '8px',
+            padding: '10px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            color: '#0369a1',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Activity size={16} />
+            <span>
+              Filtered: {statusFilter && `Status = ${statusFilter}`} {targetIdFilter && `Target = ${targetIdFilter}`}
+            </span>
+          </div>
+          <button
+            onClick={() => setSearchParams({})}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#0284c7',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontSize: '12px',
+            }}
+          >
+            Clear Filter
+          </button>
+        </div>
+      )}
+
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-rose-400 text-sm flex items-center space-x-2">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '10px',
+            padding: '14px 18px',
+            color: '#dc2626',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <AlertTriangle size={16} />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Safety Boundary Note */}
-      <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 flex items-start space-x-3 text-xs text-slate-300">
-        <ShieldCheck className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+      {/* Safety Policy Notice */}
+      <div
+        style={{
+          background: 'linear-gradient(90deg, #f0fdf4 0%, #f0f9ff 100%)',
+          border: '1px solid #bbf7d0',
+          borderRadius: '10px',
+          padding: '12px 18px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          fontSize: '12px',
+          color: '#1e293b',
+          lineHeight: 1.5,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
+        }}
+      >
+        <ShieldCheck size={18} style={{ color: '#059669', marginTop: '2px', flexShrink: 0 }} />
         <div>
-          <strong className="text-white">Strict Authorization Enforced:</strong> Before executing any scheduled monitoring run, AEGIS re-validates target status and unexpired authorization records. If target authorization expires, scheduled monitoring is automatically BLOCKED.
+          <strong style={{ color: '#0f172a' }}>Pre-Flight Scope Compliance Guarantee:</strong> Prior to firing any scheduled
+          recurring assessment, GlobalShield autonomously re-verifies the target's explicit scope and non-expired written
+          authorization. If an authorization certificate expires, the engine automatically flags the run as{' '}
+          <span style={{ color: '#e11d48', fontWeight: 700 }}>BLOCKED</span>, prohibiting unauthorized scans.
         </div>
       </div>
 
-      {/* Monitoring Schedules Table */}
-      <div className="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-base font-bold text-white flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-indigo-400" />
+      {/* Main Schedules Table Card */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: '12px',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border-subtle)',
+            background: '#ffffff',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Calendar size={16} style={{ color: 'var(--brand-primary)' }} />
             <span>Active Monitoring Configurations ({configs.length})</span>
-          </h3>
-
-          <button onClick={loadMonitoringData} className="p-1.5 text-slate-400 hover:text-white transition-colors">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          </div>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            Showing {configs.length} active schedule rules
+          </span>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-400">Loading monitoring configurations...</div>
+          <div style={{ padding: '52px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <RefreshCw size={26} className="spin" style={{ margin: '0 auto 12px', color: 'var(--brand-primary)' }} />
+            <div style={{ fontWeight: 600 }}>Loading monitoring schedules...</div>
+          </div>
         ) : configs.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
-            <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" />
-            <p>No continuous monitoring configurations set up. Click "Add Monitoring Schedule" to begin.</p>
+          <div style={{ padding: '56px 24px', textAlign: 'center' }}>
+            <div
+              style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '50%',
+                background: '#f0f9ff',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '14px',
+              }}
+            >
+              <Activity size={28} style={{ color: 'var(--brand-primary)' }} />
+            </div>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+              No Monitoring Schedules Active
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 20px auto' }}>
+              Automate recurring security scans to continuously track regression vectors, patch drifts, and newly exposed attack paths.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '9px 18px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+              }}
+            >
+              <Plus size={15} /> Add First Schedule
+            </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="p-4">Target Name</th>
-                  <th className="p-4">Primary URL</th>
-                  <th className="p-4">Frequency</th>
-                  <th className="p-4">State</th>
-                  <th className="p-4">Last Run Status</th>
-                  <th className="p-4">Next Run Scheduled</th>
-                  <th className="p-4 text-right">Actions</th>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Target Scope</th>
+                  <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Cadence</th>
+                  <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>State</th>
+                  <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Last Run Health</th>
+                  <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Next Scheduled Execution</th>
+                  <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>Controls</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {configs.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 font-semibold text-white">{c.targetName}</td>
-                    <td className="p-4 font-mono text-[11px] text-slate-400">{c.targetUrl}</td>
-                    <td className="p-4 font-bold text-indigo-400">{c.frequency}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                        c.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
-                      }`}>
-                        {c.enabled ? 'ENABLED' : 'DISABLED'}
-                      </span>
-                    </td>
-                    <td className="p-4">{getStatusBadge(c.lastStatus)}</td>
-                    <td className="p-4 text-slate-400">
-                      {c.nextRunAt ? new Date(c.nextRunAt).toLocaleString() : 'N/A'}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => handleToggle(c)}
-                        className={`p-1.5 rounded transition-colors ${
-                          c.enabled
-                            ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20'
-                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                        }`}
-                        title={c.enabled ? 'Disable Schedule' : 'Enable Schedule'}
-                      >
-                        <Power className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                {configs.map((c) => {
+                  const badge = getStatusBadge(c.lastStatus);
+                  return (
+                    <tr
+                      key={c.id}
+                      style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.15s ease' }}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    >
+                      <td style={{ padding: '14px 18px' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.targetName}</div>
+                        <div style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                          {c.targetUrl}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 18px' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 9px',
+                            borderRadius: '6px',
+                            background: '#f0f9ff',
+                            color: '#0284c7',
+                            border: '1px solid #bae6fd',
+                          }}
+                        >
+                          <Clock size={11} />
+                          {c.frequency}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 18px' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 10px',
+                            borderRadius: '12px',
+                            background: c.enabled ? '#ecfdf5' : '#f8fafc',
+                            color: c.enabled ? '#059669' : '#64748b',
+                            border: `1px solid ${c.enabled ? '#a7f3d0' : '#e2e8f0'}`,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              backgroundColor: c.enabled ? '#10b981' : '#94a3b8',
+                            }}
+                          />
+                          {c.enabled ? 'ACTIVE' : 'PAUSED'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 18px' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 9px',
+                            borderRadius: '6px',
+                            background: badge.bg,
+                            color: badge.text,
+                            border: `1px solid ${badge.border}`,
+                          }}
+                        >
+                          {badge.icon}
+                          {badge.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 18px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                        {c.nextRunAt ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Calendar size={13} style={{ color: 'var(--text-muted)' }} />
+                            <span>{new Date(c.nextRunAt).toLocaleString()}</span>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Not scheduled</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleToggle(c)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            border: `1px solid ${c.enabled ? '#fecaca' : '#bae6fd'}`,
+                            background: c.enabled ? '#fff5f5' : '#f0f9ff',
+                            color: c.enabled ? '#dc2626' : '#0284c7',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = c.enabled ? '#fee2e2' : '#e0f2fe';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = c.enabled ? '#fff5f5' : '#f0f9ff';
+                          }}
+                          title={c.enabled ? 'Pause schedule' : 'Enable schedule'}
+                        >
+                          <Power size={12} />
+                          <span>{c.enabled ? 'Pause' : 'Activate'}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -220,61 +749,185 @@ export const MonitoringPage: React.FC = () => {
 
       {/* Add Schedule Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleCreateConfig} className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <Activity className="w-5 h-5 text-indigo-400" />
-                <span>Add Continuous Monitoring Schedule</span>
-              </h3>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white text-sm">
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-slate-400 uppercase font-semibold">Target</label>
-                <select
-                  value={selectedTargetId}
-                  onChange={(e) => setSelectedTargetId(e.target.value)}
-                  className="mt-1 w-full bg-slate-800 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700"
-                  required
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999,
+            padding: '16px',
+          }}
+        >
+          <form
+            onSubmit={handleCreateConfig}
+            style={{
+              background: '#ffffff',
+              borderRadius: '14px',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '24px 28px',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: '#e0f2fe',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#0284c7',
+                  }}
                 >
-                  {targets.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.primaryUrl})</option>
-                  ))}
-                </select>
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Add Monitoring Schedule
+                  </h3>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                    Set up autonomous recurrent vulnerability checks
+                  </div>
+                </div>
               </div>
-
-              <div>
-                <label className="text-xs text-slate-400 uppercase font-semibold">Schedule Frequency</label>
-                <select
-                  value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as MonitoringFrequency)}
-                  className="mt-1 w-full bg-slate-800 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700"
-                >
-                  <option value="DAILY">Daily Assessment</option>
-                  <option value="WEEKLY">Weekly Assessment</option>
-                  <option value="MONTHLY">Monthly Assessment</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-3">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fee2e2';
+                  e.currentTarget.style.color = '#dc2626';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8fafc';
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13px' }}>
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                  Target Scope *
+                </label>
+                <select
+                  value={selectedTargetId}
+                  onChange={(e) => setSelectedTargetId(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-subtle)',
+                    background: '#ffffff',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                >
+                  {targets.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.primaryUrl})
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Only targets with authorized credentials will execute automatically.
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                  Execution Cadence *
+                </label>
+                <select
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value as MonitoringFrequency)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-subtle)',
+                    background: '#ffffff',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="DAILY">Daily Assessment (Recommended for CI/CD)</option>
+                  <option value="WEEKLY">Weekly Assessment (Recommended for Production)</option>
+                  <option value="MONTHLY">Monthly Assessment (Governance & Compliance)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  background: '#f8fafc',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-subtle)',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting || !selectedTargetId}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-indigo-600/20"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 20px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  color: '#ffffff',
+                  border: '1px solid #0284c7',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: submitting || !selectedTargetId ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+                  transition: 'all 0.15s ease',
+                }}
               >
-                {submitting ? 'Saving...' : 'Enable Schedule'}
+                <Check size={14} />
+                <span>{submitting ? 'Activating...' : 'Activate Schedule'}</span>
               </button>
             </div>
           </form>

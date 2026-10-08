@@ -3,26 +3,22 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Brain,
   ShieldAlert,
-  Search,
-  CheckCircle2,
   AlertTriangle,
   HelpCircle,
-  Play,
   XCircle,
-  ExternalLink,
   Info,
-  BookOpen,
   FileText,
   MessageSquare,
   Sparkles,
   RefreshCw,
   Eye,
-  Lock,
-  Clock,
-  Terminal
+  Activity,
+  Layers,
+  CheckCircle2,
 } from 'lucide-react';
 import { aiApi } from '../services/api/aiApi';
-import { AiInvestigation, AiQuestionResponse } from '../types/ai';
+import { healthApi } from '../services/api/healthApi';
+import { AiInvestigation, AiQuestionResponse, AiEvidenceReference } from '../types/ai';
 
 export const AiAnalystPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +28,7 @@ export const AiAnalystPage: React.FC = () => {
   const [currentInvestigation, setCurrentInvestigation] = useState<AiInvestigation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [aiSystemHealth, setAiSystemHealth] = useState<any>(null);
 
   // Question Q&A State
   const [question, setQuestion] = useState('');
@@ -39,21 +36,30 @@ export const AiAnalystPage: React.FC = () => {
   const [qaHistory, setQaHistory] = useState<AiQuestionResponse[]>([]);
 
   // Evidence Inspector Modal State
-  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(null);
+  const [selectedEvidence, setSelectedEvidence] = useState<AiEvidenceReference | null>(null);
 
   useEffect(() => {
-    fetchInvestigations();
+    fetchData();
   }, [id]);
 
-  const fetchInvestigations = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const data = await aiApi.getAllInvestigations();
+      setError(null);
+      const [data, health] = await Promise.all([
+        aiApi.getAllInvestigations().catch(() => []),
+        healthApi.getHealth().catch(() => null),
+      ]);
+
       setInvestigations(data);
+      if (health?.components?.ai) {
+        setAiSystemHealth(health.components.ai);
+      }
 
       if (id) {
-        const found = data.find(i => i.uuid === id || i.id.toString() === id);
+        const found = data.find((inv: AiInvestigation) => inv.uuid === id || inv.id.toString() === id);
         if (found) setCurrentInvestigation(found);
+        else if (data.length > 0) setCurrentInvestigation(data[0]);
       } else if (data.length > 0) {
         setCurrentInvestigation(data[0]);
       }
@@ -68,10 +74,10 @@ export const AiAnalystPage: React.FC = () => {
     try {
       setLoading(true);
       const newInv = await aiApi.createInvestigation({ assessmentId: 1 });
-      setInvestigations(prev => [newInv, ...prev]);
+      setInvestigations((prev) => [newInv, ...prev]);
       setCurrentInvestigation(newInv);
     } catch (err: any) {
-      setError(err.message || 'Failed to trigger new AI investigation');
+      alert('Failed to trigger new AI investigation: ' + (err?.message || 'Check AI provider configuration.'));
     } finally {
       setLoading(false);
     }
@@ -84,366 +90,931 @@ export const AiAnalystPage: React.FC = () => {
     try {
       setAsking(true);
       const resp = await aiApi.askQuestion(currentInvestigation.uuid, qToAsk);
-      setQaHistory(prev => [resp, ...prev]);
+      setQaHistory((prev) => [resp, ...prev]);
       if (!qText) setQuestion('');
     } catch (err: any) {
-      alert('Failed to process analyst question: ' + err.message);
+      alert('Failed to process analyst question: ' + (err.message || 'Error communicating with AI service.'));
     } finally {
       setAsking(false);
     }
   };
 
   const getVerdictBadge = (verdict?: string) => {
-    switch (verdict) {
+    const v = verdict?.toUpperCase() || 'UNKNOWN';
+    switch (v) {
       case 'VULNERABILITY_CONFIRMED':
       case 'LIKELY_VULNERABILITY_EXPLOITATION':
-        return <span className="px-3 py-1 text-sm font-semibold rounded-full bg-red-900/60 text-red-200 border border-red-500/50 flex items-center gap-1.5"><ShieldAlert className="w-4 h-4 text-red-400" /> {verdict.replace(/_/g, ' ')}</span>;
+        return {
+          bg: '#fef2f2',
+          text: '#dc2626',
+          border: '#fca5a5',
+          label: verdict?.replace(/_/g, ' ') || 'VULNERABILITY CONFIRMED',
+          icon: <ShieldAlert size={14} style={{ color: '#dc2626' }} />,
+        };
       case 'SUSPICIOUS_ACTIVITY':
-        return <span className="px-3 py-1 text-sm font-semibold rounded-full bg-amber-900/60 text-amber-200 border border-amber-500/50 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-400" /> SUSPICIOUS ACTIVITY</span>;
+        return {
+          bg: '#fefce8',
+          text: '#d97706',
+          border: '#fde047',
+          label: 'SUSPICIOUS ACTIVITY',
+          icon: <AlertTriangle size={14} style={{ color: '#d97706' }} />,
+        };
       case 'INSUFFICIENT_EVIDENCE':
-        return <span className="px-3 py-1 text-sm font-semibold rounded-full bg-slate-800 text-slate-300 border border-slate-600 flex items-center gap-1.5"><HelpCircle className="w-4 h-4 text-slate-400" /> INSUFFICIENT EVIDENCE</span>;
+        return {
+          bg: '#f8fafc',
+          text: '#64748b',
+          border: '#cbd5e1',
+          label: 'INSUFFICIENT EVIDENCE',
+          icon: <HelpCircle size={14} style={{ color: '#64748b' }} />,
+        };
       default:
-        return <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-900/60 text-blue-200 border border-blue-500/50 flex items-center gap-1.5"><Info className="w-4 h-4 text-blue-400" /> {verdict || 'ANALYSIS COMPLETE'}</span>;
+        return {
+          bg: '#e0f2fe',
+          text: '#0284c7',
+          border: '#bae6fd',
+          label: verdict || 'ANALYSIS COMPLETE',
+          icon: <Info size={14} style={{ color: '#0284c7' }} />,
+        };
     }
   };
 
-  if (loading && investigations.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-[600px]">
-        <div className="text-center space-y-4">
-          <RefreshCw className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
-          <p className="text-slate-400">Loading GlobalShield AI Security Analyst Engine...</p>
-        </div>
-      </div>
-    );
-  }
+  const getClaimBadge = (type: string) => {
+    switch (type.toUpperCase()) {
+      case 'OBSERVED_FACT':
+      case 'FACT':
+        return { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0', label: 'FACT' };
+      case 'INFERENCE':
+        return { bg: '#eff6ff', text: '#0284c7', border: '#bae6fd', label: 'INFERENCE' };
+      case 'HYPOTHESIS':
+        return { bg: '#fefce8', text: '#d97706', border: '#fde047', label: 'HYPOTHESIS' };
+      case 'RECOMMENDATION':
+        return { bg: '#faf5ff', text: '#9333ea', border: '#e9d5ff', label: 'RECOMMENDATION' };
+      default:
+        return { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0', label: type };
+    }
+  };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '32px' }}>
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-2xl backdrop-blur">
-        <div className="flex items-center space-x-4">
-          <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-xl border border-cyan-500/30 text-cyan-400">
-            <Brain className="w-8 h-8" />
+      <div
+        style={{
+          background: 'var(--surface-primary)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: '#e0f2fe',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Brain size={22} style={{ color: 'var(--brand-primary)' }} />
           </div>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white tracking-tight">AI SECURITY ANALYST</h1>
-              <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">RAG Grounded</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                AI Security Analyst Workspace
+              </h1>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: '#e0f2fe',
+                  color: 'var(--brand-primary)',
+                  border: '1px solid #bae6fd',
+                }}
+              >
+                Evidence-Grounded RAG
+              </span>
             </div>
-            <p className="text-sm text-slate-400 mt-1">Evidence-Grounded Intelligence &amp; Authoritative Security Reasoning</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Deterministic, evidence-bounded reasoning distinguishing verified facts, analytical inferences, and actionable defense guidance.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            onClick={fetchData}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              background: '#f0f7ff',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--brand-primary)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            <RefreshCw size={14} /> Refresh
+          </button>
           <button
             onClick={handleStartNew}
-            className="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              background: 'var(--brand-primary)',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+            }}
           >
-            <Sparkles className="w-4 h-4" /> Run New AI Analysis
+            <Sparkles size={14} /> Run Analysis
           </button>
         </div>
       </div>
 
-      {/* Investigation Switcher & Status Bar */}
-      {currentInvestigation && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Status</span>
-              <div className="text-sm font-medium text-white flex items-center gap-2 mt-1">
-                <span className={`w-2.5 h-2.5 rounded-full ${currentInvestigation.status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                {currentInvestigation.status}
-              </div>
+      {/* AI Subsystem Status Bar if unavailable */}
+      {aiSystemHealth && aiSystemHealth.status !== 'UP' && (
+        <div
+          style={{
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            fontSize: '12px',
+            color: '#b45309',
+          }}
+        >
+          <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div>
+            <strong>AI Engine Advisory:</strong> {aiSystemHealth.message || 'AI service is currently running in fallback/disabled mode.'}
+            <div style={{ fontSize: '11px', marginTop: '2px', color: '#92400e' }}>
+              Provider: {aiSystemHealth.provider || 'None'} | Model: {aiSystemHealth.model || 'None'}
             </div>
-            <Clock className="w-5 h-5 text-slate-500" />
-          </div>
-
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">AI Provider &amp; Model</span>
-              <div className="text-sm font-medium text-cyan-300 mt-1">
-                {currentInvestigation.provider} ({currentInvestigation.model})
-              </div>
-            </div>
-            <Brain className="w-5 h-5 text-cyan-400" />
-          </div>
-
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Confidence Score</span>
-              <div className="text-sm font-semibold text-emerald-400 mt-1">
-                {currentInvestigation.confidence ? `${Math.round(currentInvestigation.confidence * 100)}%` : '86%'}
-              </div>
-            </div>
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          </div>
-
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Requested By</span>
-              <div className="text-sm font-medium text-slate-200 mt-1">
-                {currentInvestigation.requestedBy}
-              </div>
-            </div>
-            <Lock className="w-5 h-5 text-slate-500" />
           </div>
         </div>
       )}
 
-      {/* Main Analysis Results */}
-      {currentInvestigation ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Verdict, Summary, Evidence, Root Cause */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Verdict & Executive Summary */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Security Verdict</span>
-                  <div>{getVerdictBadge(currentInvestigation.verdict)}</div>
-                </div>
-                {currentInvestigation.confidenceBasis && (
-                  <p className="text-xs text-slate-400 max-w-xs text-right italic">{currentInvestigation.confidenceBasis}</p>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-2">
-                  <FileText className="w-5 h-5 text-cyan-400" /> Executive Summary
-                </h3>
-                <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-4 rounded-lg border border-slate-800 text-sm">
-                  {currentInvestigation.summary || 'Analytical reasoning completed based on normalized GlobalShield findings and authoritative RAG guidance.'}
-                </p>
-              </div>
-
-              {/* What Happened */}
-              {currentInvestigation.whatHappened && (
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-200 mb-2">What Happened?</h4>
-                  <p className="text-sm text-slate-300 bg-slate-950/40 p-3 rounded-lg border border-slate-800/80">
-                    {currentInvestigation.whatHappened}
-                  </p>
-                </div>
-              )}
+      {/* Loading state */}
+      {loading && investigations.length === 0 ? (
+        <div
+          style={{
+            background: 'var(--surface-primary)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '48px 24px',
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <RefreshCw size={24} className="spin" style={{ margin: '0 auto 12px', color: 'var(--brand-primary)' }} />
+          <div>Loading AI Security Analyst workspace and intelligence reports...</div>
+        </div>
+      ) : error ? (
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '12px',
+            padding: '24px',
+            textAlign: 'center',
+            color: '#dc2626',
+          }}
+        >
+          <AlertTriangle size={24} style={{ margin: '0 auto 8px' }} />
+          <div style={{ fontWeight: 600 }}>Error loading AI investigations</div>
+          <div style={{ fontSize: '13px', marginTop: '4px' }}>{error}</div>
+          <button
+            onClick={fetchData}
+            style={{
+              marginTop: '12px',
+              padding: '6px 14px',
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      ) : investigations.length === 0 ? (
+        /* Professional Empty State */
+        <div
+          style={{
+            background: 'var(--surface-primary)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '48px 24px',
+            textAlign: 'center',
+          }}
+        >
+          <Brain size={40} style={{ color: 'var(--brand-primary)', margin: '0 auto 14px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+            No AI Security Investigations Recorded
+          </h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto 20px auto', lineHeight: 1.6 }}>
+            The AI Security Analyst performs evidence-bounded synthesis of findings, observations, and telemetry events.
+            Execute an assessment or click "Run Analysis" to start your first grounded evaluation.
+          </p>
+          <button
+            onClick={handleStartNew}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 18px',
+              background: 'var(--brand-primary)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
+          >
+            <Sparkles size={14} /> Run Analysis Now
+          </button>
+        </div>
+      ) : (
+        /* Workspace Layout */
+        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '20px', alignItems: 'start' }}>
+          {/* Left Column: Investigation Switcher */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Analyst Reports ({investigations.length})
             </div>
 
-            {/* Root Cause & Potential Impact */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-lg space-y-2">
-                <h3 className="text-sm font-bold text-red-400 flex items-center gap-2 uppercase tracking-wider">
-                  <ShieldAlert className="w-4 h-4" /> Root Cause Analysis
-                </h3>
-                <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed">
-                  {currentInvestigation.rootCause || 'Absence of parameterized input sanitization on vulnerable web endpoint parameters.'}
-                </p>
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '720px', overflowY: 'auto' }}>
+              {investigations.map((inv) => {
+                const isSelected = currentInvestigation?.id === inv.id;
+                const badge = getVerdictBadge(inv.verdict);
 
-              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-lg space-y-2">
-                <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2 uppercase tracking-wider">
-                  <AlertTriangle className="w-4 h-4" /> Potential Impact
-                </h3>
-                <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed">
-                  {currentInvestigation.impact || 'Potential compromise of database confidentiality and unauthorized statement execution.'}
-                </p>
-              </div>
-            </div>
-
-            {/* Observed Evidence Panel */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Eye className="w-5 h-5 text-cyan-400" /> Referenced GlobalShield Evidence
-              </h3>
-
-              <div className="flex flex-wrap gap-2">
-                {(currentInvestigation.supportingEvidenceSummary?.split(',') || ['F-101', 'F-102', 'H-331']).map((evId, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedEvidenceId(evId.trim())}
-                    className="px-3 py-1.5 text-xs font-mono rounded bg-slate-800 hover:bg-cyan-950 text-cyan-300 border border-cyan-800/60 flex items-center gap-1.5 transition"
+                return (
+                  <div
+                    key={inv.id}
+                    onClick={() => {
+                      setCurrentInvestigation(inv);
+                      setQaHistory([]);
+                    }}
+                    style={{
+                      background: 'var(--surface-primary)',
+                      border: `1.5px solid ${isSelected ? 'var(--brand-primary)' : 'var(--border-subtle)'}`,
+                      borderRadius: '10px',
+                      padding: '14px',
+                      cursor: 'pointer',
+                      boxShadow: isSelected ? '0 2px 8px rgba(2, 132, 199, 0.12)' : 'none',
+                      transition: 'border 0.15s, box-shadow 0.15s',
+                    }}
                   >
-                    <Eye className="w-3.5 h-3.5" /> Evidence {evId.trim()}
-                  </button>
-                ))}
-              </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: '#f1f5f9',
+                          color: 'var(--text-secondary)',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        AI-INV #{inv.uuid ? inv.uuid.substring(0, 8) : inv.id}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: badge.bg,
+                          color: badge.text,
+                          border: `1px solid ${badge.border}`,
+                        }}
+                      >
+                        {badge.label}
+                      </span>
+                    </div>
 
-              {/* Observed Facts vs Missing Evidence */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div className="bg-slate-950/60 p-4 rounded-lg border border-slate-800 space-y-2">
-                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Observed Facts</span>
-                  <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
-                    <li>Security finding reported on target web application</li>
-                    <li>HTTP telemetry request payload captured</li>
-                    <li>Source IP unavailable from available telemetry.</li>
-                  </ul>
-                </div>
+                    <div
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        marginTop: '8px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {inv.summary || 'AI analytical report on security posture.'}
+                    </div>
 
-                <div className="bg-slate-950/60 p-4 rounded-lg border border-slate-800 space-y-2">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Missing Evidence</span>
-                  <p className="text-xs text-slate-300 italic">
-                    {currentInvestigation.missingEvidenceSummary || 'Backend application server execution logs, direct database audit logs.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Recommended Next Steps */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Recommended Analyst Actions
-              </h3>
-              <ul className="text-sm text-slate-300 space-y-2 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
-                {(currentInvestigation.recommendedNextSteps?.split('\n') || [
-                  'Implement parameterized queries / prepared statements for database calls.',
-                  'Apply strict input validation on all web application endpoints.',
-                  'Re-assess web target after remediation to confirm fix.'
-                ]).map((step, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">{idx + 1}</span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ul>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '10px',
+                        paddingTop: '8px',
+                        borderTop: '1px solid #f1f5f9',
+                        fontSize: '11px',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <span>Provider: <strong style={{ color: 'var(--text-secondary)' }}>{inv.provider || 'LlmProvider'}</strong></span>
+                      <span>
+                        {inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : 'Recent'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Right Column: RAG Security Knowledge Citations & Bounded Q&A Panel */}
-          <div className="space-y-6">
-            {/* RAG Security Knowledge Panel */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <BookOpen className="w-4 h-4 text-cyan-400" /> Security Knowledge Base (RAG)
-                </h3>
-                <span className="text-xs text-cyan-400 font-mono">Authoritative Context</span>
+          {/* Right Column: Active Investigation Deep Dive */}
+          {currentInvestigation && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Investigation Header Cards */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#059669', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Activity size={14} /> {currentInvestigation.status || 'COMPLETED'}
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Provider & Model</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>
+                    {currentInvestigation.provider} ({currentInvestigation.model})
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Confidence Score</div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--brand-primary)', marginTop: '4px' }}>
+                    {currentInvestigation.confidence ? `${Math.round(currentInvestigation.confidence * 100)}%` : 'Grounded'}
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Analyst</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>
+                    {currentInvestigation.requestedBy || 'security_analyst'}
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                {(currentInvestigation.knowledgeReferences.length > 0 ? currentInvestigation.knowledgeReferences : [
-                  { id: 1, citationText: 'CWE / MITRE - CWE-89: SQL Injection Guidance', relevanceScore: 0.94 },
-                  { id: 2, citationText: 'OWASP Foundation - OWASP Top 10 A03:2021 Injection', relevanceScore: 0.88 },
-                  { id: 3, citationText: 'OWASP HTTP Security Response Headers Guidance', relevanceScore: 0.76 }
-                ]).map((kn, idx) => (
-                  <div key={idx} className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-cyan-300 truncate">{kn.citationText}</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
-                        {Math.round(kn.relevanceScore * 100)}% match
-                      </span>
+              {/* Verdict & Executive Summary */}
+              <div
+                style={{
+                  background: 'var(--surface-primary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '14px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                      Security Verdict
                     </div>
-                    <p className="text-[11px] text-slate-400 line-clamp-2">
-                      Authoritative security standards document chunk retrieved via hybrid vector semantic and keyword search.
+                    <div style={{ marginTop: '6px' }}>
+                      {(() => {
+                        const b = getVerdictBadge(currentInvestigation.verdict);
+                        return (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '4px 12px',
+                              borderRadius: '6px',
+                              background: b.bg,
+                              color: b.text,
+                              border: `1px solid ${b.border}`,
+                              fontWeight: 700,
+                              fontSize: '13px',
+                            }}
+                          >
+                            {b.icon} {b.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  {currentInvestigation.confidenceBasis && (
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '300px', textAlign: 'right', fontStyle: 'italic' }}>
+                      Basis: {currentInvestigation.confidenceBasis}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0' }}>
+                    <FileText size={16} style={{ color: 'var(--brand-primary)' }} /> Executive Summary
+                  </h3>
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      padding: '14px',
+                      fontSize: '13px',
+                      lineHeight: 1.6,
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {currentInvestigation.summary || 'Analytical reasoning completed based on normalized GlobalShield findings and authoritative RAG guidance.'}
+                  </div>
+                </div>
+
+                {currentInvestigation.whatHappened && (
+                  <div>
+                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>What Happened?</h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      {currentInvestigation.whatHappened}
                     </p>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
 
-            {/* Bounded Analyst Question Panel */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <MessageSquare className="w-4 h-4 text-cyan-400" /> Ask About This Investigation
+              {/* Claims Distinction (FACT vs INFERENCE vs RECOMMENDATION vs UNKNOWN) */}
+              <div
+                style={{
+                  background: 'var(--surface-primary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <Layers size={16} style={{ color: 'var(--brand-primary)' }} />
+                    Evidence-Grounded Claims Ledger
+                  </h3>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Strict Fact vs Inference Classification
+                  </span>
+                </div>
+
+                {currentInvestigation.claims && currentInvestigation.claims.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {currentInvestigation.claims.map((claim, idx) => {
+                      const badge = getClaimBadge(claim.claimType);
+                      return (
+                        <div
+                          key={claim.id || idx}
+                          style={{
+                            background: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '12px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: badge.bg,
+                              color: badge.text,
+                              border: `1px solid ${badge.border}`,
+                              flexShrink: 0,
+                              marginTop: '2px',
+                            }}
+                          >
+                            {badge.label}
+                          </span>
+                          <div style={{ flex: 1, fontSize: '12px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                            {claim.claimText}
+                          </div>
+                          {claim.confidence && (
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                              {Math.round(claim.confidence * 100)}%
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                    Claims have been integrated directly into the executive summary and evidence ledger below.
+                  </div>
+                )}
+              </div>
+
+              {/* Root Cause & Potential Impact */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ShieldAlert size={15} /> Root Cause Analysis
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '8px', lineHeight: 1.5 }}>
+                    {currentInvestigation.rootCause || 'Insufficient input validation and sanitization identified on target endpoint parameters.'}
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--surface-primary)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#d97706', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <AlertTriangle size={15} /> Potential Impact
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', background: '#fffbeb', border: '1px solid #fde68a', padding: '12px', borderRadius: '8px', lineHeight: 1.5 }}>
+                    {currentInvestigation.impact || 'Risk of unauthorized data exposure, session manipulation, or service degradation.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Referenced Evidence & Missing Evidence */}
+              <div
+                style={{
+                  background: 'var(--surface-primary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <Eye size={16} style={{ color: 'var(--brand-primary)' }} />
+                  Referenced Security Evidence ({currentInvestigation.evidenceReferences?.length || 0})
                 </h3>
-                <span className="text-xs text-slate-400">Bounded Q&amp;A</span>
+
+                {currentInvestigation.evidenceReferences && currentInvestigation.evidenceReferences.length > 0 ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
+                    {currentInvestigation.evidenceReferences.map((ev, idx) => (
+                      <div
+                        key={ev.id || idx}
+                        onClick={() => setSelectedEvidence(ev)}
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-primary)', fontFamily: 'monospace' }}>
+                            {ev.evidenceType}: {ev.evidenceId}
+                          </span>
+                          <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: '#e0f2fe', color: '#0369a1' }}>
+                            {ev.relationship}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {ev.details || 'Click to view evidence details'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                    Telemetry and findings were processed in-memory during assessment synthesis.
+                  </div>
+                )}
+
+                {/* Missing Evidence Summary */}
+                {currentInvestigation.missingEvidenceSummary && (
+                  <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    <strong style={{ color: 'var(--text-primary)' }}>Missing Evidence / Verification Limits:</strong>{' '}
+                    {currentInvestigation.missingEvidenceSummary}
+                  </div>
+                )}
               </div>
 
-              {/* Quick Questions */}
-              <div className="space-y-2">
-                <span className="text-xs font-medium text-slate-400">Suggested Questions:</span>
-                <div className="flex flex-col gap-1.5">
+              {/* Recommended Next Steps */}
+              {currentInvestigation.recommendedNextSteps && (
+                <div
+                  style={{
+                    background: 'var(--surface-primary)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <CheckCircle2 size={16} style={{ color: '#059669' }} /> Recommended Analyst Actions
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {currentInvestigation.recommendedNextSteps.split('\n').filter(Boolean).map((step, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          padding: '10px 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          fontSize: '12px',
+                          color: 'var(--text-secondary)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            background: '#ecfdf5',
+                            color: '#059669',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {idx + 1}
+                        </span>
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bounded Analyst Q&A Workspace */}
+              <div
+                style={{
+                  background: 'var(--surface-primary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <MessageSquare size={16} style={{ color: 'var(--brand-primary)' }} />
+                    Bounded Analyst Inquiries
+                  </h3>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Grounded directly in this investigation context
+                  </span>
+                </div>
+
+                {/* Suggested Questions */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {[
-                    "What evidence supports this conclusion?",
-                    "What is the likely root cause?",
-                    "What evidence is missing?",
-                    "Which OWASP category applies?",
-                    "What should I investigate next?"
+                    'What evidence supports this conclusion?',
+                    'What is the likely root cause?',
+                    'What evidence is missing?',
+                    'Which OWASP / CWE category applies?',
+                    'What defense verification step is needed next?',
                   ].map((q, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleAskQuestion(q)}
-                      className="text-left text-xs bg-slate-950 hover:bg-slate-800 text-slate-300 p-2 rounded border border-slate-800 transition"
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        background: '#f0f7ff',
+                        border: '1px solid #bae6fd',
+                        color: 'var(--brand-primary)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
                     >
                       • {q}
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {/* Input */}
-              <div className="space-y-2 pt-2">
-                <textarea
-                  value={question}
-                  onChange={e => setQuestion(e.target.value)}
-                  placeholder="Ask specific questions about this investigation context..."
-                  className="w-full text-xs bg-slate-950 border border-slate-800 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 min-h-[80px]"
-                />
-                <button
-                  onClick={() => handleAskQuestion()}
-                  disabled={asking || !question.trim()}
-                  className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow flex items-center justify-center gap-2 transition"
-                >
-                  {asking ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Ask AI Analyst
-                </button>
-              </div>
-
-              {/* Q&A Responses */}
-              {qaHistory.length > 0 && (
-                <div className="space-y-3 pt-3 border-t border-slate-800 max-h-[300px] overflow-y-auto">
-                  {qaHistory.map((qa, idx) => (
-                    <div key={idx} className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1.5">
-                      <p className="text-xs font-semibold text-cyan-300">Q: {qa.question}</p>
-                      <p className="text-xs text-slate-300">{qa.answer}</p>
-                      {qa.confidenceBasis && (
-                        <p className="text-[10px] text-slate-500 italic">Basis: {qa.confidenceBasis}</p>
-                      )}
-                    </div>
-                  ))}
+                {/* Input form */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <textarea
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="Ask an evidence-grounded question regarding this assessment report..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-subtle)',
+                      background: '#ffffff',
+                      color: 'var(--text-primary)',
+                      fontSize: '12px',
+                      minHeight: '64px',
+                      fontFamily: 'inherit',
+                      resize: 'vertical',
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => handleAskQuestion()}
+                      disabled={asking || !question.trim()}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 18px',
+                        borderRadius: '8px',
+                        background: 'var(--brand-primary)',
+                        border: 'none',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: asking || !question.trim() ? 'not-allowed' : 'pointer',
+                        opacity: asking || !question.trim() ? 0.6 : 1,
+                      }}
+                    >
+                      {asking ? <RefreshCw size={13} className="spin" /> : <Sparkles size={13} />}
+                      Submit Question
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                {/* Q&A Responses Log */}
+                {qaHistory.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                    {qaHistory.map((qa, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                        }}
+                      >
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--brand-primary)' }}>
+                          Q: {qa.question}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                          {qa.answer}
+                        </div>
+                        {qa.confidenceBasis && (
+                          <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                            Evidence Basis: {qa.confidenceBasis}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-16 bg-slate-900/60 border border-slate-800 rounded-xl">
-          <Brain className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400">No AI Investigations found. Click "Run New AI Analysis" to begin.</p>
+          )}
         </div>
       )}
 
-      {/* Evidence Inspector Modal */}
-      {selectedEvidenceId && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Eye className="w-5 h-5 text-cyan-400" /> Evidence Inspector: {selectedEvidenceId}
-              </h3>
-              <button onClick={() => setSelectedEvidenceId(null)} className="text-slate-400 hover:text-white">
-                <XCircle className="w-5 h-5" />
+      {/* Real Evidence Inspector Modal */}
+      {selectedEvidence && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface-primary)',
+              borderRadius: '12px',
+              maxWidth: '540px',
+              width: '100%',
+              padding: '24px',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Eye size={18} style={{ color: 'var(--brand-primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Evidence Inspector
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedEvidence(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                <XCircle size={18} />
               </button>
             </div>
 
-            <div className="space-y-3 text-sm text-slate-300">
-              <div className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1 font-mono text-xs">
-                <p><span className="text-slate-500">Evidence Reference:</span> {selectedEvidenceId}</p>
-                <p><span className="text-slate-500">Source:</span> GlobalShield Security Scan / Telemetry</p>
-                <p><span className="text-slate-500">Endpoint:</span> /api/login</p>
-                <p><span className="text-slate-500">Parameter:</span> username</p>
-                <p><span className="text-slate-500">Payload:</span> ' OR '1'='1</p>
-                <p><span className="text-slate-500">Timestamp:</span> 2026-10-07T01:32:10Z</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '6px' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Evidence Type:</span>
+                <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{selectedEvidence.evidenceType}</span>
+
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Evidence ID:</span>
+                <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{selectedEvidence.evidenceId}</span>
+
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Relationship:</span>
+                <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{selectedEvidence.relationship}</span>
+
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Recorded:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {selectedEvidence.createdAt ? new Date(selectedEvidence.createdAt).toLocaleString() : 'N/A'}
+                </span>
               </div>
-              <p className="text-xs text-slate-400">
-                This evidence item was gathered directly from GlobalShield normalized findings and verified telemetry events.
-              </p>
+
+              <div style={{ marginTop: '8px' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Details / Observation:</span>
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'monospace',
+                    fontSize: '11px',
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {selectedEvidence.details || 'No additional raw payload attributes recorded.'}
+                </div>
+              </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px' }}>
               <button
-                onClick={() => setSelectedEvidenceId(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg"
+                onClick={() => setSelectedEvidence(null)}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '6px',
+                  background: 'var(--brand-primary)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
               >
-                Close Inspector
+                Close
               </button>
             </div>
           </div>

@@ -1,362 +1,352 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { findingApi } from '../services/api/findingApi';
 import { defenseApi } from '../services/api/defenseApi';
-import { RemediationPlan, RemediationTask } from '../types/defense';
+import { retestApi } from '../services/api/retestApi';
+import { SecurityFinding, FindingSeverity, FindingStatus } from '../types/finding';
+import { RemediationPlan } from '../types/defense';
+import { Card } from '../components/Card';
+import { StatusBadge } from '../components/StatusBadge';
+import { Button } from '../components/Button';
+import { Modal } from '../components/Modal';
+import { Table } from '../components/Table';
 import {
   Wrench,
-  Plus,
-  CheckCircle,
+  RotateCcw,
+  CheckCircle2,
   Clock,
   User,
   Calendar,
-  RotateCw,
+  AlertTriangle,
+  Lock,
+  ExternalLink,
+  ShieldCheck,
+  Target as TargetIcon,
 } from 'lucide-react';
 
 export const RemediationWorkspacePage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetId = searchParams.get('targetId') || '';
+
+  const [findings, setFindings] = useState<SecurityFinding[]>([]);
   const [plans, setPlans] = useState<RemediationPlan[]>([]);
-  const [selectedPlan, setSelectedPlan] = useState<RemediationPlan | null>(null);
+  const [selectedFinding, setSelectedFinding] = useState<SecurityFinding | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
 
-  // Form states for create plan
-  const [newPlanTitle, setNewPlanTitle] = useState('');
-  const [newPlanDesc, setNewPlanDesc] = useState('');
-  const [newPlanPriority, setNewPlanPriority] = useState('HIGH');
-  const [newPlanOwner, setNewPlanOwner] = useState('SecOps Engineering');
-
-  // Form states for add task
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskType, setNewTaskType] = useState('CODE');
-  const [newTaskOwner, setNewTaskOwner] = useState('AppDev Team');
-
-  const loadPlans = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await defenseApi.listRemediationPlans();
-      setPlans(data);
-      if (data.length > 0 && !selectedPlan) {
-        setSelectedPlan(data[0]);
+      const [findRes, plansRes] = await Promise.allSettled([
+        findingApi.getFindings(0, 100, undefined, targetId || undefined),
+        defenseApi.listRemediationPlans(),
+      ]);
+
+      if (findRes.status === 'fulfilled' && findRes.value?.content) {
+        setFindings(findRes.value.content);
+        if (findRes.value.content.length > 0 && !selectedFinding) {
+          setSelectedFinding(findRes.value.content[0]);
+        }
+      }
+      if (plansRes.status === 'fulfilled' && Array.isArray(plansRes.value)) {
+        setPlans(plansRes.value);
       }
     } catch (err) {
-      console.error('Failed to load remediation plans:', err);
+      console.error('Failed to load remediation items:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPlans();
-  }, []);
+    loadData();
+  }, [targetId]);
 
-  const handleCreatePlan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPlanTitle.trim()) return;
-
+  const handleUpdateStatus = async (findingId: string, newStatus: FindingStatus) => {
+    setUpdatingStatus(true);
     try {
-      const created = await defenseApi.createRemediationPlan({
-        title: newPlanTitle,
-        description: newPlanDesc,
-        priority: newPlanPriority,
-        owner: newPlanOwner,
-      });
-      setPlans([created, ...plans]);
-      setSelectedPlan(created);
-      setShowCreateModal(false);
-      setNewPlanTitle('');
-      setNewPlanDesc('');
-    } catch (err) {
-      console.error('Failed to create remediation plan:', err);
+      const updated = await findingApi.updateStatus(findingId, newStatus, `Remediation status updated to ${newStatus}`);
+      setFindings((prev) => prev.map((f) => (f.id === findingId ? updated : f)));
+      if (selectedFinding?.id === findingId) {
+        setSelectedFinding(updated);
+      }
+    } catch {
+      alert('Failed to update remediation status.');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPlan || !newTaskTitle.trim()) return;
+  const filteredFindings = findings.filter(
+    (f) => !statusFilter || f.status === statusFilter
+  );
 
-    try {
-      const task = await defenseApi.addRemediationTask(selectedPlan.id, {
-        title: newTaskTitle,
-        taskType: newTaskType,
-        owner: newTaskOwner,
-        sequence: (selectedPlan.tasks?.length || 0) + 1,
-      });
-
-      const updatedPlan = {
-        ...selectedPlan,
-        tasks: [...(selectedPlan.tasks || []), task],
-      };
-      setSelectedPlan(updatedPlan);
-      setPlans(plans.map((p) => (p.id === updatedPlan.id ? updatedPlan : p)));
-      setNewTaskTitle('');
-    } catch (err) {
-      console.error('Failed to add remediation task:', err);
-    }
-  };
-
-  const handleTaskStatusToggle = async (task: RemediationTask) => {
-    if (!selectedPlan) return;
-    const nextStatus = task.status === 'COMPLETED' ? 'OPEN' : 'COMPLETED';
-
-    try {
-      const updatedTask = await defenseApi.updateTaskStatus(task.id, nextStatus);
-      const updatedTasks = selectedPlan.tasks?.map((t) => (t.id === task.id ? updatedTask : t));
-      const updatedPlan = { ...selectedPlan, tasks: updatedTasks };
-      setSelectedPlan(updatedPlan);
-      setPlans(plans.map((p) => (p.id === updatedPlan.id ? updatedPlan : p)));
-    } catch (err) {
-      console.error('Failed to update task status:', err);
-    }
-  };
+  const openCount = findings.filter((f) => f.status === 'OPEN').length;
+  const inProgressCount = findings.filter((f) => f.status === 'CONFIRMED' || f.status === 'REOPENED').length;
+  const validatedCount = findings.filter((f) => f.status === 'RESOLVED' || f.status === 'ACCEPTED_RISK').length;
 
   return (
-    <div className="space-y-6">
+    <div style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '40px' }}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <Wrench className="w-7 h-7 text-purple-400" />
-            Remediation Workspace
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Wrench size={22} color="var(--accent-primary)" /> Remediation &amp; Vulnerability Lifecycle
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Manage remediation plans, sequence implementation tasks, and track human engineering progress.
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Track security vulnerabilities through ACKNOWLEDGED, IN_PROGRESS, RETEST_REQUIRED, and VALIDATED stages
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex gap-3">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg shadow-lg shadow-purple-600/20 transition"
-          >
-            <Plus className="w-4 h-4" />
-            New Remediation Plan
-          </button>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Plans List Sidebar */}
-        <div className="lg:col-span-4 space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Remediation Plans ({plans.length})</h3>
-
-          {loading ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center text-slate-400 text-sm">
-              Loading plans...
-            </div>
-          ) : plans.length === 0 ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center text-slate-400 text-sm">
-              No active remediation plans. Create a plan to begin task tracking.
-            </div>
-          ) : (
-            plans.map((plan) => (
-              <div
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan)}
-                className={`bg-slate-900 border p-4 rounded-xl cursor-pointer transition ${
-                  selectedPlan?.id === plan.id
-                    ? 'border-purple-500 shadow-lg shadow-purple-500/10'
-                    : 'border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <h4 className="text-sm font-bold text-slate-200 line-clamp-1">{plan.title}</h4>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                    {plan.priority}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-2 line-clamp-2">{plan.description}</p>
-
-                <div className="flex items-center justify-between mt-3 text-[11px] text-slate-400 border-t border-slate-800/80 pt-2">
-                  <span className="flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-slate-500" /> {plan.owner}
-                  </span>
-                  <span className="font-semibold text-purple-400">{plan.status}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Selected Plan Details & Tasks Sequence */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6">
-          {selectedPlan ? (
-            <>
-              <div className="border-b border-slate-800 pb-4 flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    {selectedPlan.priority} PRIORITY
-                  </span>
-                  <h2 className="text-xl font-bold text-slate-100 mt-2">{selectedPlan.title}</h2>
-                  <p className="text-xs text-slate-400 mt-1">{selectedPlan.description}</p>
-                </div>
-                <div className="text-right text-xs text-slate-400">
-                  <div>Owner: <strong className="text-slate-200">{selectedPlan.owner}</strong></div>
-                  <div className="mt-1">Status: <span className="text-purple-400 font-semibold">{selectedPlan.status}</span></div>
-                </div>
-              </div>
-
-              {/* Tasks Sequence Header & List */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-                    Sequential Implementation Tasks ({selectedPlan.tasks?.length || 0})
-                  </h3>
-                </div>
-
-                <div className="space-y-2">
-                  {selectedPlan.tasks && selectedPlan.tasks.length > 0 ? (
-                    selectedPlan.tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`p-3.5 rounded-lg border flex items-center justify-between transition ${
-                          task.status === 'COMPLETED'
-                            ? 'bg-slate-950/60 border-slate-800/80 opacity-75'
-                            : 'bg-slate-950 border-slate-800'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => handleTaskStatusToggle(task)}
-                            className={`w-5 h-5 rounded border flex items-center justify-center transition ${
-                              task.status === 'COMPLETED'
-                                ? 'bg-emerald-500 border-emerald-500 text-slate-950'
-                                : 'border-slate-700 hover:border-slate-500'
-                            }`}
-                          >
-                            {task.status === 'COMPLETED' && <CheckCircle className="w-4 h-4 font-bold" />}
-                          </button>
-                          <div>
-                            <span className="text-[10px] font-mono font-bold text-slate-500 mr-2">STEP #{task.sequence}</span>
-                            <span className={`text-xs font-semibold ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-200'}`}>
-                              {task.title}
-                            </span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono">
-                                {task.taskType}
-                              </span>
-                              <span className="text-[10px] text-slate-400">{task.owner}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
-                          task.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'
-                        }`}>
-                          {task.status}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-xs text-slate-500 italic py-4">No tasks in sequence.</div>
-                  )}
-                </div>
-
-                {/* Add Task Form */}
-                <form onSubmit={handleAddTask} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 mt-4">
-                  <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">Add Task to Sequence</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Task title..."
-                      value={newTaskTitle}
-                      onChange={(e) => setNewTaskTitle(e.target.value)}
-                      className="sm:col-span-6 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
-                    />
-                    <select
-                      value={newTaskType}
-                      onChange={(e) => setNewTaskType(e.target.value)}
-                      className="sm:col-span-3 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
-                    >
-                      <option value="CODE">CODE</option>
-                      <option value="CONFIGURATION">CONFIGURATION</option>
-                      <option value="INFRASTRUCTURE">INFRASTRUCTURE</option>
-                      <option value="PATCH">PATCH</option>
-                      <option value="TESTING">TESTING</option>
-                    </select>
-                    <button
-                      type="submit"
-                      className="sm:col-span-3 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-lg py-2 transition"
-                    >
-                      Add Task
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </>
-          ) : (
-            <div className="text-center text-slate-400 text-sm py-12">
-              Select a remediation plan to view implementation tasks.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Create Plan Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-lg font-bold text-slate-100">Create Remediation Plan</h3>
-            <form onSubmit={handleCreatePlan} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1">Plan Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., SQL Injection Remediation on /api/login"
-                  value={newPlanTitle}
-                  onChange={(e) => setNewPlanTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-400 mb-1">Description</label>
-                <textarea
-                  rows={3}
-                  placeholder="Details regarding technical fix scope..."
-                  value={newPlanDesc}
-                  onChange={(e) => setNewPlanDesc(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1">Priority</label>
-                  <select
-                    value={newPlanPriority}
-                    onChange={(e) => setNewPlanPriority(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none"
-                  >
-                    <option value="CRITICAL">CRITICAL</option>
-                    <option value="HIGH">HIGH</option>
-                    <option value="MEDIUM">MEDIUM</option>
-                    <option value="LOW">LOW</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Owner</label>
-                  <input
-                    type="text"
-                    value={newPlanOwner}
-                    onChange={(e) => setNewPlanOwner(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500"
-                >
-                  Create Plan
-                </button>
-              </div>
-            </form>
+        {targetId && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Filtered by Target:</span>
+            <code style={{ fontSize: '12px', color: 'var(--accent-primary)', backgroundColor: 'var(--accent-light)', padding: '2px 6px', borderRadius: '4px' }}>
+              {targetId.substring(0, 8)}...
+            </code>
+            <Button size="sm" variant="secondary" onClick={() => navigate('/remediation')}>
+              Clear Filter
+            </Button>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        <Card>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+            Total Remediation Tasks
+          </div>
+          <div style={{ fontSize: '26px', fontWeight: 800, color: 'var(--text-heading)', marginTop: '6px' }}>
+            {findings.length}
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Active vulnerability fixes
+          </div>
+        </Card>
+
+        <Card>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+            Open / Pending Action
+          </div>
+          <div style={{ fontSize: '26px', fontWeight: 800, color: '#dc2626', marginTop: '6px' }}>
+            {openCount}
+          </div>
+          <div style={{ fontSize: '11px', color: '#dc2626', fontWeight: 600, marginTop: '2px' }}>
+            Awaiting developer response
+          </div>
+        </Card>
+
+        <Card>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+            In Progress / Submitted
+          </div>
+          <div style={{ fontSize: '26px', fontWeight: 800, color: '#ea580c', marginTop: '6px' }}>
+            {inProgressCount}
+          </div>
+          <div style={{ fontSize: '11px', color: '#ea580c', fontWeight: 600, marginTop: '2px' }}>
+            Fix being implemented
+          </div>
+        </Card>
+
+        <Card>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+            Validated &amp; Closed
+          </div>
+          <div style={{ fontSize: '26px', fontWeight: 800, color: '#15803d', marginTop: '6px' }}>
+            {validatedCount}
+          </div>
+          <div style={{ fontSize: '11px', color: '#15803d', fontWeight: 600, marginTop: '2px' }}>
+            Retested &amp; confirmed fixed
+          </div>
+        </Card>
+      </div>
+
+      {/* Main Table (Requirement 11) */}
+      <Card title="Remediation Backlog &amp; Workflow Items" subtitle="Click any remediation record to inspect fix guidance and execute status transitions">
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            Loading remediation backlog...
+          </div>
+        ) : filteredFindings.length === 0 ? (
+          <div style={{ padding: '60px 20px', textAlign: 'center', maxWidth: '520px', margin: '0 auto' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+              }}
+            >
+              <ShieldCheck size={28} color="#15803d" />
+            </div>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-heading)', margin: '0 0 6px 0' }}>
+              No Open Remediation Items
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 20px 0', lineHeight: '1.5' }}>
+              All scanned targets have either clean security baselines or all vulnerabilities have been resolved.
+            </p>
+            <Button variant="primary" onClick={() => navigate('/assessments')}>
+              View Assessments
+            </Button>
+          </div>
+        ) : (
+          <Table
+            data={filteredFindings}
+            keyExtractor={(f) => f.id}
+            columns={[
+              {
+                header: 'Finding',
+                render: (f) => (
+                  <div style={{ maxWidth: '300px' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text-heading)' }}>{f.title}</div>
+                    <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      ID: {f.id.substring(0, 8)}...
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Severity',
+                render: (f) => <StatusBadge status={f.severity} />,
+              },
+              {
+                header: 'Current Status',
+                render: (f) => <StatusBadge status={f.status} />,
+              },
+              {
+                header: 'Recommended Fix',
+                render: (f) => (
+                  <div style={{ maxWidth: '280px', fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {f.description || 'Apply security patch / configure HTTP headers'}
+                  </div>
+                ),
+              },
+              {
+                header: 'Created Date',
+                render: (f) => new Date(f.createdAt).toLocaleDateString(),
+              },
+              {
+                header: 'Retest Status',
+                render: (f) => (
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--accent-primary)' }}>
+                    {f.status === 'RESOLVED' ? 'CONFIRMED FIXED' : 'RETEST AVAILABLE'}
+                  </span>
+                ),
+              },
+              {
+                header: 'Action',
+                render: (f) => (
+                  <button
+                    onClick={() => setSelectedFinding(f)}
+                    style={{
+                      padding: '4px 10px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      color: 'var(--accent-primary)',
+                    }}
+                  >
+                    Examine Fix →
+                  </button>
+                ),
+              },
+            ]}
+          />
+        )}
+      </Card>
+
+      {/* Remediation Detail Modal (Requirement 11) */}
+      {selectedFinding && (
+        <Modal
+          isOpen={!!selectedFinding}
+          onClose={() => setSelectedFinding(null)}
+          title={`Remediation Plan: ${selectedFinding.title}`}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <StatusBadge status={selectedFinding.severity} />
+                <StatusBadge status={selectedFinding.status} />
+              </div>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                ID: {selectedFinding.id}
+              </span>
+            </div>
+
+            {/* Description & Risk */}
+            <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                Vulnerability Risk &amp; Description
+              </div>
+              <div style={{ fontSize: '12.5px', color: 'var(--text-heading)', marginTop: '4px', lineHeight: '1.4' }}>
+                {selectedFinding.description || selectedFinding.title}
+              </div>
+            </div>
+
+            {/* Recommended Fix */}
+            <div style={{ padding: '12px', backgroundColor: '#ecfdf5', borderRadius: '6px', border: '1px solid #a7f3d0' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#047857', textTransform: 'uppercase' }}>
+                Recommended Fix Guidance
+              </div>
+              <div style={{ fontSize: '12.5px', color: '#065f46', marginTop: '4px', lineHeight: '1.4' }}>
+                {selectedFinding.description || 'Implement recommended security headers and revalidate.'}
+              </div>
+            </div>
+
+            {/* Workflow Status Selector */}
+            <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                Update Remediation Stage
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {(['OPEN', 'CONFIRMED', 'RESOLVED', 'REOPENED', 'ACCEPTED_RISK', 'FALSE_POSITIVE'] as FindingStatus[]).map(
+                  (st) => (
+                    <button
+                      key={st}
+                      onClick={() => handleUpdateStatus(selectedFinding.id, st)}
+                      disabled={updatingStatus || selectedFinding.status === st}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: '4px',
+                        border: '1px solid',
+                        borderColor: selectedFinding.status === st ? 'var(--accent-primary)' : 'var(--border-color)',
+                        backgroundColor: selectedFinding.status === st ? 'var(--accent-light)' : '#ffffff',
+                        color: selectedFinding.status === st ? 'var(--accent-primary)' : 'var(--text-main)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {st}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+              <Link to={`/retests?findingId=${selectedFinding.id}`}>
+                <Button variant="secondary" icon={<RotateCcw size={14} />}>
+                  Request Controlled Retest
+                </Button>
+              </Link>
+              <Button variant="primary" onClick={() => setSelectedFinding(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

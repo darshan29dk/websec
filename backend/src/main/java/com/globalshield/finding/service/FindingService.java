@@ -18,6 +18,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +42,7 @@ public class FindingService {
             int page,
             int size,
             UUID assessmentId,
+            UUID targetId,
             FindingSeverity severity,
             FindingStatus status,
             FindingConfidence confidence,
@@ -45,10 +50,52 @@ public class FindingService {
             String search) {
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<SecurityFinding> pageResult = findingRepository.searchFindings(
-                assessmentId, severity, status, confidence, source, search, pageRequest
-        );
+
+        Specification<SecurityFinding> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (assessmentId != null) {
+                predicates.add(cb.equal(root.get("assessment").get("id"), assessmentId));
+            }
+            if (targetId != null) {
+                predicates.add(cb.equal(root.get("assessment").get("target").get("id"), targetId));
+            }
+            if (severity != null) {
+                predicates.add(cb.equal(root.get("severity"), severity));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (confidence != null) {
+                predicates.add(cb.equal(root.get("confidence"), confidence));
+            }
+            if (source != null && !source.trim().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("source")), "%" + source.trim().toLowerCase() + "%"));
+            }
+            if (search != null && !search.trim().isEmpty()) {
+                String pattern = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("title")), pattern),
+                    cb.like(cb.lower(root.get("description")), pattern)
+                ));
+            }
+            return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<SecurityFinding> pageResult = findingRepository.findAll(spec, pageRequest);
         return PageResponse.from(pageResult.map(SecurityFindingResponse::fromEntity));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<SecurityFindingResponse> getFindings(
+            int page,
+            int size,
+            UUID assessmentId,
+            FindingSeverity severity,
+            FindingStatus status,
+            FindingConfidence confidence,
+            String source,
+            String search) {
+        return getFindings(page, size, assessmentId, null, severity, status, confidence, source, search);
     }
 
     @Transactional(readOnly = true)

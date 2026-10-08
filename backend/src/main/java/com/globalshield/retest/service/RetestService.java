@@ -120,6 +120,16 @@ public class RetestService {
     }
 
     @Transactional(readOnly = true)
+    public List<RetestResponseDto> listAllRetests(UUID targetId) {
+        List<Retest> list = (targetId != null)
+                ? retestRepository.findByTargetIdOrderByCreatedAtDesc(targetId)
+                : retestRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        return list.stream()
+                .map(this::getRetestDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<RetestResponseDto> listRetestsForFinding(UUID findingId) {
         return retestRepository.findByFindingIdOrderByCreatedAtDesc(findingId).stream()
                 .map(this::getRetestDto)

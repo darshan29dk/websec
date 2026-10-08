@@ -32,11 +32,12 @@ public class FindingController {
 
     @GetMapping("/findings")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST', 'VIEWER')")
-    @Operation(summary = "List findings", description = "Return paginated security findings with backend filtering by severity, status, confidence, source, and search")
+    @Operation(summary = "List findings", description = "Return paginated security findings with backend filtering by target, assessment, severity, status, confidence, source, and search")
     public ResponseEntity<ApiResponse<PageResponse<SecurityFindingResponse>>> getFindings(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) UUID assessmentId,
+            @RequestParam(required = false) UUID targetId,
             @RequestParam(required = false) FindingSeverity severity,
             @RequestParam(required = false) FindingStatus status,
             @RequestParam(required = false) FindingConfidence confidence,
@@ -44,7 +45,7 @@ public class FindingController {
             @RequestParam(required = false) String search) {
 
         PageResponse<SecurityFindingResponse> response = findingService.getFindings(
-                page, size, assessmentId, severity, status, confidence, source, search
+                page, size, assessmentId, targetId, severity, status, confidence, source, search
         );
         return ResponseEntity.ok(ApiResponse.success(response));
     }

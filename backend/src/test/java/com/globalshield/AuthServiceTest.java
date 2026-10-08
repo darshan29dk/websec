@@ -49,6 +49,9 @@ class AuthServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private OtpService otpService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -67,13 +70,14 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Should successfully register a new user")
+    @DisplayName("Should successfully register a new user with valid OTP")
     void testSuccessfulRegistration() {
         RegisterRequest request = RegisterRequest.builder()
                 .email("newuser@aegis.local")
                 .password("SecurePass123!")
                 .displayName("New User")
                 .role(UserRole.ANALYST)
+                .otp("123456")
                 .build();
 
         when(userRepository.existsByEmail("newuser@aegis.local")).thenReturn(false);
@@ -87,8 +91,24 @@ class AuthServiceTest {
         assertNotNull(response);
         assertEquals("mock_access_token", response.getAccessToken());
         assertEquals("mock_refresh_token", response.getRefreshToken());
+        verify(otpService).verifyOtp(eq("newuser@aegis.local"), eq("123456"), eq("REGISTRATION"));
         verify(userRepository).save(any());
         verify(auditService).logEvent(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Should throw BadRequestException when registration OTP is missing")
+    void testRegistrationFailsWithoutOtp() {
+        RegisterRequest request = RegisterRequest.builder()
+                .email("newuser@aegis.local")
+                .password("SecurePass123!")
+                .displayName("New User")
+                .role(UserRole.ANALYST)
+                .build();
+
+        when(userRepository.existsByEmail("newuser@aegis.local")).thenReturn(false);
+
+        assertThrows(com.globalshield.exception.BadRequestException.class, () -> authService.register(request, "127.0.0.1", "JUnit"));
     }
 
     @Test
@@ -98,6 +118,7 @@ class AuthServiceTest {
                 .email("analyst@aegis.local")
                 .password("SecurePass123!")
                 .displayName("Duplicate User")
+                .otp("123456")
                 .build();
 
         when(userRepository.existsByEmail("analyst@aegis.local")).thenReturn(true);

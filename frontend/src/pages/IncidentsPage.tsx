@@ -10,10 +10,21 @@ export const IncidentsPage: React.FC = () => {
   const targetId = searchParams.get('targetId') || '';
 
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
-  const [severityFilter, setSeverityFilter] = useState<IncidentSeverity | ''>('');
-  const [statusFilter, setStatusFilter] = useState<IncidentStatus | ''>('');
+  const [severityFilter, setSeverityFilter] = useState<IncidentSeverity | ''>(
+    (searchParams.get('severity') as IncidentSeverity) || ''
+  );
+  const [statusFilter, setStatusFilter] = useState<IncidentStatus | ''>(
+    (searchParams.get('status') as IncidentStatus) || ''
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const sev = searchParams.get('severity') as IncidentSeverity;
+    if (sev) setSeverityFilter(sev);
+    const stat = searchParams.get('status') as IncidentStatus;
+    if (stat) setStatusFilter(stat);
+  }, [searchParams]);
 
   useEffect(() => {
     loadIncidents();
