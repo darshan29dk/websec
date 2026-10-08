@@ -22,6 +22,7 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Environments
-.env.local
-.env.*.local
+# Environments & Secrets
+.env
+.env.*
+!.env.example
