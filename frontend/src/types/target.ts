@@ -42,6 +42,8 @@ export interface Target {
   updatedAt: string;
 }
 
+export type SecurityTarget = Target;
+
 export interface TargetRequest {
   name: string;
   primaryUrl: string;

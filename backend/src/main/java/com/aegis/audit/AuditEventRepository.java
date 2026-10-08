@@ -13,10 +13,10 @@ import java.util.UUID;
 public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
 
     @Query("SELECT a FROM AuditEvent a WHERE " +
-           "(:actorEmail IS NULL OR LOWER(a.actorEmail) LIKE LOWER(CONCAT('%', :actorEmail, '%'))) AND " +
+           "(:actorEmail IS NULL OR LOWER(a.actorEmail) LIKE LOWER(CONCAT('%', COALESCE(:actorEmail, ''), '%'))) AND " +
            "(:eventType IS NULL OR a.eventType = :eventType) AND " +
-           "(:resourceType IS NULL OR LOWER(a.resourceType) LIKE LOWER(CONCAT('%', :resourceType, '%'))) AND " +
-           "(:search IS NULL OR LOWER(a.action) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(a.details) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "(:resourceType IS NULL OR LOWER(a.resourceType) LIKE LOWER(CONCAT('%', COALESCE(:resourceType, ''), '%'))) AND " +
+           "(:search IS NULL OR LOWER(a.action) LIKE LOWER(CONCAT('%', COALESCE(:search, ''), '%')) OR LOWER(a.details) LIKE LOWER(CONCAT('%', COALESCE(:search, ''), '%')))")
     Page<AuditEvent> searchAuditEvents(
             @Param("actorEmail") String actorEmail,
             @Param("eventType") AuditEventType eventType,

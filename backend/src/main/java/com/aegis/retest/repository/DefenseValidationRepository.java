@@ -14,5 +14,7 @@ public interface DefenseValidationRepository extends JpaRepository<DefenseValida
     Optional<DefenseValidation> findByUuid(String uuid);
     Optional<DefenseValidation> findByRetestId(UUID retestId);
     List<DefenseValidation> findByFindingIdOrderByValidatedAtDesc(UUID findingId);
+    List<DefenseValidation> findByFindingAssessmentTargetId(UUID targetId);
     long countByValidationStatus(ValidationStatus validationStatus);
 }
+

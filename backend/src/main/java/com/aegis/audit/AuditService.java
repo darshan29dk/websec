@@ -63,9 +63,13 @@ public class AuditService {
             String search) {
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AuditEvent> eventsPage = auditEventRepository.searchAuditEvents(
-                userEmail, eventType, resourceType, search, pageRequest
-        );
+        
+        Page<AuditEvent> eventsPage;
+        if (userEmail == null && eventType == null && resourceType == null && search == null) {
+            eventsPage = auditEventRepository.findAll(pageRequest);
+        } else {
+            eventsPage = auditEventRepository.searchAuditEvents(userEmail, eventType, resourceType, search, pageRequest);
+        }
 
         Page<AuditEventResponse> dtoPage = eventsPage.map(AuditEventResponse::fromEntity);
         return PageResponse.from(dtoPage);

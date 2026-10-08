@@ -18,7 +18,7 @@ public class AuditController {
     private final AuditService auditService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ANALYST', 'ADMIN', 'ANALYST')")
     @Operation(summary = "Get audit events", description = "Returns paginated and filtered audit events")
     public ResponseEntity<ApiResponse<PageResponse<AuditEventResponse>>> getAuditEvents(
             @RequestParam(defaultValue = "0") int page,

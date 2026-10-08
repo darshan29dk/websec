@@ -23,4 +23,9 @@ public interface WebEndpointRepository extends JpaRepository<WebEndpoint, UUID> 
     long countByAssessmentId(UUID assessmentId);
 
     long countByAssessmentIdAndEndpointType(UUID assessmentId, EndpointType endpointType);
+
+    long countByAssessmentTargetId(UUID targetId);
+
+    List<WebEndpoint> findByAssessmentTargetId(UUID targetId);
 }
+

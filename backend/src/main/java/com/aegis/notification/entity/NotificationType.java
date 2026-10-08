@@ -1,0 +1,13 @@
+package com.aegis.notification.entity;
+
+public enum NotificationType {
+    CRITICAL_FINDING,
+    HIGH_FINDING,
+    NEW_FINDING,
+    REGRESSION,
+    DEFENSE_VALIDATION_FAILURE,
+    MONITORING_FAILURE,
+    AUTHORIZATION_EXPIRING,
+    AUTHORIZATION_EXPIRED,
+    POSTURE_DECREASE
+}

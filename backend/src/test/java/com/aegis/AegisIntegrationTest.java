@@ -49,9 +49,11 @@ class AegisIntegrationTest {
     @Test
     @DisplayName("Complete end-to-end user registration, authentication, target creation, authorization, and assessment lifecycle flow")
     void testEndToEndPhase1Flow() throws Exception {
+        String testEmail = "admin_" + System.currentTimeMillis() + "@aegis.local";
+
         // 1. Register Admin User
         RegisterRequest registerReq = RegisterRequest.builder()
-                .email("admin@aegis.local")
+                .email(testEmail)
                 .password("AdminSecurePass123!")
                 .displayName("Admin Integrator")
                 .role(UserRole.ADMIN)
@@ -76,7 +78,7 @@ class AegisIntegrationTest {
 
         // 2. Login verification
         LoginRequest loginReq = LoginRequest.builder()
-                .email("admin@aegis.local")
+                .email(testEmail)
                 .password("AdminSecurePass123!")
                 .build();
 
@@ -90,7 +92,7 @@ class AegisIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/me")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.email").value("admin@aegis.local"));
+                .andExpect(jsonPath("$.data.email").value(testEmail));
 
         // 4. List Assessment Profiles
         mockMvc.perform(get("/api/v1/assessment-profiles")

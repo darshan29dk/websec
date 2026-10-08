@@ -24,9 +24,18 @@ import { KnowledgePage } from './pages/KnowledgePage';
 import { DefenseOverviewPage } from './pages/DefenseOverviewPage';
 import { RemediationWorkspacePage } from './pages/RemediationWorkspacePage';
 import { RetestWorkspacePage } from './pages/RetestWorkspacePage';
+import { SecurityPosturePage } from './pages/SecurityPosturePage';
+import { RegressionCenterPage } from './pages/RegressionCenterPage';
+import { AssessmentComparePage } from './pages/AssessmentComparePage';
+import { ReportsPage } from './pages/ReportsPage';
+import { MonitoringPage } from './pages/MonitoringPage';
+import { SecurityHistoryPage } from './pages/SecurityHistoryPage';
 import { AuditPage } from './pages/AuditPage';
+
 import { SystemPage } from './pages/SystemPage';
+import { SecurityToolsPage } from './pages/SecurityToolsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,7 +52,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
           color: 'var(--text-muted)',
         }}
       >
-        Initializing AEGIS Platform...
+        Initializing GlobalShield Platform...
       </div>
     );
   }
@@ -97,8 +106,17 @@ export const App: React.FC = () => {
             <Route path="defense" element={<DefenseOverviewPage />} />
             <Route path="remediation" element={<RemediationWorkspacePage />} />
             <Route path="retests" element={<RetestWorkspacePage />} />
+            <Route path="posture" element={<SecurityPosturePage />} />
+            <Route path="regressions" element={<RegressionCenterPage />} />
+            <Route path="compare" element={<AssessmentComparePage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="monitoring" element={<MonitoringPage />} />
+            <Route path="security-history" element={<SecurityHistoryPage />} />
             <Route path="audit" element={<AuditPage />} />
+
+
             <Route path="system" element={<SystemPage />} />
+            <Route path="system/tools" element={<SecurityToolsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

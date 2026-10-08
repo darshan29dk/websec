@@ -22,4 +22,9 @@ public interface SecurityAssessmentRepository extends JpaRepository<SecurityAsse
     );
 
     long countByStatus(AssessmentStatus status);
+
+    java.util.List<SecurityAssessment> findByTargetIdOrderByCreatedAtDesc(UUID targetId);
+
+    java.util.List<SecurityAssessment> findTop2ByTargetIdAndStatusOrderByCompletedAtDesc(UUID targetId, AssessmentStatus status);
 }
+

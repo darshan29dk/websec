@@ -1,5 +1,5 @@
 import client from './client';
-import { ApiResponse, PageResponse } from '../../types/common';
+import { PageResponse } from '../../types/common';
 import {
   Assessment,
   AssessmentProfile,
@@ -12,75 +12,67 @@ import {
 } from '../../types/assessment';
 
 export const assessmentApi = {
-  getProfiles: async (): Promise<ApiResponse<AssessmentProfile[]>> => {
-    const response = await client.get<ApiResponse<AssessmentProfile[]>>('/api/v1/assessment-profiles');
-    return response.data;
+  getProfiles: async (): Promise<AssessmentProfile[]> => {
+    return client.get<AssessmentProfile[]>('/api/v1/assessment-profiles');
   },
 
-  createAssessment: async (request: CreateAssessmentRequest): Promise<ApiResponse<Assessment>> => {
-    const response = await client.post<ApiResponse<Assessment>>('/api/v1/assessments', request);
-    return response.data;
+  createAssessment: async (request: CreateAssessmentRequest): Promise<Assessment> => {
+    return client.post<Assessment>('/api/v1/assessments', request);
   },
 
-  startAssessment: async (id: string): Promise<ApiResponse<Assessment>> => {
-    const response = await client.post<ApiResponse<Assessment>>(`/api/v1/assessments/${id}/start`);
-    return response.data;
+  startAssessment: async (id: string): Promise<Assessment> => {
+    return client.post<Assessment>(`/api/v1/assessments/${id}/start`);
   },
 
-  getAssessments: async (page = 0, size = 20, targetId?: string, status?: AssessmentStatus): Promise<ApiResponse<PageResponse<Assessment>>> => {
+  getAssessments: async (page = 0, size = 20, targetId?: string, status?: AssessmentStatus): Promise<PageResponse<Assessment>> => {
     const params: Record<string, any> = { page, size };
     if (targetId) params.targetId = targetId;
     if (status) params.status = status;
-    const response = await client.get<ApiResponse<PageResponse<Assessment>>>('/api/v1/assessments', { params });
-    return response.data;
+    return client.get<PageResponse<Assessment>>('/api/v1/assessments', { params });
   },
 
-  getAssessmentById: async (id: string): Promise<ApiResponse<Assessment>> => {
-    const response = await client.get<ApiResponse<Assessment>>(`/api/v1/assessments/${id}`);
-    return response.data;
+  listAssessments: async (targetId?: string): Promise<PageResponse<Assessment>> => {
+    return assessmentApi.getAssessments(0, 100, targetId);
   },
 
-  getAssessmentStatus: async (id: string): Promise<ApiResponse<Assessment>> => {
-    const response = await client.get<ApiResponse<Assessment>>(`/api/v1/assessments/${id}/status`);
-    return response.data;
+  getAssessmentById: async (id: string): Promise<Assessment> => {
+    return client.get<Assessment>(`/api/v1/assessments/${id}`);
   },
 
-  getToolExecutions: async (id: string, page = 0, size = 50): Promise<ApiResponse<PageResponse<ToolExecution>>> => {
-    const response = await client.get<ApiResponse<PageResponse<ToolExecution>>>(`/api/v1/assessments/${id}/executions`, {
+  getAssessmentStatus: async (id: string): Promise<Assessment> => {
+    return client.get<Assessment>(`/api/v1/assessments/${id}/status`);
+  },
+
+  getToolExecutions: async (id: string, page = 0, size = 50): Promise<PageResponse<ToolExecution>> => {
+    return client.get<PageResponse<ToolExecution>>(`/api/v1/assessments/${id}/executions`, {
       params: { page, size }
     });
-    return response.data;
   },
 
-  getAssets: async (id: string, page = 0, size = 50): Promise<ApiResponse<PageResponse<AssessmentAssetItem>>> => {
-    const response = await client.get<ApiResponse<PageResponse<AssessmentAssetItem>>>(`/api/v1/assessments/${id}/assets`, {
+  getAssets: async (id: string, page = 0, size = 50): Promise<PageResponse<AssessmentAssetItem>> => {
+    return client.get<PageResponse<AssessmentAssetItem>>(`/api/v1/assessments/${id}/assets`, {
       params: { page, size }
     });
-    return response.data;
   },
 
-  getEndpoints: async (id: string, page = 0, size = 50): Promise<ApiResponse<PageResponse<AssessmentEndpointItem>>> => {
-    const response = await client.get<ApiResponse<PageResponse<AssessmentEndpointItem>>>(`/api/v1/assessments/${id}/endpoints`, {
+  getEndpoints: async (id: string, page = 0, size = 50): Promise<PageResponse<AssessmentEndpointItem>> => {
+    return client.get<PageResponse<AssessmentEndpointItem>>(`/api/v1/assessments/${id}/endpoints`, {
       params: { page, size }
     });
-    return response.data;
   },
 
-  getObservations: async (id: string, page = 0, size = 50): Promise<ApiResponse<PageResponse<AssessmentObservationItem>>> => {
-    const response = await client.get<ApiResponse<PageResponse<AssessmentObservationItem>>>(`/api/v1/assessments/${id}/observations`, {
+  getObservations: async (id: string, page = 0, size = 50): Promise<PageResponse<AssessmentObservationItem>> => {
+    return client.get<PageResponse<AssessmentObservationItem>>(`/api/v1/assessments/${id}/observations`, {
       params: { page, size }
     });
-    return response.data;
   },
 
-  cancelAssessment: async (id: string): Promise<ApiResponse<Assessment>> => {
-    const response = await client.post<ApiResponse<Assessment>>(`/api/v1/assessments/${id}/cancel`);
-    return response.data;
+  cancelAssessment: async (id: string): Promise<Assessment> => {
+    return client.post<Assessment>(`/api/v1/assessments/${id}/cancel`);
   },
 
-  retryFailedStage: async (id: string, stage?: string): Promise<ApiResponse<Assessment>> => {
+  retryFailedStage: async (id: string, stage?: string): Promise<Assessment> => {
     const params = stage ? { stage } : {};
-    const response = await client.post<ApiResponse<Assessment>>(`/api/v1/assessments/${id}/retry-failed-stage`, null, { params });
-    return response.data;
+    return client.post<Assessment>(`/api/v1/assessments/${id}/retry-failed-stage`, null, { params });
   }
 };

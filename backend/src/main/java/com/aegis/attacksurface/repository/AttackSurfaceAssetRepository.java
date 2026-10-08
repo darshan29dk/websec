@@ -23,4 +23,9 @@ public interface AttackSurfaceAssetRepository extends JpaRepository<AttackSurfac
     Optional<AttackSurfaceAsset> findByAssessmentIdAndAssetTypeAndNormalizedValue(UUID assessmentId, AssetType assetType, String normalizedValue);
 
     long countByAssessmentId(UUID assessmentId);
+
+    long countByAssessmentTargetId(UUID targetId);
+
+    List<AttackSurfaceAsset> findByAssessmentTargetId(UUID targetId);
 }
+

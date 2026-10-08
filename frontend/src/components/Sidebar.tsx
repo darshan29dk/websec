@@ -12,129 +12,124 @@ import {
   ShieldCheck,
   RotateCcw,
   BarChart2,
+  AlertTriangle,
+  Radio,
+  Sliders,
+  History,
+  Terminal,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const activeNavItems = [
-    { path: '/overview', label: 'Overview', icon: LayoutDashboard },
-    { path: '/targets', label: 'Targets', icon: TargetIcon },
-    { path: '/assessments', label: 'Assessments', icon: Activity },
-    { path: '/attack-surface', label: 'Attack Surface', icon: Search },
-    { path: '/findings', label: 'Findings', icon: Lock },
-    { path: '/incidents', label: 'Incidents', icon: Activity },
-    { path: '/investigations', label: 'Investigation', icon: FileText },
-    { path: '/forensics', label: 'Digital Forensics', icon: Search },
-    { path: '/ai', label: 'AI Security Analyst', icon: Bot },
-    { path: '/knowledge', label: 'Knowledge Base', icon: FileText },
-    { path: '/defense', label: 'Defense', icon: ShieldCheck },
-    { path: '/remediation', label: 'Remediation', icon: RotateCcw },
-    { path: '/retests', label: 'Controlled Retests', icon: RotateCcw },
-    { path: '/audit', label: 'Audit Log', icon: FileText },
-    { path: '/system', label: 'System', icon: Server },
-  ];
-
-  const futurePhaseItems = [
-    { label: 'Security Posture', icon: BarChart2, phase: 'Phase 9' },
-    { label: 'Continuous Reporting', icon: BarChart2, phase: 'Phase 10' },
+  const sections = [
+    {
+      title: 'Security Operations',
+      items: [
+        { path: '/overview', label: 'Overview', icon: LayoutDashboard },
+        { path: '/targets', label: 'Targets', icon: TargetIcon },
+        { path: '/assessments', label: 'Assessments', icon: Activity },
+        { path: '/attack-surface', label: 'Attack Surface', icon: Search },
+        { path: '/findings', label: 'Findings', icon: Lock },
+      ],
+    },
+    {
+      title: 'Incident Response',
+      items: [
+        { path: '/incidents', label: 'Incidents', icon: AlertTriangle },
+        { path: '/investigations', label: 'Investigation', icon: FileText },
+        { path: '/forensics', label: 'Digital Forensics', icon: Search },
+      ],
+    },
+    {
+      title: 'Defense & Retesting',
+      items: [
+        { path: '/defense', label: 'Defense Center', icon: ShieldCheck },
+        { path: '/remediation', label: 'Remediation', icon: RotateCcw },
+        { path: '/retests', label: 'Controlled Retests', icon: RotateCcw },
+        { path: '/posture', label: 'Security Posture', icon: BarChart2 },
+        { path: '/regressions', label: 'Regression Center', icon: RotateCcw },
+        { path: '/compare', label: 'Compare Assessments', icon: Sliders },
+      ],
+    },
+    {
+      title: 'Intelligence',
+      items: [
+        { path: '/ai', label: 'AI Security Analyst', icon: Bot },
+        { path: '/security-history', label: 'Security History', icon: History },
+        { path: '/knowledge', label: 'Knowledge Base', icon: FileText },
+      ],
+    },
+    {
+      title: 'Operations & System',
+      items: [
+        { path: '/reports', label: 'Reports', icon: FileText },
+        { path: '/monitoring', label: 'Continuous Monitoring', icon: Radio },
+        { path: '/audit', label: 'Audit Log', icon: FileText },
+        { path: '/system/tools', label: 'Security Tools', icon: Terminal },
+        { path: '/system', label: 'System Overview', icon: Server },
+      ],
+    },
   ];
 
   return (
     <aside
       style={{
         width: '240px',
-        backgroundColor: 'var(--bg-card)',
-        borderRight: '1px solid var(--border-color)',
+        backgroundColor: '#090d16',
+        borderRight: '1px solid #1e293b',
         display: 'flex',
         flexDirection: 'column',
-        padding: '16px 12px',
-        minHeight: 'calc(100vh - 56px)',
+        padding: '16px 10px',
+        height: 'calc(100vh - 56px)',
+        overflowY: 'auto',
+        position: 'sticky',
+        top: '56px',
+        flexShrink: 0,
       }}
     >
-      <div style={{ marginBottom: '24px' }}>
-        <div
-          style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            color: 'var(--text-muted)',
-            marginBottom: '8px',
-            paddingLeft: '12px',
-          }}
-        >
-          Core Platform
-        </div>
-        {activeNavItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: isActive ? 'var(--text-heading)' : 'var(--text-muted)',
-                backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
-                borderLeft: isActive ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                marginBottom: '2px',
-                transition: 'all 0.15s',
-              })}
-            >
-              <Icon size={16} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
-      </div>
-
-      <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-        <div
-          style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            color: 'var(--text-muted)',
-            marginBottom: '8px',
-            paddingLeft: '12px',
-          }}
-        >
-          Future Modules
-        </div>
-        {futurePhaseItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={item.label}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '6px 12px',
-                fontSize: '12px',
-                color: 'var(--text-muted)',
-                opacity: 0.45,
-                cursor: 'not-allowed',
-                userSelect: 'none',
-              }}
-              title={`${item.label} will be available in ${item.phase}`}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Icon size={14} />
+      {sections.map((section, idx) => (
+        <div key={section.title} style={{ marginBottom: idx === sections.length - 1 ? '16px' : '20px' }}>
+          <div
+            style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+              color: '#475569',
+              marginBottom: '6px',
+              paddingLeft: '10px',
+            }}
+          >
+            {section.title}
+          </div>
+          {section.items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                style={({ isActive }) => ({
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  fontSize: '12.5px',
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? '#f8fafc' : '#94a3b8',
+                  backgroundColor: isActive ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                  borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+                  marginBottom: '2px',
+                  transition: 'all 0.12s ease',
+                  textDecoration: 'none',
+                })}
+              >
+                <Icon size={15} style={{ flexShrink: 0 }} />
                 <span>{item.label}</span>
-              </div>
-              <span style={{ fontSize: '9px', border: '1px solid var(--border-color)', borderRadius: '3px', padding: '1px 4px' }}>
-                {item.phase}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+              </NavLink>
+            );
+          })}
+        </div>
+      ))}
     </aside>
   );
 };

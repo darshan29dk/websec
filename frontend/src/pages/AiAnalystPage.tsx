@@ -112,7 +112,7 @@ export const AiAnalystPage: React.FC = () => {
       <div className="flex items-center justify-center min-h-[600px]">
         <div className="text-center space-y-4">
           <RefreshCw className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
-          <p className="text-slate-400">Loading AEGIS AI Security Analyst Engine...</p>
+          <p className="text-slate-400">Loading GlobalShield AI Security Analyst Engine...</p>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export const AiAnalystPage: React.FC = () => {
               <h1 className="text-2xl font-bold text-white tracking-tight">AI SECURITY ANALYST</h1>
               <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">RAG Grounded</span>
             </div>
-            <p className="text-sm text-slate-400 mt-1">Evidence-Grounded Intelligence & Authoritative Security Reasoning</p>
+            <p className="text-sm text-slate-400 mt-1">Evidence-Grounded Intelligence &amp; Authoritative Security Reasoning</p>
           </div>
         </div>
 
@@ -161,7 +161,7 @@ export const AiAnalystPage: React.FC = () => {
 
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">AI Provider & Model</span>
+              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">AI Provider &amp; Model</span>
               <div className="text-sm font-medium text-cyan-300 mt-1">
                 {currentInvestigation.provider} ({currentInvestigation.model})
               </div>
@@ -213,7 +213,7 @@ export const AiAnalystPage: React.FC = () => {
                   <FileText className="w-5 h-5 text-cyan-400" /> Executive Summary
                 </h3>
                 <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-4 rounded-lg border border-slate-800 text-sm">
-                  {currentInvestigation.summary || 'Analytical reasoning completed based on normalized AEGIS findings and authoritative RAG guidance.'}
+                  {currentInvestigation.summary || 'Analytical reasoning completed based on normalized GlobalShield findings and authoritative RAG guidance.'}
                 </p>
               </div>
 
@@ -252,7 +252,7 @@ export const AiAnalystPage: React.FC = () => {
             {/* Observed Evidence Panel */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Eye className="w-5 h-5 text-cyan-400" /> Referenced AEGIS Evidence
+                <Eye className="w-5 h-5 text-cyan-400" /> Referenced GlobalShield Evidence
               </h3>
 
               <div className="flex flex-wrap gap-2">
@@ -324,7 +324,7 @@ export const AiAnalystPage: React.FC = () => {
                   { id: 2, citationText: 'OWASP Foundation - OWASP Top 10 A03:2021 Injection', relevanceScore: 0.88 },
                   { id: 3, citationText: 'OWASP HTTP Security Response Headers Guidance', relevanceScore: 0.76 }
                 ]).map((kn, idx) => (
-                  <div key={idx} className="bg-slate-950 p-3 rounded.lg border border-slate-800 space-y-1.5">
+                  <div key={idx} className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-cyan-300 truncate">{kn.citationText}</span>
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
@@ -345,7 +345,7 @@ export const AiAnalystPage: React.FC = () => {
                 <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
                   <MessageSquare className="w-4 h-4 text-cyan-400" /> Ask About This Investigation
                 </h3>
-                <span className="text-xs text-slate-400">Bounded Q&A</span>
+                <span className="text-xs text-slate-400">Bounded Q&amp;A</span>
               </div>
 
               {/* Quick Questions */}
@@ -427,14 +427,14 @@ export const AiAnalystPage: React.FC = () => {
             <div className="space-y-3 text-sm text-slate-300">
               <div className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1 font-mono text-xs">
                 <p><span className="text-slate-500">Evidence Reference:</span> {selectedEvidenceId}</p>
-                <p><span className="text-slate-500">Source:</span> AEGIS Security Scan / Telemetry</p>
+                <p><span className="text-slate-500">Source:</span> GlobalShield Security Scan / Telemetry</p>
                 <p><span className="text-slate-500">Endpoint:</span> /api/login</p>
                 <p><span className="text-slate-500">Parameter:</span> username</p>
                 <p><span className="text-slate-500">Payload:</span> ' OR '1'='1</p>
                 <p><span className="text-slate-500">Timestamp:</span> 2026-10-07T01:32:10Z</p>
               </div>
               <p className="text-xs text-slate-400">
-                This evidence item was gathered directly from AEGIS normalized findings and verified telemetry events.
+                This evidence item was gathered directly from GlobalShield normalized findings and verified telemetry events.
               </p>
             </div>
 

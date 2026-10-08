@@ -44,4 +44,11 @@ public interface SecurityFindingRepository extends JpaRepository<SecurityFinding
     long countByAssessmentId(UUID assessmentId);
 
     long countByAssessmentIdAndSeverity(UUID assessmentId, FindingSeverity severity);
+
+    List<SecurityFinding> findByAssessmentTargetId(UUID targetId);
+
+    List<SecurityFinding> findByAssessmentTargetIdAndStatus(UUID targetId, FindingStatus status);
+
+    long countByAssessmentTargetIdAndSeverity(UUID targetId, FindingSeverity severity);
 }
+

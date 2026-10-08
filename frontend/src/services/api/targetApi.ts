@@ -30,6 +30,11 @@ export const targetApi = {
     return ApiClient.get<PageResponse<Target>>(`/targets?${params.toString()}`);
   },
 
+  listTargets: async (): Promise<Target[]> => {
+    const res = await ApiClient.get<PageResponse<Target>>('/targets?page=0&size=100');
+    return res.content || [];
+  },
+
   getTargetById: (id: string): Promise<Target> => {
     return ApiClient.get<Target>(`/targets/${id}`);
   },
