@@ -13,8 +13,8 @@ export const Navbar: React.FC = () => {
       <header
         style={{
           height: '56px',
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #bae6fd',
+          backgroundColor: '#091122',
+          borderBottom: '1px solid #1e293b',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -22,7 +22,7 @@ export const Navbar: React.FC = () => {
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          boxShadow: '0 2px 8px rgba(2, 132, 199, 0.06)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
         }}
       >
         {/* Brand & Tagline */}
@@ -33,14 +33,14 @@ export const Navbar: React.FC = () => {
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                backgroundColor: '#e0f2fe',
-                border: '1px solid #7dd3fc',
+                backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Shield size={18} color="#0284c7" />
+              <Shield size={18} color="#38bdf8" />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span
@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
                   fontSize: '15px',
                   fontWeight: 700,
                   letterSpacing: '0.5px',
-                  color: '#0f172a',
+                  color: '#ffffff',
                   lineHeight: '1.2',
                 }}
               >
@@ -57,7 +57,7 @@ export const Navbar: React.FC = () => {
               <span
                 style={{
                   fontSize: '10px',
-                  color: '#64748b',
+                  color: '#38bdf8',
                   fontWeight: 500,
                   letterSpacing: '0.2px',
                 }}
@@ -71,7 +71,7 @@ export const Navbar: React.FC = () => {
             style={{
               height: '16px',
               width: '1px',
-              backgroundColor: '#bae6fd',
+              backgroundColor: '#1e293b',
               margin: '0 4px',
             }}
           />
@@ -86,9 +86,9 @@ export const Navbar: React.FC = () => {
               fontWeight: 600,
               padding: '3px 10px',
               borderRadius: '12px',
-              backgroundColor: '#dcfce7',
-              border: '1px solid #86efac',
-              color: '#166534',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              color: '#34d399',
             }}
           >
             <span
@@ -96,7 +96,7 @@ export const Navbar: React.FC = () => {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: '#166534',
+                backgroundColor: '#34d399',
               }}
             />
             <span>Production</span>
@@ -112,12 +112,12 @@ export const Navbar: React.FC = () => {
               fontWeight: 500,
               padding: '3px 10px',
               borderRadius: '12px',
-              backgroundColor: '#e0f2fe',
-              border: '1px solid #7dd3fc',
-              color: '#0369a1',
+              backgroundColor: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              color: '#38bdf8',
             }}
           >
-            <Activity size={12} color="#0284c7" />
+            <Activity size={12} color="#38bdf8" />
             <span>Protection Active</span>
           </div>
         </div>
@@ -129,30 +129,30 @@ export const Navbar: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            backgroundColor: '#f0f9ff',
-            border: '1px solid #bae6fd',
+            backgroundColor: '#070c18',
+            border: '1px solid #1e293b',
             borderRadius: '6px',
             padding: '6px 14px',
             width: '280px',
-            color: '#475569',
+            color: '#94a3b8',
             fontSize: '12px',
             cursor: 'pointer',
             transition: 'all 0.15s ease',
           }}
-          onMouseOver={(e) => (e.currentTarget.style.borderColor = '#0284c7')}
-          onMouseOut={(e) => (e.currentTarget.style.borderColor = '#bae6fd')}
+          onMouseOver={(e) => (e.currentTarget.style.borderColor = '#38bdf8')}
+          onMouseOut={(e) => (e.currentTarget.style.borderColor = '#1e293b')}
         >
-          <Search size={14} color="#0284c7" />
-          <span style={{ flex: 1, textAlign: 'left' }}>Search targets, findings, incidents...</span>
+          <Search size={14} color="#38bdf8" />
+          <span style={{ flex: 1, textAlign: 'left', color: '#f1f5f9' }}>Search targets, findings, incidents...</span>
           <kbd
             style={{
               fontSize: '10px',
               fontWeight: 600,
-              backgroundColor: '#e0f2fe',
-              color: '#0369a1',
+              backgroundColor: 'rgba(56, 189, 248, 0.15)',
+              color: '#38bdf8',
               padding: '2px 5px',
               borderRadius: '4px',
-              border: '1px solid #7dd3fc',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
             }}
           >
             Ctrl K
@@ -168,10 +168,10 @@ export const Navbar: React.FC = () => {
                 onClick={() => setShowNotifications(!showNotifications)}
                 style={{
                   background: 'transparent',
-                  border: '1px solid #bae6fd',
+                  border: '1px solid #1e293b',
                   borderRadius: '6px',
                   padding: '6px',
-                  color: '#0284c7',
+                  color: '#38bdf8',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -201,10 +201,10 @@ export const Navbar: React.FC = () => {
                     right: 0,
                     top: '40px',
                     width: '300px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #bae6fd',
+                    backgroundColor: '#0f172a',
+                    border: '1px solid #1e293b',
                     borderRadius: '8px',
-                    boxShadow: '0 10px 25px -3px rgba(2, 132, 199, 0.15)',
+                    boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.5)',
                     padding: '12px',
                     zIndex: 200,
                   }}

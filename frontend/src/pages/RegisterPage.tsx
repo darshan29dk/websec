@@ -86,18 +86,19 @@ export const RegisterPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #ffffff 100%)',
+        backgroundColor: '#070c18',
+        backgroundImage: 'radial-gradient(circle at top, #0d2137 0%, #070c18 70%)',
         padding: '20px',
       }}
     >
       <div
         style={{
           width: '440px',
-          backgroundColor: '#ffffff',
-          border: '1px solid #bae6fd',
+          backgroundColor: '#0f172a',
+          border: '1px solid #1e293b',
           borderRadius: '12px',
           padding: '32px',
-          boxShadow: '0 20px 30px -5px rgba(2, 132, 199, 0.12)',
+          boxShadow: '0 20px 30px -5px rgba(0, 0, 0, 0.6)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -109,18 +110,18 @@ export const RegisterPage: React.FC = () => {
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              backgroundColor: '#e0f2fe',
-              border: '1px solid #7dd3fc',
-              color: '#0284c7',
+              backgroundColor: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              color: '#38bdf8',
               marginBottom: '12px',
             }}
           >
             <Shield size={26} />
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff' }}>
             Register Account
           </h2>
-          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+          <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
             GLOBALSHIELD Security Console Access Registration
           </p>
         </div>
