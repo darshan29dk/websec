@@ -74,8 +74,8 @@ export const Sidebar: React.FC = () => {
     <aside
       style={{
         width: '240px',
-        backgroundColor: '#090d16',
-        borderRight: '1px solid #1e293b',
+        backgroundColor: '#ffffff',
+        borderRight: '1px solid #bae6fd',
         display: 'flex',
         flexDirection: 'column',
         padding: '16px 10px',
@@ -94,7 +94,7 @@ export const Sidebar: React.FC = () => {
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.8px',
-              color: '#475569',
+              color: '#0284c7',
               marginBottom: '6px',
               paddingLeft: '10px',
             }}
@@ -115,9 +115,9 @@ export const Sidebar: React.FC = () => {
                   borderRadius: '6px',
                   fontSize: '12.5px',
                   fontWeight: isActive ? 600 : 500,
-                  color: isActive ? '#f8fafc' : '#94a3b8',
-                  backgroundColor: isActive ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
-                  borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+                  color: isActive ? '#0284c7' : '#475569',
+                  backgroundColor: isActive ? '#e0f2fe' : 'transparent',
+                  borderLeft: isActive ? '3px solid #0284c7' : '3px solid transparent',
                   marginBottom: '2px',
                   transition: 'all 0.12s ease',
                   textDecoration: 'none',

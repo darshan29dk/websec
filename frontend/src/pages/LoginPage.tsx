@@ -120,18 +120,18 @@ export const LoginPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#090d16',
+        background: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #ffffff 100%)',
         padding: '20px',
       }}
     >
       <div
         style={{
           width: '420px',
-          backgroundColor: '#0f172a',
-          border: '1px solid #1e293b',
-          borderRadius: '10px',
+          backgroundColor: '#ffffff',
+          border: '1px solid #bae6fd',
+          borderRadius: '12px',
           padding: '32px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 20px 30px -5px rgba(2, 132, 199, 0.12)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -143,15 +143,15 @@ export const LoginPage: React.FC = () => {
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              backgroundColor: 'rgba(59, 130, 246, 0.12)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              color: '#3b82f6',
+              backgroundColor: '#e0f2fe',
+              border: '1px solid #7dd3fc',
+              color: '#0284c7',
               marginBottom: '12px',
             }}
           >
             <Shield size={26} />
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#f8fafc' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
             GLOBALSHIELD
           </h2>
           <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
