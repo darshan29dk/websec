@@ -208,30 +208,6 @@ export const LoginPage: React.FC = () => {
             <Button type="submit" variant="primary" isLoading={isLoading} style={{ width: '100%', marginTop: '4px' }}>
               Sign In
             </Button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('dk9380905822@gmail.com');
-                setPassword('Dk#5822..com');
-                setError(null);
-              }}
-              style={{
-                background: 'rgba(56, 189, 248, 0.1)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-                color: '#38bdf8',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                width: '100%',
-                marginTop: '12px',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              Fill Super Admin Credentials (dk9380905822@gmail.com)
-            </button>
           </form>
         )}
 
