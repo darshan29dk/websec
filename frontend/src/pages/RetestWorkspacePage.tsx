@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { retestApi } from '../services/api/retestApi';
+import { findingApi } from '../services/api/findingApi';
 import {
   Retest,
   RetestCheck,
@@ -33,13 +34,18 @@ export const RetestWorkspacePage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const m = await retestApi.getDashboardMetrics();
+      const m = await retestApi.getDashboardMetrics().catch(() => null);
       setMetrics(m);
-      // Fetch retests for active demo / workspace
-      const allRetests = await retestApi.listRetestsForFinding('00000000-0000-0000-0000-000000000001').catch(() => []);
-      setRetests(allRetests);
-      if (allRetests.length > 0 && !selectedRetest) {
-        setSelectedRetest(allRetests[0]);
+      const findingsRes = await findingApi.getFindings(0, 10).catch(() => ({ content: [] }));
+      const findings = findingsRes?.content || [];
+      if (findings.length > 0) {
+        const allRetests = await retestApi.listRetestsForFinding(findings[0].id).catch(() => []);
+        setRetests(allRetests);
+        if (allRetests.length > 0 && !selectedRetest) {
+          setSelectedRetest(allRetests[0]);
+        }
+      } else {
+        setRetests([]);
       }
     } catch (err) {
       console.error('Failed to load retest workspace data:', err);
