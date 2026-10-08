@@ -1,6 +1,6 @@
 import { ApiClient } from './client';
 
-public interface SecurityToolStatus {
+export interface SecurityToolStatus {
   id?: string;
   toolName: string;
   version?: string;

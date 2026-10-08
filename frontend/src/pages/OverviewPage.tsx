@@ -47,7 +47,7 @@ export const OverviewPage: React.FC = () => {
         setAssessments(assessmentPage.content || []);
         setAuditEvents(auditPage.content || []);
 
-        const findingsList = findingPage.data?.content || [];
+        const findingsList = (findingPage as any)?.content || [];
         if (findingsList.length > 0) {
           const c = findingsList.filter((f: any) => f.severity === 'CRITICAL').length;
           const h = findingsList.filter((f: any) => f.severity === 'HIGH').length;

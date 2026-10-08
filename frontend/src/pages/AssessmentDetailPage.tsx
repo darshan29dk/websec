@@ -177,7 +177,7 @@ export const AssessmentDetailPage: React.FC = () => {
 
           <div>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Requested By</span>
-            <div style={{ fontSize: '13px', marginTop: '2px' }}>{assessment.requestedByName}</div>
+            <div style={{ fontSize: '13px', marginTop: '2px' }}>{(assessment as any).requestedByName || (assessment as any).createdBy || 'System'}</div>
           </div>
 
           <div>

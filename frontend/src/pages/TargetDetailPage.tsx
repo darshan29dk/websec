@@ -351,7 +351,7 @@ export const TargetDetailPage: React.FC = () => {
               header: 'Status',
               render: (a) => <StatusBadge status={a.status} />,
             },
-            { header: 'Requested By', accessor: 'requestedByName' },
+            { header: 'Requested By', render: (a: any) => a.requestedByName || a.createdBy || 'System' },
             {
               header: 'Created Date',
               render: (a) => new Date(a.createdAt).toLocaleString(),

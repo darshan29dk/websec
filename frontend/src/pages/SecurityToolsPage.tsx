@@ -66,7 +66,7 @@ export const SecurityToolsPage: React.FC = () => {
             Managed tool adapters, executable availability, and health status for authorized security operations.
           </p>
         </div>
-        <Button onClick={handleRecheckAll} disabled={isRefreshing} icon={RefreshCw}>
+        <Button onClick={handleRecheckAll} disabled={isRefreshing} icon={<RefreshCw size={14} />}>
           {isRefreshing ? 'Checking Tools...' : 'Re-check All Tools'}
         </Button>
       </div>

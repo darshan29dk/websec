@@ -2,10 +2,11 @@ import React from 'react';
 
 interface StatusBadgeProps {
   status: string;
+  customLabel?: string;
   type?: 'target' | 'assessment' | 'authorization' | 'health' | 'severity' | 'control';
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, customLabel }) => {
   const getStyle = () => {
     const s = status?.toUpperCase() || '';
 
@@ -118,7 +119,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
           marginRight: '6px',
         }}
       />
-      {status}
+      {customLabel || status}
     </span>
   );
 };

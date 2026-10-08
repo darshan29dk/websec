@@ -24,9 +24,9 @@ export const ForensicsPage: React.FC = () => {
         page,
         size: 15
       });
-      if (res.success && res.data) {
-        setCases(res.data.content);
-        setTotalPages(res.data.totalPages);
+      if (res && res.content) {
+        setCases(res.content);
+        setTotalPages(res.totalPages);
       }
     } catch (err) {
       console.error('Failed to load forensic cases:', err);

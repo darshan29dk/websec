@@ -46,10 +46,10 @@ export const InvestigationsPage: React.FC = () => {
   const loadInvestigationsList = async () => {
     try {
       const res = await investigationApi.getInvestigations(0, 50);
-      if (res.success && res.data) {
-        setInvestigationsList(res.data.content);
-        if (!selectedInvId && res.data.content.length > 0) {
-          setSelectedInvId(res.data.content[0].id);
+      if (res && res.content) {
+        setInvestigationsList(res.content);
+        if (!selectedInvId && res.content.length > 0) {
+          setSelectedInvId(res.content[0].id);
         }
       }
     } catch (err: any) {

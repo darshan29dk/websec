@@ -29,11 +29,11 @@ export const IncidentsPage: React.FC = () => {
         severityFilter || undefined,
         statusFilter || undefined
       );
-      if (res.success && res.data) {
-        setIncidents(res.data.content);
+      if (res && res.content) {
+        setIncidents(res.content);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load security incidents');
+      setError(err.message || 'Failed to load security incidents');
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +160,7 @@ export const IncidentsPage: React.FC = () => {
                           {inc.sourceIp}
                         </span>
                       ) : (
-                        <span style={{ color: 'var(--text-muted)', italic: 'true' }}>
+                        <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
                           Source IP unavailable from telemetry
                         </span>
                       )}

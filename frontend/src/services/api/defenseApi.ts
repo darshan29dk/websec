@@ -9,68 +9,58 @@ import {
 
 export const defenseApi = {
   getOverviewMetrics: async (): Promise<DefenseOverviewMetrics> => {
-    const res = await api.get<DefenseOverviewMetrics>('/api/v1/defense/overview');
-    return res.data;
+    return api.get<DefenseOverviewMetrics>('/defense/overview');
   },
 
   listRecommendations: async (status?: string, priority?: string): Promise<DefenseRecommendation[]> => {
     const params: Record<string, string> = {};
     if (status) params.status = status;
     if (priority) params.priority = priority;
-    const res = await api.get<DefenseRecommendation[]>('/api/v1/defense/recommendations', { params });
-    return res.data;
+    return api.get<DefenseRecommendation[]>('/defense/recommendations', { params });
   },
 
   getRecommendation: async (id: string): Promise<DefenseRecommendation> => {
-    const res = await api.get<DefenseRecommendation>(`/api/v1/defense/recommendations/${id}`);
-    return res.data;
+    return api.get<DefenseRecommendation>(`/defense/recommendations/${id}`);
   },
 
   generateRecommendation: async (findingId: string, useAiAnalysis = true): Promise<DefenseRecommendation> => {
-    const res = await api.post<DefenseRecommendation>('/api/v1/defense/recommendations/generate', {
+    return api.post<DefenseRecommendation>('/defense/recommendations/generate', {
       findingId,
       useAiAnalysis,
     });
-    return res.data;
   },
 
   reviewRecommendation: async (id: string, action: 'APPROVE' | 'REJECT', reviewNotes?: string): Promise<DefenseRecommendation> => {
-    const res = await api.post<DefenseRecommendation>(`/api/v1/defense/recommendations/${id}/review`, {
+    return api.post<DefenseRecommendation>(`/defense/recommendations/${id}/review`, {
       action,
       reviewNotes,
     });
-    return res.data;
   },
 
   updateRecommendationStatus: async (id: string, status: string): Promise<DefenseRecommendation> => {
-    const res = await api.put<DefenseRecommendation>(`/api/v1/defense/recommendations/${id}/status`, {
+    return api.put<DefenseRecommendation>(`/defense/recommendations/${id}/status`, {
       status,
     });
-    return res.data;
   },
 
   listControls: async (category?: string): Promise<DefenseControl[]> => {
     const params: Record<string, string> = {};
     if (category) params.category = category;
-    const res = await api.get<DefenseControl[]>('/api/v1/defense/controls', { params });
-    return res.data;
+    return api.get<DefenseControl[]>('/defense/controls', { params });
   },
 
   getControl: async (id: string): Promise<DefenseControl> => {
-    const res = await api.get<DefenseControl>(`/api/v1/defense/controls/${id}`);
-    return res.data;
+    return api.get<DefenseControl>(`/defense/controls/${id}`);
   },
 
   listRemediationPlans: async (status?: string): Promise<RemediationPlan[]> => {
     const params: Record<string, string> = {};
     if (status) params.status = status;
-    const res = await api.get<RemediationPlan[]>('/api/v1/remediation/plans', { params });
-    return res.data;
+    return api.get<RemediationPlan[]>('/remediation/plans', { params });
   },
 
   getRemediationPlan: async (id: string): Promise<RemediationPlan> => {
-    const res = await api.get<RemediationPlan>(`/api/v1/remediation/plans/${id}`);
-    return res.data;
+    return api.get<RemediationPlan>(`/remediation/plans/${id}`);
   },
 
   createRemediationPlan: async (data: {
@@ -82,8 +72,7 @@ export const defenseApi = {
     owner?: string;
     targetDate?: string;
   }): Promise<RemediationPlan> => {
-    const res = await api.post<RemediationPlan>('/api/v1/remediation/plans', data);
-    return res.data;
+    return api.post<RemediationPlan>('/remediation/plans', data);
   },
 
   addRemediationTask: async (planId: string, data: {
@@ -93,12 +82,10 @@ export const defenseApi = {
     sequence?: number;
     owner?: string;
   }): Promise<RemediationTask> => {
-    const res = await api.post<RemediationTask>(`/api/v1/remediation/plans/${planId}/tasks`, data);
-    return res.data;
+    return api.post<RemediationTask>(`/remediation/plans/${planId}/tasks`, data);
   },
 
   updateTaskStatus: async (taskId: string, status: string): Promise<RemediationTask> => {
-    const res = await api.put<RemediationTask>(`/api/v1/remediation/tasks/${taskId}`, { status });
-    return res.data;
+    return api.put<RemediationTask>(`/remediation/tasks/${taskId}`, { status });
   },
 };

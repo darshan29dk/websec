@@ -12,7 +12,7 @@ export const eventApi = {
     sourceIp?: string,
     startTime?: string,
     endTime?: string
-  ): Promise<ApiResponse<PageResponse<SecurityEvent>>> => {
+  ): Promise<PageResponse<SecurityEvent>> => {
     const params: Record<string, any> = { page, size };
     if (targetId) params.targetId = targetId;
     if (eventType) params.eventType = eventType;
@@ -21,22 +21,18 @@ export const eventApi = {
     if (startTime) params.startTime = startTime;
     if (endTime) params.endTime = endTime;
 
-    const response = await client.get<ApiResponse<PageResponse<SecurityEvent>>>('/api/v1/events', { params });
-    return response.data;
+    return client.get<PageResponse<SecurityEvent>>('/events', { params });
   },
 
-  getEventById: async (id: string): Promise<ApiResponse<SecurityEvent>> => {
-    const response = await client.get<ApiResponse<SecurityEvent>>(`/api/v1/events/${id}`);
-    return response.data;
+  getEventById: async (id: string): Promise<SecurityEvent> => {
+    return client.get<SecurityEvent>(`/events/${id}`);
   },
 
-  getDetectionsForEvent: async (id: string): Promise<ApiResponse<DetectionMatch[]>> => {
-    const response = await client.get<ApiResponse<DetectionMatch[]>>(`/api/v1/events/${id}/detections`);
-    return response.data;
+  getDetectionsForEvent: async (id: string): Promise<DetectionMatch[]> => {
+    return client.get<DetectionMatch[]>(`/events/${id}/detections`);
   },
 
-  ingestHttpEvent: async (payload: any): Promise<ApiResponse<SecurityEvent>> => {
-    const response = await client.post<ApiResponse<SecurityEvent>>('/api/v1/events/http', payload);
-    return response.data;
+  ingestHttpEvent: async (payload: any): Promise<SecurityEvent> => {
+    return client.post<SecurityEvent>('/events/http', payload);
   }
 };

@@ -51,13 +51,13 @@ export const ForensicDetailPage: React.FC = () => {
         forensicApi.getAttackEvents(caseId)
       ]);
 
-      if (caseRes.success && caseRes.data) setForensicCase(caseRes.data);
-      if (summaryRes.success && summaryRes.data) setSummary(summaryRes.data);
-      if (evRes.success && evRes.data) setEvidenceList(evRes.data.content);
-      if (timelineRes.success && timelineRes.data) setTimelineEvents(timelineRes.data.content);
-      if (httpRes.success && httpRes.data) setHttpEvents(httpRes.data.content);
-      if (netRes.success && netRes.data) setNetworkEvents(netRes.data.content);
-      if (attackRes.success && attackRes.data) setAttackEvents(attackRes.data);
+      if (caseRes) setForensicCase(caseRes);
+      if (summaryRes) setSummary(summaryRes);
+      if (evRes?.content) setEvidenceList(evRes.content);
+      if (timelineRes?.content) setTimelineEvents(timelineRes.content);
+      if (httpRes?.content) setHttpEvents(httpRes.content);
+      if (netRes?.content) setNetworkEvents(netRes.content);
+      if (attackRes) setAttackEvents(attackRes);
     } catch (err) {
       console.error('Failed to load forensic case detail:', err);
     } finally {
@@ -69,8 +69,8 @@ export const ForensicDetailPage: React.FC = () => {
     setVerifyingId(evidenceId);
     try {
       const res = await forensicApi.verifyEvidence(evidenceId);
-      if (res.success && res.data) {
-        setVerificationResult(res.data);
+      if (res) {
+        setVerificationResult(res);
         if (id) loadAllCaseData(id);
       }
     } catch (err) {

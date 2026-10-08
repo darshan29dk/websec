@@ -52,15 +52,15 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
       try {
         const [targetData, findingData, incidentData, reportData] = await Promise.all([
           targetApi.getTargets(0, 5).catch(() => ({ content: [] })),
-          findingApi.getFindings(0, 10).catch(() => ({ data: { content: [] } })),
-          incidentApi.getIncidents(0, 10).catch(() => ({ data: { content: [] } })),
+          findingApi.getFindings(0, 10).catch(() => ({ content: [] } as any)),
+          incidentApi.getIncidents(0, 10).catch(() => ({ content: [] } as any)),
           reportApi.searchReports(undefined, undefined, undefined, undefined, 0, 5).catch(() => ({ content: [] })),
         ]);
 
         const q = query.toLowerCase();
         const targetsList = targetData.content || [];
-        const findingsList = findingData.data?.content || [];
-        const incidentsList = incidentData.data?.content || [];
+        const findingsList = (findingData as any)?.content || [];
+        const incidentsList = (incidentData as any)?.content || [];
         const reportsList = reportData.content || [];
 
         setResults({

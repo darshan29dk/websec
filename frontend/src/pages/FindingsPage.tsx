@@ -33,11 +33,11 @@ export const FindingsPage: React.FC = () => {
         undefined,
         searchQuery || undefined
       );
-      if (res.success && res.data) {
-        setFindings(res.data.content);
+      if (res && res.content) {
+        setFindings(res.content);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load vulnerability findings');
+      setError(err.message || 'Failed to load vulnerability findings');
     } finally {
       setIsLoading(false);
     }

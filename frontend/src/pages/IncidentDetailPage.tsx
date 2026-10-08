@@ -37,27 +37,27 @@ export const IncidentDetailPage: React.FC = () => {
     setError('');
     try {
       const res = await incidentApi.getIncidentById(id);
-      if (res.success && res.data) {
-        setIncident(res.data);
-        setNewStatus(res.data.status);
+      if (res) {
+        setIncident(res);
+        setNewStatus(res.status);
       }
 
       const [evRes, timeRes, chainRes, evidRes, findRes] = await Promise.all([
-        incidentApi.getEventsForIncident(id).catch(() => ({ success: false, data: [] })),
-        incidentApi.getTimelineForIncident(id).catch(() => ({ success: false, data: [] })),
-        incidentApi.getAttackChainForIncident(id).catch(() => ({ success: false, data: null })),
-        incidentApi.getEvidenceForIncident(id).catch(() => ({ success: false, data: [] })),
-        incidentApi.getRelatedFindingsForIncident(id).catch(() => ({ success: false, data: [] }))
+        incidentApi.getEventsForIncident(id).catch(() => []),
+        incidentApi.getTimelineForIncident(id).catch(() => []),
+        incidentApi.getAttackChainForIncident(id).catch(() => null),
+        incidentApi.getEvidenceForIncident(id).catch(() => []),
+        incidentApi.getRelatedFindingsForIncident(id).catch(() => [])
       ]);
 
-      if (evRes.data) setEvents(evRes.data);
-      if (timeRes.data) setTimeline(timeRes.data);
-      if (chainRes.data) setAttackChain(chainRes.data);
-      if (evidRes.data) setEvidenceList(evidRes.data);
-      if (findRes.data) setRelatedFindings(findRes.data);
+      if (evRes) setEvents(evRes);
+      if (timeRes) setTimeline(timeRes);
+      if (chainRes) setAttackChain(chainRes);
+      if (evidRes) setEvidenceList(evidRes);
+      if (findRes) setRelatedFindings(findRes);
 
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load incident details');
+      setError(err.message || 'Failed to load incident details');
     } finally {
       setIsLoading(false);
     }
@@ -70,11 +70,11 @@ export const IncidentDetailPage: React.FC = () => {
     setIsUpdatingStatus(true);
     try {
       const res = await incidentApi.updateStatus(id, newStatus);
-      if (res.success) {
+      if (res) {
         await loadIncidentDetail();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update incident status');
+      alert(err.message || 'Failed to update incident status');
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -84,8 +84,8 @@ export const IncidentDetailPage: React.FC = () => {
     if (!id) return;
     try {
       const res = await incidentApi.createOrGetInvestigation(id);
-      if (res.success && res.data) {
-        navigate(`/investigations/${res.data.id}`);
+      if (res && res.id) {
+        navigate(`/investigations/${res.id}`);
       }
     } catch (err: any) {
       alert('Failed to open investigation workspace');

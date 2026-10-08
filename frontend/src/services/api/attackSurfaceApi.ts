@@ -10,36 +10,31 @@ import {
 } from '../../types/attackSurface';
 
 export const attackSurfaceApi = {
-  getSummary: async (assessmentId: string): Promise<ApiResponse<AttackSurfaceSummary>> => {
-    const response = await client.get<ApiResponse<AttackSurfaceSummary>>(`/api/v1/assessments/${assessmentId}/attack-surface/summary`);
-    return response.data;
+  getSummary: async (assessmentId: string): Promise<AttackSurfaceSummary> => {
+    return client.get<AttackSurfaceSummary>(`/assessments/${assessmentId}/attack-surface/summary`);
   },
 
-  getAssets: async (assessmentId: string, type?: AssetType, page = 0, size = 50): Promise<ApiResponse<PageResponse<AttackSurfaceAsset>>> => {
+  getAssets: async (assessmentId: string, type?: AssetType, page = 0, size = 50): Promise<PageResponse<AttackSurfaceAsset>> => {
     const params: Record<string, any> = { page, size };
     if (type) params.type = type;
-    const response = await client.get<ApiResponse<PageResponse<AttackSurfaceAsset>>>(`/api/v1/assessments/${assessmentId}/attack-surface/assets`, { params });
-    return response.data;
+    return client.get<PageResponse<AttackSurfaceAsset>>(`/assessments/${assessmentId}/attack-surface/assets`, { params });
   },
 
-  getRelationships: async (assessmentId: string, page = 0, size = 50): Promise<ApiResponse<PageResponse<AttackSurfaceRelationship>>> => {
-    const response = await client.get<ApiResponse<PageResponse<AttackSurfaceRelationship>>>(`/api/v1/assessments/${assessmentId}/attack-surface/relationships`, {
+  getRelationships: async (assessmentId: string, page = 0, size = 50): Promise<PageResponse<AttackSurfaceRelationship>> => {
+    return client.get<PageResponse<AttackSurfaceRelationship>>(`/assessments/${assessmentId}/attack-surface/relationships`, {
       params: { page, size }
     });
-    return response.data;
   },
 
-  getTechnologies: async (assessmentId: string, page = 0, size = 50): Promise<ApiResponse<PageResponse<Technology>>> => {
-    const response = await client.get<ApiResponse<PageResponse<Technology>>>(`/api/v1/assessments/${assessmentId}/attack-surface/technologies`, {
+  getTechnologies: async (assessmentId: string, page = 0, size = 50): Promise<PageResponse<Technology>> => {
+    return client.get<PageResponse<Technology>>(`/assessments/${assessmentId}/attack-surface/technologies`, {
       params: { page, size }
     });
-    return response.data;
   },
 
-  getEndpoints: async (assessmentId: string, page = 0, size = 50): Promise<ApiResponse<PageResponse<WebEndpoint>>> => {
-    const response = await client.get<ApiResponse<PageResponse<WebEndpoint>>>(`/api/v1/assessments/${assessmentId}/attack-surface/endpoints`, {
+  getEndpoints: async (assessmentId: string, page = 0, size = 50): Promise<PageResponse<WebEndpoint>> => {
+    return client.get<PageResponse<WebEndpoint>>(`/assessments/${assessmentId}/attack-surface/endpoints`, {
       params: { page, size }
     });
-    return response.data;
   }
 };

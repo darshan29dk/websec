@@ -34,21 +34,21 @@ export const AttackSurfacePage: React.FC = () => {
     setError('');
     try {
       const sumRes = await attackSurfaceApi.getSummary(assessmentId);
-      if (sumRes.success && sumRes.data) setSummary(sumRes.data);
+      if (sumRes) setSummary(sumRes);
 
       const assetRes = await attackSurfaceApi.getAssets(assessmentId);
-      if (assetRes.success && assetRes.data) setAssets(assetRes.data.content);
+      if (assetRes && assetRes.content) setAssets(assetRes.content);
 
       const techRes = await attackSurfaceApi.getTechnologies(assessmentId);
-      if (techRes.success && techRes.data) setTechnologies(techRes.data.content);
+      if (techRes && techRes.content) setTechnologies(techRes.content);
 
       const epRes = await attackSurfaceApi.getEndpoints(assessmentId);
-      if (epRes.success && epRes.data) setEndpoints(epRes.data.content);
+      if (epRes && epRes.content) setEndpoints(epRes.content);
 
       const relRes = await attackSurfaceApi.getRelationships(assessmentId);
-      if (relRes.success && relRes.data) setRelationships(relRes.data.content);
+      if (relRes && relRes.content) setRelationships(relRes.content);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load attack surface data');
+      setError(err.message || 'Failed to load attack surface data');
     } finally {
       setIsLoading(false);
     }

@@ -3,8 +3,7 @@ import { ApiResponse } from '../../types/common';
 import { SecurityToolStatus } from '../../types/assessment';
 
 export const systemApi = {
-  getSecurityTools: async (): Promise<ApiResponse<SecurityToolStatus[]>> => {
-    const response = await client.get<ApiResponse<SecurityToolStatus[]>>('/api/v1/system/security-tools');
-    return response.data;
+  getSecurityTools: async (): Promise<SecurityToolStatus[]> => {
+    return client.get<SecurityToolStatus[]>('/system/security-tools');
   }
 };

@@ -32,12 +32,12 @@ export const FindingDetailPage: React.FC = () => {
     setError('');
     try {
       const res = await findingApi.getFindingById(id);
-      if (res.success && res.data) {
-        setDetail(res.data);
-        setNewStatus(res.data.finding.status);
+      if (res) {
+        setDetail(res);
+        setNewStatus(res.finding.status);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load vulnerability finding details');
+      setError(err.message || 'Failed to load vulnerability finding details');
     } finally {
       setIsLoading(false);
     }
@@ -50,12 +50,12 @@ export const FindingDetailPage: React.FC = () => {
     setIsUpdatingStatus(true);
     try {
       const res = await findingApi.updateStatus(id, newStatus, statusComment);
-      if (res.success) {
+      if (res) {
         setStatusComment('');
         await loadFindingDetail();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update finding status');
+      alert(err.message || 'Failed to update finding status');
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -68,12 +68,12 @@ export const FindingDetailPage: React.FC = () => {
     setIsSubmittingComment(true);
     try {
       const res = await findingApi.addComment(id, commentText.trim());
-      if (res.success) {
+      if (res) {
         setCommentText('');
         await loadFindingDetail();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to add comment');
+      alert(err.message || 'Failed to add comment');
     } finally {
       setIsSubmittingComment(false);
     }

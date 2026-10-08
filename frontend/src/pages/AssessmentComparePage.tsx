@@ -13,14 +13,14 @@ import {
 import { postureApi } from '../services/api/postureApi';
 import { targetApi } from '../services/api/targetApi';
 import { assessmentApi } from '../services/api/assessmentApi';
-import { SecurityTarget } from '../types/target';
-import { SecurityAssessment } from '../types/assessment';
+import { Target } from '../types/target';
+import { Assessment } from '../types/assessment';
 import { AssessmentComparisonDto } from '../types/posture';
 
 export const AssessmentComparePage: React.FC = () => {
-  const [targets, setTargets] = useState<SecurityTarget[]>([]);
+  const [targets, setTargets] = useState<Target[]>([]);
   const [selectedTargetId, setSelectedTargetId] = useState<string>('');
-  const [assessments, setAssessments] = useState<SecurityAssessment[]>([]);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [prevAssessmentId, setPrevAssessmentId] = useState<string>('');
   const [currAssessmentId, setCurrAssessmentId] = useState<string>('');
   const [comparison, setComparison] = useState<AssessmentComparisonDto | null>(null);

@@ -15,75 +15,61 @@ import {
 } from '../../types/forensic';
 
 export const forensicApi = {
-  getCases: async (params?: { targetId?: string; status?: string; page?: number; size?: number }) => {
-    const response = await apiClient.get<ApiResponse<PageResponse<ForensicCase>>>('/forensics/cases', { params });
-    return response.data;
+  getCases: async (params?: { targetId?: string; status?: string; page?: number; size?: number }): Promise<PageResponse<ForensicCase>> => {
+    return apiClient.get<PageResponse<ForensicCase>>('/forensics/cases', { params });
   },
 
-  getCaseById: async (id: string) => {
-    const response = await apiClient.get<ApiResponse<ForensicCase>>(`/forensics/cases/${id}`);
-    return response.data;
+  getCaseById: async (id: string): Promise<ForensicCase> => {
+    return apiClient.get<ForensicCase>(`/forensics/cases/${id}`);
   },
 
-  createCase: async (data: CreateCaseRequest) => {
-    const response = await apiClient.post<ApiResponse<ForensicCase>>('/forensics/cases', data);
-    return response.data;
+  createCase: async (data: CreateCaseRequest): Promise<ForensicCase> => {
+    return apiClient.post<ForensicCase>('/forensics/cases', data);
   },
 
-  createCaseFromIncident: async (incidentId: string) => {
-    const response = await apiClient.post<ApiResponse<ForensicCase>>(`/incidents/${incidentId}/forensic-case`);
-    return response.data;
+  createCaseFromIncident: async (incidentId: string): Promise<ForensicCase> => {
+    return apiClient.post<ForensicCase>(`/incidents/${incidentId}/forensic-case`);
   },
 
-  closeCase: async (id: string, status?: string) => {
-    const response = await apiClient.post<ApiResponse<ForensicCase>>(`/forensics/cases/${id}/close`, null, {
+  closeCase: async (id: string, status?: string): Promise<ForensicCase> => {
+    return apiClient.post<ForensicCase>(`/forensics/cases/${id}/close`, null, {
       params: { status }
     });
-    return response.data;
   },
 
-  getEvidence: async (caseId: string, params?: { page?: number; size?: number }) => {
-    const response = await apiClient.get<ApiResponse<PageResponse<ForensicEvidence>>>(`/forensics/cases/${caseId}/evidence`, { params });
-    return response.data;
+  getEvidence: async (caseId: string, params?: { page?: number; size?: number }): Promise<PageResponse<ForensicEvidence>> => {
+    return apiClient.get<PageResponse<ForensicEvidence>>(`/forensics/cases/${caseId}/evidence`, { params });
   },
 
-  addEvidence: async (caseId: string, data: AddEvidenceRequest) => {
-    const response = await apiClient.post<ApiResponse<ForensicEvidence>>(`/forensics/cases/${caseId}/evidence`, data);
-    return response.data;
+  addEvidence: async (caseId: string, data: AddEvidenceRequest): Promise<ForensicEvidence> => {
+    return apiClient.post<ForensicEvidence>(`/forensics/cases/${caseId}/evidence`, data);
   },
 
-  verifyEvidence: async (evidenceId: string) => {
-    const response = await apiClient.post<ApiResponse<EvidenceVerification>>(`/forensics/evidence/${evidenceId}/verify`);
-    return response.data;
+  verifyEvidence: async (evidenceId: string): Promise<EvidenceVerification> => {
+    return apiClient.post<EvidenceVerification>(`/forensics/evidence/${evidenceId}/verify`);
   },
 
-  getTimeline: async (caseId: string, params?: { page?: number; size?: number }) => {
-    const response = await apiClient.get<ApiResponse<PageResponse<TimelineEvent>>>(`/forensics/cases/${caseId}/timeline`, { params });
-    return response.data;
+  getTimeline: async (caseId: string, params?: { page?: number; size?: number }): Promise<PageResponse<TimelineEvent>> => {
+    return apiClient.get<PageResponse<TimelineEvent>>(`/forensics/cases/${caseId}/timeline`, { params });
   },
 
-  getHttpEvents: async (caseId: string, params?: { page?: number; size?: number }) => {
-    const response = await apiClient.get<ApiResponse<PageResponse<HttpForensicEvent>>>(`/forensics/cases/${caseId}/http-events`, { params });
-    return response.data;
+  getHttpEvents: async (caseId: string, params?: { page?: number; size?: number }): Promise<PageResponse<HttpForensicEvent>> => {
+    return apiClient.get<PageResponse<HttpForensicEvent>>(`/forensics/cases/${caseId}/http-events`, { params });
   },
 
-  getNetworkEvents: async (caseId: string, params?: { page?: number; size?: number }) => {
-    const response = await apiClient.get<ApiResponse<PageResponse<NetworkForensicEvent>>>(`/forensics/cases/${caseId}/network-events`, { params });
-    return response.data;
+  getNetworkEvents: async (caseId: string, params?: { page?: number; size?: number }): Promise<PageResponse<NetworkForensicEvent>> => {
+    return apiClient.get<PageResponse<NetworkForensicEvent>>(`/forensics/cases/${caseId}/network-events`, { params });
   },
 
-  getAttackEvents: async (caseId: string) => {
-    const response = await apiClient.get<ApiResponse<AttackEvent[]>>(`/forensics/cases/${caseId}/attack-events`);
-    return response.data;
+  getAttackEvents: async (caseId: string): Promise<AttackEvent[]> => {
+    return apiClient.get<AttackEvent[]>(`/forensics/cases/${caseId}/attack-events`);
   },
 
-  getAttackChain: async (caseId: string) => {
-    const response = await apiClient.get<ApiResponse<AttackChain>>(`/forensics/cases/${caseId}/attack-chain`);
-    return response.data;
+  getAttackChain: async (caseId: string): Promise<AttackChain> => {
+    return apiClient.get<AttackChain>(`/forensics/cases/${caseId}/attack-chain`);
   },
 
-  getSummary: async (caseId: string) => {
-    const response = await apiClient.get<ApiResponse<ForensicSummary>>(`/forensics/cases/${caseId}/summary`);
-    return response.data;
+  getSummary: async (caseId: string): Promise<ForensicSummary> => {
+    return apiClient.get<ForensicSummary>(`/forensics/cases/${caseId}/summary`);
   }
 };

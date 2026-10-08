@@ -27,7 +27,9 @@ export class ApiClient {
     options: RequestInit & { params?: Record<string, any> } = {}
   ): Promise<T> {
     const { params, ...fetchOptions } = options;
-    let url = `${API_BASE_URL}${endpoint}`;
+    let url = endpoint.startsWith('/api/v1')
+      ? endpoint
+      : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
     if (params) {
       const query = new URLSearchParams();
       Object.entries(params).forEach(([key, val]) => {
@@ -66,7 +68,7 @@ export class ApiClient {
         response = await fetch(url, { ...fetchOptions, headers });
       } else {
         this.clearTokens();
-        window.dispatchEvent(new Event('aegis:auth:unauthorized'));
+        window.dispatchEvent(new Event('globalshield:auth:unauthorized'));
       }
     }
 
@@ -129,6 +131,14 @@ export class ApiClient {
   public static put<T>(endpoint: string, body?: any, options?: RequestInit & { params?: Record<string, any> }): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+      ...options,
+    });
+  }
+
+  public static patch<T>(endpoint: string, body?: any, options?: RequestInit & { params?: Record<string, any> }): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
       body: body ? JSON.stringify(body) : undefined,
       ...options,
     });

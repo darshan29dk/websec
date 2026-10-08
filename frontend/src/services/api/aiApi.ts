@@ -11,48 +11,39 @@ import {
 
 export const aiApi = {
   createInvestigation: async (request: AiInvestigationRequest): Promise<AiInvestigation> => {
-    const response = await client.post<AiInvestigation>('/api/v1/ai/investigations', request);
-    return response.data;
+    return client.post<AiInvestigation>('/ai/investigations', request);
   },
 
   getAllInvestigations: async (): Promise<AiInvestigation[]> => {
-    const response = await client.get<AiInvestigation[]>('/api/v1/ai/investigations');
-    return response.data;
+    return client.get<AiInvestigation[]>('/ai/investigations');
   },
 
   getInvestigationById: async (id: string): Promise<AiInvestigation> => {
-    const response = await client.get<AiInvestigation>(`/api/v1/ai/investigations/${id}`);
-    return response.data;
+    return client.get<AiInvestigation>(`/ai/investigations/${id}`);
   },
 
   runInvestigation: async (id: string): Promise<AiInvestigation> => {
-    const response = await client.post<AiInvestigation>(`/api/v1/ai/investigations/${id}/run`);
-    return response.data;
+    return client.post<AiInvestigation>(`/ai/investigations/${id}/run`);
   },
 
   cancelInvestigation: async (id: string): Promise<AiInvestigation> => {
-    const response = await client.post<AiInvestigation>(`/api/v1/ai/investigations/${id}/cancel`);
-    return response.data;
+    return client.post<AiInvestigation>(`/ai/investigations/${id}/cancel`);
   },
 
   getEvidenceReferences: async (id: string): Promise<AiEvidenceReference[]> => {
-    const response = await client.get<AiEvidenceReference[]>(`/api/v1/ai/investigations/${id}/evidence`);
-    return response.data;
+    return client.get<AiEvidenceReference[]>(`/ai/investigations/${id}/evidence`);
   },
 
   getKnowledgeReferences: async (id: string): Promise<AiKnowledgeReference[]> => {
-    const response = await client.get<AiKnowledgeReference[]>(`/api/v1/ai/investigations/${id}/knowledge`);
-    return response.data;
+    return client.get<AiKnowledgeReference[]>(`/ai/investigations/${id}/knowledge`);
   },
 
   getClaims: async (id: string): Promise<AiAnalysisClaim[]> => {
-    const response = await client.get<AiAnalysisClaim[]>(`/api/v1/ai/investigations/${id}/claims`);
-    return response.data;
+    return client.get<AiAnalysisClaim[]>(`/ai/investigations/${id}/claims`);
   },
 
   askQuestion: async (id: string, question: string): Promise<AiQuestionResponse> => {
     const req: AiQuestionRequest = { question };
-    const response = await client.post<AiQuestionResponse>(`/api/v1/ai/investigations/${id}/questions`, req);
-    return response.data;
+    return client.post<AiQuestionResponse>(`/ai/investigations/${id}/questions`, req);
   },
 };

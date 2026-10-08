@@ -7,23 +7,19 @@ import {
 
 export const knowledgeApi = {
   getAllDocuments: async (): Promise<KnowledgeDocument[]> => {
-    const response = await client.get<KnowledgeDocument[]>('/api/v1/knowledge/documents');
-    return response.data;
+    return client.get<KnowledgeDocument[]>('/knowledge/documents');
   },
 
   getDocumentById: async (id: string): Promise<KnowledgeDocument> => {
-    const response = await client.get<KnowledgeDocument>(`/api/v1/knowledge/documents/${id}`);
-    return response.data;
+    return client.get<KnowledgeDocument>(`/knowledge/documents/${id}`);
   },
 
   createDocument: async (request: KnowledgeIngestRequest): Promise<KnowledgeDocument> => {
-    const response = await client.post<KnowledgeDocument>('/api/v1/knowledge/documents', request);
-    return response.data;
+    return client.post<KnowledgeDocument>('/knowledge/documents', request);
   },
 
   ingestDocument: async (request: KnowledgeIngestRequest): Promise<KnowledgeDocument> => {
-    const response = await client.post<KnowledgeDocument>('/api/v1/knowledge/ingest', request);
-    return response.data;
+    return client.post<KnowledgeDocument>('/knowledge/ingest', request);
   },
 
   searchKnowledge: async (query?: string, source?: string, documentType?: string, limit = 10): Promise<KnowledgeSearchResult[]> => {
@@ -32,7 +28,6 @@ export const knowledgeApi = {
     if (source) params.source = source;
     if (documentType) params.documentType = documentType;
 
-    const response = await client.get<KnowledgeSearchResult[]>('/api/v1/knowledge/search', { params });
-    return response.data;
+    return client.get<KnowledgeSearchResult[]>('/knowledge/search', { params });
   },
 };
