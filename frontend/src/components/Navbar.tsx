@@ -13,8 +13,8 @@ export const Navbar: React.FC = () => {
       <header
         style={{
           height: '56px',
-          backgroundColor: '#091122',
-          borderBottom: '1px solid #1e293b',
+          backgroundColor: 'var(--bg-navbar)',
+          borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -22,7 +22,7 @@ export const Navbar: React.FC = () => {
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+          boxShadow: '0 2px 8px rgba(2, 132, 199, 0.08)',
         }}
       >
         {/* Brand & Tagline */}
@@ -33,14 +33,14 @@ export const Navbar: React.FC = () => {
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
+                backgroundColor: 'var(--accent-light)',
+                border: '1px solid var(--border-focus)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Shield size={18} color="#38bdf8" />
+              <Shield size={18} color="var(--accent-primary)" />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span
@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
                   fontSize: '15px',
                   fontWeight: 700,
                   letterSpacing: '0.5px',
-                  color: '#ffffff',
+                  color: 'var(--text-heading)',
                   lineHeight: '1.2',
                 }}
               >
@@ -57,8 +57,8 @@ export const Navbar: React.FC = () => {
               <span
                 style={{
                   fontSize: '10px',
-                  color: '#38bdf8',
-                  fontWeight: 500,
+                  color: 'var(--accent-primary)',
+                  fontWeight: 600,
                   letterSpacing: '0.2px',
                 }}
               >
@@ -71,7 +71,7 @@ export const Navbar: React.FC = () => {
             style={{
               height: '16px',
               width: '1px',
-              backgroundColor: '#1e293b',
+              backgroundColor: 'var(--border-color)',
               margin: '0 4px',
             }}
           />
@@ -86,9 +86,9 @@ export const Navbar: React.FC = () => {
               fontWeight: 600,
               padding: '3px 10px',
               borderRadius: '12px',
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
-              color: '#34d399',
+              backgroundColor: 'var(--status-active-bg)',
+              border: '1px solid var(--status-active-border)',
+              color: 'var(--status-active-text)',
             }}
           >
             <span
@@ -96,7 +96,7 @@ export const Navbar: React.FC = () => {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: '#34d399',
+                backgroundColor: 'var(--status-active-text)',
               }}
             />
             <span>Production</span>
@@ -109,15 +109,15 @@ export const Navbar: React.FC = () => {
               alignItems: 'center',
               gap: '6px',
               fontSize: '11px',
-              fontWeight: 500,
+              fontWeight: 600,
               padding: '3px 10px',
               borderRadius: '12px',
-              backgroundColor: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              color: '#38bdf8',
+              backgroundColor: 'var(--status-queued-bg)',
+              border: '1px solid var(--status-queued-border)',
+              color: 'var(--status-queued-text)',
             }}
           >
-            <Activity size={12} color="#38bdf8" />
+            <Activity size={12} color="var(--status-queued-text)" />
             <span>Protection Active</span>
           </div>
         </div>
@@ -129,30 +129,30 @@ export const Navbar: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            backgroundColor: '#070c18',
-            border: '1px solid #1e293b',
+            backgroundColor: 'var(--bg-page)',
+            border: '1px solid var(--border-color)',
             borderRadius: '6px',
             padding: '6px 14px',
             width: '280px',
-            color: '#94a3b8',
+            color: 'var(--text-muted)',
             fontSize: '12px',
             cursor: 'pointer',
             transition: 'all 0.15s ease',
           }}
-          onMouseOver={(e) => (e.currentTarget.style.borderColor = '#38bdf8')}
-          onMouseOut={(e) => (e.currentTarget.style.borderColor = '#1e293b')}
+          onMouseOver={(e) => (e.currentTarget.style.borderColor = 'var(--border-focus)')}
+          onMouseOut={(e) => (e.currentTarget.style.borderColor = 'var(--border-color)')}
         >
-          <Search size={14} color="#38bdf8" />
-          <span style={{ flex: 1, textAlign: 'left', color: '#f1f5f9' }}>Search targets, findings, incidents...</span>
+          <Search size={14} color="var(--accent-primary)" />
+          <span style={{ flex: 1, textAlign: 'left', color: 'var(--text-main)' }}>Search targets, findings, incidents...</span>
           <kbd
             style={{
               fontSize: '10px',
               fontWeight: 600,
-              backgroundColor: 'rgba(56, 189, 248, 0.15)',
-              color: '#38bdf8',
+              backgroundColor: 'var(--accent-light)',
+              color: 'var(--accent-primary)',
               padding: '2px 5px',
               borderRadius: '4px',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              border: '1px solid var(--border-color)',
             }}
           >
             Ctrl K
@@ -168,10 +168,10 @@ export const Navbar: React.FC = () => {
                 onClick={() => setShowNotifications(!showNotifications)}
                 style={{
                   background: 'transparent',
-                  border: '1px solid #1e293b',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '6px',
                   padding: '6px',
-                  color: '#38bdf8',
+                  color: 'var(--accent-primary)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -201,10 +201,10 @@ export const Navbar: React.FC = () => {
                     right: 0,
                     top: '40px',
                     width: '300px',
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #1e293b',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.5)',
+                    boxShadow: '0 10px 25px -3px rgba(2, 132, 199, 0.15)',
                     padding: '12px',
                     zIndex: 200,
                   }}
@@ -213,23 +213,23 @@ export const Navbar: React.FC = () => {
                     style={{
                       fontSize: '12px',
                       fontWeight: 600,
-                      color: '#0f172a',
+                      color: 'var(--text-heading)',
                       marginBottom: '8px',
                       paddingBottom: '6px',
-                      borderBottom: '1px solid #e2e8f0',
+                      borderBottom: '1px solid var(--border-color)',
                     }}
                   >
                     Security Alerts &amp; Notifications
                   </div>
-                  <div style={{ fontSize: '12px', color: '#cbd5e1', padding: '6px 0' }}>
-                    <div style={{ fontWeight: 600, color: '#f97316' }}>Retest Pending</div>
-                    <div style={{ color: '#64748b', fontSize: '11px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-main)', padding: '6px 0' }}>
+                    <div style={{ fontWeight: 600, color: '#ea580c' }}>Retest Pending</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
                       Controlled retest requested for target scope
                     </div>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#cbd5e1', padding: '6px 0', borderTop: '1px solid #1e293b' }}>
-                    <div style={{ fontWeight: 600, color: '#3b82f6' }}>Continuous Monitoring Active</div>
-                    <div style={{ color: '#64748b', fontSize: '11px' }}>All target schedules verified</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-main)', padding: '6px 0', borderTop: '1px solid var(--border-color)' }}>
+                    <div style={{ fontWeight: 600, color: '#0284c7' }}>Continuous Monitoring Active</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>All target schedules verified</div>
                   </div>
                 </div>
               )}
@@ -242,21 +242,21 @@ export const Navbar: React.FC = () => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
+                  backgroundColor: 'var(--accent-light)',
+                  border: '1px solid var(--border-focus)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#60a5fa',
+                  color: 'var(--accent-primary)',
                 }}
               >
                 <UserIcon size={16} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#f8fafc', lineHeight: '1.2' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-heading)', lineHeight: '1.2' }}>
                   {user.displayName}
                 </span>
-                <span style={{ fontSize: '10px', color: '#64748b' }}>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                   {user.role || 'SECURITY_ANALYST'}
                 </span>
               </div>
@@ -268,8 +268,8 @@ export const Navbar: React.FC = () => {
               title="Sign out"
               style={{
                 background: 'transparent',
-                border: '1px solid #1e293b',
-                color: '#94a3b8',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-muted)',
                 padding: '6px 10px',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -280,12 +280,12 @@ export const Navbar: React.FC = () => {
                 transition: 'all 0.15s',
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = '#ef444440';
-                e.currentTarget.style.color = '#ef4444';
+                e.currentTarget.style.borderColor = '#fca5a5';
+                e.currentTarget.style.color = '#dc2626';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = '#1e293b';
-                e.currentTarget.style.color = '#94a3b8';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.color = 'var(--text-muted)';
               }}
             >
               <LogOut size={14} />

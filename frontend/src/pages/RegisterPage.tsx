@@ -86,19 +86,19 @@ export const RegisterPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#070c18',
-        backgroundImage: 'radial-gradient(circle at top, #0d2137 0%, #070c18 70%)',
+        backgroundColor: '#f0f7ff',
+        backgroundImage: 'radial-gradient(circle at top, #e0f2fe 0%, #f0f7ff 70%)',
         padding: '20px',
       }}
     >
       <div
         style={{
           width: '440px',
-          backgroundColor: '#0f172a',
-          border: '1px solid #1e293b',
+          backgroundColor: '#ffffff',
+          border: '1px solid #cbd5e1',
           borderRadius: '12px',
           padding: '32px',
-          boxShadow: '0 20px 30px -5px rgba(0, 0, 0, 0.6)',
+          boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.12)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -110,18 +110,18 @@ export const RegisterPage: React.FC = () => {
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              backgroundColor: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              color: '#38bdf8',
+              backgroundColor: 'var(--accent-light)',
+              border: '1px solid var(--border-focus)',
+              color: 'var(--accent-primary)',
               marginBottom: '12px',
             }}
           >
             <Shield size={26} />
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-heading)' }}>
             Register Account
           </h2>
-          <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
             GLOBALSHIELD Security Console Access Registration
           </p>
         </div>
@@ -159,7 +159,7 @@ export const RegisterPage: React.FC = () => {
             />
 
             <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1' }}>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-heading)' }}>
                 Requested Platform Role
               </label>
               <select
@@ -167,11 +167,11 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setRole(e.target.value as UserRole)}
                 style={{
                   width: '100%',
-                  backgroundColor: '#020617',
-                  border: '1px solid #1e293b',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #cbd5e1',
                   borderRadius: '6px',
                   padding: '8px 12px',
-                  color: '#f8fafc',
+                  color: '#0f172a',
                   fontSize: '13px',
                   outline: 'none',
                 }}

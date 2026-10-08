@@ -81,11 +81,11 @@ export const FindingDetailPage: React.FC = () => {
 
   const getSeverityBadgeColor = (sev: FindingSeverity) => {
     switch (sev) {
-      case 'CRITICAL': return { bg: '#3b0000', color: '#ff4d4d', border: '#800000' };
-      case 'HIGH': return { bg: '#2b1000', color: '#ff9933', border: '#803300' };
-      case 'MEDIUM': return { bg: '#2b2000', color: '#ffcc00', border: '#806600' };
-      case 'LOW': return { bg: '#002b10', color: '#33cc66', border: '#008033' };
-      default: return { bg: '#1a1a2e', color: '#8a8aa3', border: '#33334d' };
+      case 'CRITICAL': return { bg: '#fef2f2', color: '#dc2626', border: '#fca5a5' };
+      case 'HIGH': return { bg: '#fff7ed', color: '#ea580c', border: '#fdba74' };
+      case 'MEDIUM': return { bg: '#fffbeb', color: '#d97706', border: '#fde68a' };
+      case 'LOW': return { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0' };
+      default: return { bg: '#f8fafc', color: '#64748b', border: '#cbd5e1' };
     }
   };
 
@@ -290,13 +290,13 @@ export const FindingDetailPage: React.FC = () => {
                     )}
                     {(ev.redactedContent || ev.content) && (
                       <pre style={{
-                        backgroundColor: '#0a0a12',
-                        border: '1px solid #1e1e30',
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #cbd5e1',
                         padding: '10px',
                         borderRadius: '4px',
                         fontSize: '12px',
                         fontFamily: 'monospace',
-                        color: '#d1d1e0',
+                        color: '#0f172a',
                         overflowX: 'auto',
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',

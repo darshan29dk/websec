@@ -1,39 +1,42 @@
 :root {
-  --bg-dark: #070c18;
-  --bg-page: #070c18;
-  --bg-card: #0f172a;
-  --bg-card-hover: #17243c;
-  --bg-input: #091122;
-  --border-color: #1e293b;
-  --border-focus: #38bdf8;
+  --bg-dark: #f0f7ff;
+  --bg-page: #f0f7ff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f9ff;
+  --bg-input: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-navbar: #ffffff;
 
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --text-heading: #ffffff;
+  --border-color: #cbd5e1;
+  --border-focus: #0284c7;
 
-  --accent-primary: #38bdf8;
-  --accent-hover: #7dd3fc;
-  --accent-light: rgba(56, 189, 248, 0.15);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-heading: #0f172a;
 
-  --status-active-bg: rgba(16, 185, 129, 0.15);
-  --status-active-border: rgba(16, 185, 129, 0.4);
-  --status-active-text: #34d399;
+  --accent-primary: #0284c7;
+  --accent-hover: #0369a1;
+  --accent-light: #e0f2fe;
 
-  --status-warning-bg: rgba(245, 158, 11, 0.15);
-  --status-warning-border: rgba(245, 158, 11, 0.4);
-  --status-warning-text: #fbbf24;
+  --status-active-bg: #ecfdf5;
+  --status-active-border: #a7f3d0;
+  --status-active-text: #047857;
 
-  --status-disabled-bg: rgba(100, 116, 139, 0.15);
-  --status-disabled-border: rgba(100, 116, 139, 0.4);
-  --status-disabled-text: #94a3b8;
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #fde68a;
+  --status-warning-text: #b45309;
 
-  --status-queued-bg: rgba(56, 189, 248, 0.15);
-  --status-queued-border: rgba(56, 189, 248, 0.4);
-  --status-queued-text: #38bdf8;
+  --status-disabled-bg: #f8fafc;
+  --status-disabled-border: #e2e8f0;
+  --status-disabled-text: #64748b;
 
-  --status-danger-bg: rgba(239, 68, 68, 0.15);
-  --status-danger-border: rgba(239, 68, 68, 0.4);
-  --status-danger-text: #f87171;
+  --status-queued-bg: #e0f2fe;
+  --status-queued-border: #7dd3fc;
+  --status-queued-text: #0369a1;
+
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #fca5a5;
+  --status-danger-text: #b91c1c;
 
   --font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
@@ -46,7 +49,7 @@
 }
 
 body {
-  background-color: var(--bg-dark);
+  background-color: var(--bg-page);
   color: var(--text-main);
   font-family: var(--font-family);
   font-size: 13px;
@@ -84,12 +87,12 @@ code, pre {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #070c18;
+  background: #f0f7ff;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;
+  background: #0284c7;
 }

@@ -74,8 +74,8 @@ export const Sidebar: React.FC = () => {
     <aside
       style={{
         width: '240px',
-        backgroundColor: '#070c18',
-        borderRight: '1px solid #1e293b',
+        backgroundColor: 'var(--bg-sidebar)',
+        borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
         padding: '16px 10px',
@@ -94,7 +94,7 @@ export const Sidebar: React.FC = () => {
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.8px',
-              color: '#38bdf8',
+              color: 'var(--accent-primary)',
               marginBottom: '6px',
               paddingLeft: '10px',
             }}
@@ -115,15 +115,15 @@ export const Sidebar: React.FC = () => {
                   borderRadius: '6px',
                   fontSize: '12.5px',
                   fontWeight: isActive ? 600 : 500,
-                  color: isActive ? '#ffffff' : '#94a3b8',
-                  backgroundColor: isActive ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-                  borderLeft: isActive ? '3px solid #38bdf8' : '3px solid transparent',
+                  color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
+                  borderLeft: isActive ? '3px solid var(--accent-primary)' : '3px solid transparent',
                   marginBottom: '2px',
                   transition: 'all 0.12s ease',
                   textDecoration: 'none',
                 })}
               >
-                <Icon size={15} style={{ flexShrink: 0, color: '#38bdf8' }} />
+                <Icon size={15} style={{ flexShrink: 0, color: 'var(--accent-primary)' }} />
                 <span>{item.label}</span>
               </NavLink>
             );

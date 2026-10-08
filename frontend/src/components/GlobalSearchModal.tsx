@@ -122,10 +122,10 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
         style={{
           width: '100%',
           maxWidth: '640px',
-          backgroundColor: '#0f172a',
-          border: '1px solid #1e293b',
+          backgroundColor: '#ffffff',
+          border: '1px solid #cbd5e1',
           borderRadius: '10px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 20px 25px -5px rgba(2, 132, 199, 0.15)',
           overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -136,11 +136,11 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
             display: 'flex',
             alignItems: 'center',
             padding: '14px 18px',
-            borderBottom: '1px solid #1e293b',
+            borderBottom: '1px solid #cbd5e1',
             gap: '12px',
           }}
         >
-          <Search size={18} color="#64748b" />
+          <Search size={18} color="#0284c7" />
           <input
             type="text"
             placeholder="Search targets, findings, incidents, reports... (Press Esc to close)"
@@ -152,7 +152,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: '#f8fafc',
+              color: '#0f172a',
               fontSize: '14px',
             }}
           />
@@ -215,7 +215,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                         color: '#cbd5e1',
                         transition: 'background 0.15s',
                       }}
-                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e0f2fe')}
                       onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       <Target size={15} color="#3b82f6" />
@@ -257,7 +257,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                         color: '#cbd5e1',
                         transition: 'background 0.15s',
                       }}
-                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e0f2fe')}
                       onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       <Lock size={15} color="#f59e0b" />
@@ -319,7 +319,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                         color: '#cbd5e1',
                         transition: 'background 0.15s',
                       }}
-                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e0f2fe')}
                       onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       <AlertTriangle size={15} color="#ef4444" />
@@ -361,7 +361,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                         color: '#cbd5e1',
                         transition: 'background 0.15s',
                       }}
-                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e0f2fe')}
                       onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       <FileText size={15} color="#10b981" />

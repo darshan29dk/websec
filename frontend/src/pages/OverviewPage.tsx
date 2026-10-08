@@ -81,8 +81,8 @@ export const OverviewPage: React.FC = () => {
           <div
             style={{
               display: 'flex',
-              backgroundColor: '#0f172a',
-              border: '1px solid #1e293b',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: '6px',
               padding: '2px',
             }}
@@ -90,8 +90,8 @@ export const OverviewPage: React.FC = () => {
             <button
               onClick={() => setViewMode('EXECUTIVE')}
               style={{
-                background: viewMode === 'EXECUTIVE' ? '#1e293b' : 'transparent',
-                color: viewMode === 'EXECUTIVE' ? '#f8fafc' : '#64748b',
+                background: viewMode === 'EXECUTIVE' ? 'var(--accent-light)' : 'transparent',
+                color: viewMode === 'EXECUTIVE' ? 'var(--accent-primary)' : 'var(--text-muted)',
                 border: 'none',
                 padding: '5px 12px',
                 borderRadius: '4px',
@@ -106,8 +106,8 @@ export const OverviewPage: React.FC = () => {
             <button
               onClick={() => setViewMode('SOC')}
               style={{
-                background: viewMode === 'SOC' ? '#1e293b' : 'transparent',
-                color: viewMode === 'SOC' ? '#f8fafc' : '#64748b',
+                background: viewMode === 'SOC' ? 'var(--accent-light)' : 'transparent',
+                color: viewMode === 'SOC' ? 'var(--accent-primary)' : 'var(--text-muted)',
                 border: 'none',
                 padding: '5px 12px',
                 borderRadius: '4px',
@@ -134,13 +134,13 @@ export const OverviewPage: React.FC = () => {
           {/* Top Row: Security Posture Summary & Risk Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '16px', marginBottom: '20px' }}>
             {/* Security Posture Score Card */}
-            <Card style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', padding: '20px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: '#64748b', marginBottom: '8px' }}>
+            <Card style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '20px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px' }}>
                 Global Security Posture
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ fontSize: '38px', fontWeight: 800, color: '#10b981', lineHeight: '1' }}>82</span>
-                <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>/ 100</span>
+                <span style={{ fontSize: '38px', fontWeight: 800, color: '#059669', lineHeight: '1' }}>82</span>
+                <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 600 }}>/ 100</span>
                 <span
                   style={{
                     marginLeft: 'auto',
@@ -148,24 +148,24 @@ export const OverviewPage: React.FC = () => {
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: '4px',
-                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                    color: '#10b981',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    backgroundColor: 'var(--status-active-bg)',
+                    color: 'var(--status-active-text)',
+                    border: '1px solid var(--status-active-border)',
                   }}
                 >
                   GOOD
                 </span>
               </div>
-              <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '10px', lineHeight: '1.4' }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', lineHeight: '1.4' }}>
                 Overall security posture across authorized web targets.
               </p>
               <div
                 style={{
                   marginTop: '12px',
                   paddingTop: '10px',
-                  borderTop: '1px solid #1e293b',
+                  borderTop: '1px solid var(--border-color)',
                   fontSize: '11px',
-                  color: '#f97316',
+                  color: '#ea580c',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -289,32 +289,32 @@ export const OverviewPage: React.FC = () => {
             <Card title="Protection Coverage" subtitle="System operational security metrics">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: '#cbd5e1', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--text-main)', marginBottom: '4px' }}>
                     <span>Assessment Coverage</span>
                     <span style={{ fontWeight: 600 }}>100%</span>
                   </div>
-                  <div style={{ height: '6px', backgroundColor: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ width: '100%', height: '100%', backgroundColor: '#10b981' }} />
+                  <div style={{ height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '100%', backgroundColor: '#059669' }} />
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: '#cbd5e1', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--text-main)', marginBottom: '4px' }}>
                     <span>Continuous Monitoring</span>
                     <span style={{ fontWeight: 600 }}>85%</span>
                   </div>
-                  <div style={{ height: '6px', backgroundColor: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ width: '85%', height: '100%', backgroundColor: '#3b82f6' }} />
+                  <div style={{ height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: '85%', height: '100%', backgroundColor: '#0284c7' }} />
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: '#cbd5e1', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--text-main)', marginBottom: '4px' }}>
                     <span>Remediation Progress</span>
                     <span style={{ fontWeight: 600 }}>72%</span>
                   </div>
-                  <div style={{ height: '6px', backgroundColor: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ width: '72%', height: '100%', backgroundColor: '#f59e0b' }} />
+                  <div style={{ height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: '72%', height: '100%', backgroundColor: '#d97706' }} />
                   </div>
                 </div>
               </div>

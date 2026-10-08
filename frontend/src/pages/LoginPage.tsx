@@ -120,19 +120,19 @@ export const LoginPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#070c18',
-        backgroundImage: 'radial-gradient(circle at top, #0d2137 0%, #070c18 70%)',
+        backgroundColor: '#f0f7ff',
+        backgroundImage: 'radial-gradient(circle at top, #e0f2fe 0%, #f0f7ff 70%)',
         padding: '20px',
       }}
     >
       <div
         style={{
           width: '420px',
-          backgroundColor: '#0f172a',
-          border: '1px solid #1e293b',
+          backgroundColor: '#ffffff',
+          border: '1px solid #cbd5e1',
           borderRadius: '12px',
           padding: '32px',
-          boxShadow: '0 20px 30px -5px rgba(0, 0, 0, 0.6)',
+          boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.12)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
