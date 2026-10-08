@@ -35,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
       } else {
+        ApiClient.clearTokens();
         setUser(null);
       }
       setIsLoading(false);
@@ -43,10 +44,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
 
     const handleUnauthorized = () => {
+      ApiClient.clearTokens();
       setUser(null);
     };
+    window.addEventListener('globalshield:auth:unauthorized', handleUnauthorized);
     window.addEventListener('aegis:auth:unauthorized', handleUnauthorized);
     return () => {
+      window.removeEventListener('globalshield:auth:unauthorized', handleUnauthorized);
       window.removeEventListener('aegis:auth:unauthorized', handleUnauthorized);
     };
   }, []);
