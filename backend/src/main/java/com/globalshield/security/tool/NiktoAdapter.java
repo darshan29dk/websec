@@ -1,0 +1,142 @@
+package com.globalshield.security.tool;
+
+import com.globalshield.assessment.AssessmentStage;
+import com.globalshield.assessment.SecurityAssessment;
+import com.globalshield.assessment.execution.ToolExecutionStatus;
+import com.globalshield.assessment.result.AssessmentAsset;
+import com.globalshield.assessment.result.AssessmentEndpoint;
+import com.globalshield.assessment.result.AssessmentObservation;
+import com.globalshield.security.policy.TargetNetworkPolicy;
+import com.globalshield.security.tool.parser.NiktoParser;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+public class NiktoAdapter implements ToolAdapter {
+
+    private static final Logger log = LoggerFactory.getLogger(NiktoAdapter.class);
+
+    @Value("${security.tools.nikto.path:${NIKTO_PATH:nikto}}")
+    private String niktoPath;
+
+    private final ProcessRunner processRunner;
+    private final TargetNetworkPolicy networkPolicy;
+    private final NiktoParser parser;
+
+    @Override
+    public String getToolName() {
+        return "Nikto";
+    }
+
+    @Override
+    public AssessmentStage getStage() {
+        return AssessmentStage.WEB_SERVER_ASSESSMENT;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        try {
+            ProcessRunner.ProcessRunnerResult result = processRunner.runProcess(
+                    List.of(niktoPath, "-Version"),
+                    Duration.ofSeconds(5)
+            );
+            return result.getExitCode() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public ToolExecutionResult execute(ToolExecutionRequest request) {
+        Instant startTime = Instant.now();
+        String primaryUrl = request.getTarget().getPrimaryUrl();
+
+        try {
+            networkPolicy.validateTargetNetworkAccess(request.getTarget());
+
+            List<String> command = new ArrayList<>();
+            command.add(niktoPath);
+            command.add("-h");
+            command.add(primaryUrl);
+            command.add("-Format");
+            command.add("txt");
+            command.add("-Tuning");
+            command.add("1,2,3,4,8,9"); // Non-destructive server checks
+
+            if (!isAvailable()) {
+                return ToolExecutionResult.builder()
+                        .toolName(getToolName())
+                        .stage(getStage())
+                        .status(ToolExecutionStatus.NOT_AVAILABLE)
+                        .exitCode(-1)
+                        .errorMessage("Nikto executable not available at path: " + niktoPath)
+                        .startedAt(startTime)
+                        .completedAt(Instant.now())
+                        .durationMs(0)
+                        .build();
+            }
+
+            ProcessRunner.ProcessRunnerResult runnerResult = processRunner.runProcess(command, request.getTimeout());
+            Instant endTime = Instant.now();
+
+            ToolExecutionStatus status;
+            if (runnerResult.isTimedOut()) {
+                status = ToolExecutionStatus.TIMEOUT;
+            } else if (runnerResult.getExitCode() == 0) {
+                status = ToolExecutionStatus.COMPLETED;
+            } else {
+                status = ToolExecutionStatus.FAILED;
+            }
+
+            return ToolExecutionResult.builder()
+                    .toolName(getToolName())
+                    .stage(getStage())
+                    .status(status)
+                    .exitCode(runnerResult.getExitCode())
+                    .stdout(runnerResult.getStdout())
+                    .stderr(runnerResult.getStderr())
+                    .errorMessage(runnerResult.getErrorMessage())
+                    .startedAt(startTime)
+                    .completedAt(endTime)
+                    .durationMs(runnerResult.getDurationMs())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Nikto execution failed for target {}: {}", primaryUrl, e.getMessage());
+            return ToolExecutionResult.builder()
+                    .toolName(getToolName())
+                    .stage(getStage())
+                    .status(ToolExecutionStatus.FAILED)
+                    .exitCode(-1)
+                    .errorMessage(e.getMessage())
+                    .startedAt(startTime)
+                    .completedAt(Instant.now())
+                    .durationMs(Duration.between(startTime, Instant.now()).toMillis())
+                    .build();
+        }
+    }
+
+    @Override
+    public List<AssessmentAsset> parseAssets(SecurityAssessment assessment, ToolExecutionResult result) {
+        return parser.parseAssets(assessment, result.getStdout());
+    }
+
+    @Override
+    public List<AssessmentEndpoint> parseEndpoints(SecurityAssessment assessment, ToolExecutionResult result) {
+        return parser.parseEndpoints(assessment, result.getStdout());
+    }
+
+    @Override
+    public List<AssessmentObservation> parseObservations(SecurityAssessment assessment, ToolExecutionResult result) {
+        return parser.parseObservations(assessment, result.getStdout());
+    }
+}

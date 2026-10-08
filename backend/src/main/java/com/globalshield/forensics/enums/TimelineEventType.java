@@ -1,0 +1,18 @@
+package com.globalshield.forensics.enums;
+
+public enum TimelineEventType {
+    RECONNAISSANCE,
+    HTTP_REQUEST,
+    HTTP_RESPONSE,
+    AUTHENTICATION,
+    AUTHORIZATION_EVENT,
+    SUSPICIOUS_REQUEST,
+    VULNERABILITY_INTERACTION,
+    NETWORK_CONNECTION,
+    ERROR,
+    FILE_EVENT,
+    PROCESS_EVENT,
+    SECURITY_ALERT,
+    ASSESSMENT_EVENT,
+    OTHER
+}

@@ -10,11 +10,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.aegis</groupId>
-    <artifactId>aegis-backend</artifactId>
+    <groupId>com.globalshield</groupId>
+    <artifactId>globalshield-backend</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>AEGIS Web Security Platform</name>
-    <description>AEGIS Phase 1 - Authorized Web Security Assessment Platform</description>
+    <name>GlobalShield Security Platform</name>
+    <description>GlobalShield Authorized Web Security Assessment, Defense &amp; Continuous Monitoring Platform</description>
 
     <properties>
         <java.version>17</java.version>

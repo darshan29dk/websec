@@ -1,0 +1,13 @@
+package com.globalshield.finding.entity;
+
+public enum FindingType {
+    MISCONFIGURATION,
+    EXPOSES_SERVICE,
+    SECURITY_HEADER,
+    TLS_CONFIGURATION,
+    KNOWN_VULNERABILITY,
+    WEB_APPLICATION_ALERT,
+    INFORMATION_DISCLOSURE,
+    OUTDATED_COMPONENT,
+    OTHER
+}
