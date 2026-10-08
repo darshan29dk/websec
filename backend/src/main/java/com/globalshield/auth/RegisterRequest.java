@@ -28,4 +28,6 @@ public class RegisterRequest {
     private String displayName;
 
     private UserRole role; // Optional at registration, defaults to ANALYST or ADMIN if first user
+
+    private String otp; // OTP code sent via SMTP
 }

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield } from 'lucide-react';
+import { Shield, KeyRound, MailCheck, ArrowRight } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Alert } from '../components/Alert';
 import { UserRole } from '../types/user';
 import { ApiError } from '../types/common';
+import { authApi } from '../services/api/authApi';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
@@ -16,12 +17,17 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('ANALYST');
+  const [otp, setOtp] = useState('');
+
+  const [step, setStep] = useState<'DETAILS' | 'OTP'>('DETAILS');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMsg(null);
 
     const cleanEmail = email.toLowerCase().trim();
     if (!cleanEmail.endsWith('@gmail.com') && !cleanEmail.endsWith('@outlook.com') && !cleanEmail.endsWith('@aegis.local')) {
@@ -41,11 +47,33 @@ export const RegisterPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await register({ email, password, displayName, role });
+      await authApi.requestOtp(cleanEmail);
+      setSuccessMsg(`A 6-digit verification OTP code has been dispatched via SMTP to ${cleanEmail}.`);
+      setStep('OTP');
+    } catch (err: any) {
+      const apiErr = err as ApiError;
+      setError(apiErr.message || 'Failed to dispatch verification OTP to your email.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!otp || otp.trim().length === 0) {
+      setError('Please enter the 6-digit verification OTP code sent to your email.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await register({ email, password, displayName, role, otp: otp.trim() });
       navigate('/overview');
     } catch (err: any) {
       const apiErr = err as ApiError;
-      setError(apiErr.message || 'Registration failed. Email may already be in use.');
+      setError(apiErr.message || 'Registration failed. Verification code may be invalid or expired.');
     } finally {
       setIsLoading(false);
     }
@@ -98,63 +126,107 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         {error && <Alert type="error" message={error} />}
+        {successMsg && <Alert type="info" message={successMsg} />}
 
-        <form onSubmit={handleSubmit}>
-          <Input
-            label="Full Display Name"
-            type="text"
-            placeholder="Darshan Reddy"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            required
-          />
+        {step === 'DETAILS' ? (
+          <form onSubmit={handleRequestOtp}>
+            <Input
+              label="Full Display Name"
+              type="text"
+              placeholder="Darshan Reddy"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+            />
 
-          <Input
-            label="Authorized Email Address (@gmail.com / @outlook.com)"
-            type="email"
-            placeholder="darshanreddy5822@gmail.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+            <Input
+              label="Authorized Email Address (@gmail.com / @outlook.com)"
+              type="email"
+              placeholder="darshanreddy5822@gmail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-          <Input
-            label="Password (SHA-512 Encrypted)"
-            type="password"
-            placeholder="Minimum 8 characters"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            <Input
+              label="Password (SHA-512 Encrypted)"
+              type="password"
+              placeholder="Minimum 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-          <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1' }}>
-              Requested Platform Role
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
+            <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1' }}>
+                Requested Platform Role
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#020617',
+                  border: '1px solid #1e293b',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  color: '#f8fafc',
+                  fontSize: '13px',
+                  outline: 'none',
+                }}
+              >
+                <option value="ANALYST">Security Analyst</option>
+                <option value="ADMIN">System Administrator</option>
+                <option value="VIEWER">Read-only Viewer</option>
+              </select>
+            </div>
+
+            <Button type="submit" variant="primary" isLoading={isLoading} style={{ width: '100%', marginTop: '8px' }}>
+              <MailCheck size={16} style={{ marginRight: '6px' }} />
+              Send Email Verification OTP
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyAndRegister}>
+            <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+              <span style={{ fontSize: '13px', color: '#94a3b8' }}>
+                Enter the 6-digit code sent to <strong style={{ color: '#60a5fa' }}>{email}</strong>
+              </span>
+            </div>
+
+            <Input
+              label="6-Digit OTP Verification Code"
+              type="text"
+              placeholder="123456"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              required
+              autoFocus
+            />
+
+            <Button type="submit" variant="primary" isLoading={isLoading} style={{ width: '100%', marginTop: '8px' }}>
+              <KeyRound size={16} style={{ marginRight: '6px' }} />
+              Verify OTP &amp; Create Account
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => setStep('DETAILS')}
               style={{
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                fontSize: '12px',
+                marginTop: '12px',
+                cursor: 'pointer',
                 width: '100%',
-                backgroundColor: '#020617',
-                border: '1px solid #1e293b',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                color: '#f8fafc',
-                fontSize: '13px',
-                outline: 'none',
+                textDecoration: 'underline',
               }}
             >
-              <option value="ANALYST">Security Analyst</option>
-              <option value="ADMIN">System Administrator</option>
-              <option value="VIEWER">Read-only Viewer</option>
-            </select>
-          </div>
-
-          <Button type="submit" variant="primary" isLoading={isLoading} style={{ width: '100%', marginTop: '8px' }}>
-            Create Account
-          </Button>
-        </form>
+              ← Edit Account Details
+            </button>
+          </form>
+        )}
 
         <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: '#64748b' }}>
           Already registered?{' '}

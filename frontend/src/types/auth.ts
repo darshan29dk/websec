@@ -20,6 +20,7 @@ export interface RegisterRequest {
   password: string;
   displayName: string;
   role?: UserRole;
+  otp?: string;
 }
 
 export interface LoginRequest {

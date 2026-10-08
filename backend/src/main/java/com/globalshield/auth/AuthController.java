@@ -19,14 +19,21 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Authentication and User Registration endpoints")
+@Tag(name = "Authentication", description = "Authentication, User Registration, and OTP Password Reset endpoints")
 public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
 
+    @PostMapping("/request-otp")
+    @Operation(summary = "Request registration OTP", description = "Sends a 6-digit OTP code to the provided email address via SMTP")
+    public ResponseEntity<ApiResponse<Void>> requestOtp(@Valid @RequestBody OtpRequest request) {
+        authService.requestRegistrationOtp(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("Verification OTP code sent to " + request.getEmail() + " via SMTP.", null));
+    }
+
     @PostMapping("/register")
-    @Operation(summary = "Register a new user", description = "Creates a new user account with role-based access")
+    @Operation(summary = "Register a new user", description = "Creates a new user account with OTP verification and role-based access")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
             @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpRequest) {
@@ -35,6 +42,20 @@ public class AuthController {
         String userAgent = IpUtil.getUserAgent(httpRequest);
         AuthResponse response = authService.register(request, ipAddress, userAgent);
         return new ResponseEntity<>(ApiResponse.success("User registered successfully", response), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request password reset OTP", description = "Generates and emails a password reset OTP code via SMTP to registered email")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestForgotPasswordOtp(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("Password reset OTP code sent to " + request.getEmail() + " via SMTP.", null));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using OTP", description = "Verifies the 6-digit OTP and updates user password using SHA-512 encryption")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully. You can now log in with your new password.", null));
     }
 
     @PostMapping("/login")

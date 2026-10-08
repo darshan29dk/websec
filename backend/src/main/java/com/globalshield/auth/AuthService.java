@@ -4,6 +4,7 @@ import com.globalshield.audit.AuditService;
 import com.globalshield.audit.AuditEventType;
 import com.globalshield.exception.BadRequestException;
 import com.globalshield.exception.DuplicateResourceException;
+import com.globalshield.exception.ResourceNotFoundException;
 import com.globalshield.exception.UnauthorizedException;
 import com.globalshield.security.JwtTokenProvider;
 import com.globalshield.security.UserPrincipal;
@@ -33,11 +34,77 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final AuditService auditService;
+    private final OtpService otpService;
 
     private boolean isAuthorizedEmailDomain(String email) {
         if (email == null) return false;
         String lower = email.toLowerCase().trim();
         return lower.endsWith("@gmail.com") || lower.endsWith("@outlook.com") || lower.endsWith("@aegis.local");
+    }
+
+    @Transactional
+    public void requestRegistrationOtp(String emailStr) {
+        String email = emailStr.toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+        }
+
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException("User with email '" + email + "' already exists");
+        }
+
+        otpService.generateAndSendOtp(email, "Account Registration", "REGISTRATION");
+    }
+
+    @Transactional
+    public void requestForgotPasswordOtp(String emailStr) {
+        String email = emailStr.toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No registered account found with email '" + email + "'"));
+
+        if (!user.isEnabled()) {
+            throw new BadRequestException("User account is disabled.");
+        }
+
+        otpService.generateAndSendOtp(email, "Password Reset", "PASSWORD_RESET");
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        String email = request.getEmail().toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No registered account found with email '" + email + "'"));
+
+        // Verify OTP code
+        otpService.verifyOtp(email, request.getOtp(), "PASSWORD_RESET");
+
+        // Update password using SHA-512 encoder
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(Instant.now());
+        userRepository.save(user);
+
+        // Revoke old refresh tokens for security
+        refreshTokenRepository.deleteByUserId(user.getId());
+
+        auditService.logEvent(
+                user.getId(),
+                user.getEmail(),
+                AuditEventType.PASSWORD_RESET,
+                "User",
+                user.getId().toString(),
+                "PASSWORD_RESET",
+                "Password reset successfully using OTP verification",
+                null,
+                null
+        );
     }
 
     @Transactional
@@ -49,6 +116,11 @@ public class AuthService {
 
         if (userRepository.existsByEmail(email)) {
             throw new DuplicateResourceException("User with email '" + request.getEmail() + "' already exists");
+        }
+
+        // Verify registration OTP if provided or required
+        if (request.getOtp() != null && !request.getOtp().trim().isEmpty()) {
+            otpService.verifyOtp(email, request.getOtp(), "REGISTRATION");
         }
 
         // If no users exist yet, make the first user ADMIN; otherwise respect request role or default to ANALYST
@@ -164,6 +236,21 @@ public class AuthService {
         }
     }
 
+    private String hashToken(String token) {
+        if (token == null) return "";
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] bytes = md.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm unavailable", e);
+        }
+    }
+
     @Transactional
     public RefreshTokenResponse refreshToken(RefreshTokenRequest request) {
         String tokenStr = request.getRefreshToken();
@@ -179,7 +266,7 @@ public class AuthService {
             throw new UnauthorizedException("User account is disabled");
         }
 
-        RefreshToken refreshTokenEntity = refreshTokenRepository.findByTokenHash(tokenStr)
+        RefreshToken refreshTokenEntity = refreshTokenRepository.findByTokenHash(hashToken(tokenStr))
                 .orElseThrow(() -> new UnauthorizedException("Refresh token record not found or revoked"));
 
         if (refreshTokenEntity.isRevoked() || refreshTokenEntity.getExpiresAt().isBefore(Instant.now())) {
@@ -224,9 +311,10 @@ public class AuthService {
         Instant expiresAt = Instant.now().plusMillis(tokenProvider.getJwtRefreshExpirationMs());
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
-                .tokenHash(tokenStr)
+                .tokenHash(hashToken(tokenStr))
                 .expiresAt(expiresAt)
                 .revoked(false)
+                .createdAt(Instant.now())
                 .build();
         refreshTokenRepository.save(refreshToken);
     }
