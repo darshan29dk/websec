@@ -168,7 +168,7 @@ export const LoginPage: React.FC = () => {
             <Input
               label="Authorized Email Address (@gmail.com / @outlook.com)"
               type="email"
-              placeholder="darshanreddy5822@gmail.com"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -189,13 +189,13 @@ export const LoginPage: React.FC = () => {
                 onClick={() => {
                   setError(null);
                   setSuccessMsg(null);
-                  setResetEmail(email || 'darshanreddy5822@gmail.com');
+                  setResetEmail(email || '');
                   setMode('FORGOT_PASSWORD');
                 }}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#3b82f6',
+                  color: '#38bdf8',
                   fontSize: '12px',
                   cursor: 'pointer',
                   fontWeight: 500,
@@ -214,18 +214,18 @@ export const LoginPage: React.FC = () => {
         {mode === 'FORGOT_PASSWORD' && (
           <form onSubmit={handleSendResetOtp}>
             <div style={{ marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#f8fafc', marginBottom: '6px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
                 Reset Password via Email OTP
               </h3>
               <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
-                Enter your registered email address to receive a 6-digit OTP code from SMTP sender (darshanreddy5822@gmail.com).
+                Enter your registered email address to receive a 6-digit OTP code in your inbox.
               </p>
             </div>
 
             <Input
               label="Registered Email Address"
               type="email"
-              placeholder="darshanreddy5822@gmail.com"
+              placeholder="name@example.com"
               value={resetEmail}
               onChange={(e) => setResetEmail(e.target.value)}
               required
@@ -243,7 +243,7 @@ export const LoginPage: React.FC = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#64748b',
+                color: '#94a3b8',
                 fontSize: '12px',
                 marginTop: '14px',
                 cursor: 'pointer',
@@ -262,18 +262,18 @@ export const LoginPage: React.FC = () => {
         {mode === 'RESET_PASSWORD' && (
           <form onSubmit={handleResetPassword}>
             <div style={{ marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#f8fafc', marginBottom: '6px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
                 Enter Reset OTP &amp; New Password
               </h3>
               <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
-                A 6-digit OTP code was sent to <strong style={{ color: '#60a5fa' }}>{resetEmail}</strong>.
+                A 6-digit OTP code was sent to <strong style={{ color: '#38bdf8' }}>{resetEmail}</strong>.
               </p>
             </div>
 
             <Input
               label="6-Digit Reset OTP Code"
               type="text"
-              placeholder="810394"
+              placeholder="Enter 6-digit OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               required

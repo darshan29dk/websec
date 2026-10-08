@@ -134,7 +134,7 @@ export const RegisterPage: React.FC = () => {
             <Input
               label="Full Display Name"
               type="text"
-              placeholder="Darshan Reddy"
+              placeholder="Full Name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
@@ -143,7 +143,7 @@ export const RegisterPage: React.FC = () => {
             <Input
               label="Authorized Email Address (@gmail.com / @outlook.com)"
               type="email"
-              placeholder="darshanreddy5822@gmail.com"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

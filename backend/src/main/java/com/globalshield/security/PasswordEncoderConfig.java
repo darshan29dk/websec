@@ -11,6 +11,9 @@ import java.security.NoSuchAlgorithmException;
 @Configuration
 public class PasswordEncoderConfig {
 
+    private static final org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder BCRYPT =
+            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new PasswordEncoder() {
@@ -28,10 +31,17 @@ public class PasswordEncoderConfig {
                     return false;
                 }
                 String hashedRaw = hashSha512(rawPassword.toString());
-                return MessageDigest.isEqual(
+                if (MessageDigest.isEqual(
                     hashedRaw.getBytes(StandardCharsets.UTF_8),
                     encodedPassword.getBytes(StandardCharsets.UTF_8)
-                );
+                )) {
+                    return true;
+                }
+                // Fallback check for BCrypt hashes (e.g. $2a$, $2b$, $2y$)
+                if (encodedPassword.startsWith("$2a$") || encodedPassword.startsWith("$2b$") || encodedPassword.startsWith("$2y$")) {
+                    return BCRYPT.matches(rawPassword, encodedPassword);
+                }
+                return false;
             }
 
             private String hashSha512(String input) {
