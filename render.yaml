@@ -1,0 +1,45 @@
+services:
+  # ----------------------------------------------------
+  # Backend Web Service (Spring Boot 3 + Java 17)
+  # ----------------------------------------------------
+  - type: web
+    name: globalshield-backend
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?prepareThreshold=0
+      - key: SPRING_DATASOURCE_USERNAME
+        value: postgres.ilsauwdyeizvbbirckwp
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: Dk#5822..com
+      - key: JWT_SECRET
+        value: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+  # ----------------------------------------------------
+  # Frontend Static Site (React 19 + Vite)
+  # ----------------------------------------------------
+  - type: web
+    name: globalshield-frontend
+    env: static
+    plan: free
+    region: singapore
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: globalshield-backend
+          property: host
