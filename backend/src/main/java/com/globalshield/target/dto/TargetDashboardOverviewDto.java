@@ -1,6 +1,6 @@
 package com.globalshield.target.dto;
 
-import com.globalshield.assessment.dto.SecurityAssessmentResponse;
+import com.globalshield.assessment.AssessmentResponse;
 import com.globalshield.target.TargetResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,7 +21,7 @@ public class TargetDashboardOverviewDto {
 
     private long discoveredEndpointsCount;
     private long totalAssessmentsCount;
-    private SecurityAssessmentResponse latestAssessment;
+    private AssessmentResponse latestAssessment;
 
     private long uniqueOpenFindings;
     private long criticalOpenFindings;

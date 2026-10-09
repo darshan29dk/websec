@@ -11,7 +11,7 @@ import com.globalshield.user.User;
 import com.globalshield.user.UserRepository;
 import com.globalshield.assessment.SecurityAssessment;
 import com.globalshield.assessment.SecurityAssessmentRepository;
-import com.globalshield.assessment.dto.SecurityAssessmentResponse;
+import com.globalshield.assessment.AssessmentResponse;
 import com.globalshield.attacksurface.dto.WebEndpointResponse;
 import com.globalshield.attacksurface.entity.WebEndpoint;
 import com.globalshield.attacksurface.repository.WebEndpointRepository;
@@ -293,7 +293,7 @@ public class TargetService {
 
         long endpointsCount = endpointRepository.countByAssessmentTargetId(targetId);
         List<SecurityAssessment> assessments = assessmentRepository.findByTargetIdOrderByCreatedAtDesc(targetId);
-        SecurityAssessmentResponse latestAssessment = assessments.isEmpty() ? null : SecurityAssessmentResponse.fromEntity(assessments.get(0));
+        AssessmentResponse latestAssessment = assessments.isEmpty() ? null : AssessmentResponse.fromEntity(assessments.get(0));
 
         List<SecurityFinding> findings = findingRepository.findByAssessmentTargetId(targetId);
         List<SecurityFinding> openFindings = findings.stream()
