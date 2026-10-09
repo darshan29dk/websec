@@ -9,6 +9,7 @@ export interface AuthResponse {
   mfaRequired?: boolean;
   message?: string;
   email?: string;
+  otpCode?: string;
 }
 
 export interface RefreshTokenResponse {

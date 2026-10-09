@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (credentials: LoginRequest) => Promise<AuthResponse>;
   verifyLoginOtp: (payload: VerifyLoginOtpRequest) => Promise<AuthResponse>;
-  resendLoginOtp: (email: string) => Promise<void>;
+  resendLoginOtp: (email: string) => Promise<{ otpCode?: string } | void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -83,8 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const resendLoginOtp = async (email: string): Promise<void> => {
-    await authApi.resendLoginOtp(email);
+  const resendLoginOtp = async (email: string): Promise<{ otpCode?: string } | void> => {
+    return await authApi.resendLoginOtp(email);
   };
 
   const register = async (data: RegisterRequest) => {

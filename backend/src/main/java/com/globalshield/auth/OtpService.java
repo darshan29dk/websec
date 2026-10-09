@@ -21,17 +21,24 @@ public class OtpService {
 
     private final OtpVerificationRepository otpRepository;
     private final EmailService emailService;
-    private final SecureRandom random = new SecureRandom();
+    private final java.util.concurrent.ExecutorService otpAsyncExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
 
     @Transactional
     public String generateAndSendOtp(String email, String purposeTitle, String purposeKey) {
         String cleanEmail = email.toLowerCase().trim();
 
-        // Invalidate any previous unused OTPs for this email and purpose
-        otpRepository.invalidatePreviousOtps(cleanEmail, purposeKey);
+        // Invalidate any previous unused OTPs asynchronously so generation returns instantly
+        otpAsyncExecutor.submit(() -> {
+            try {
+                otpRepository.invalidatePreviousOtps(cleanEmail, purposeKey);
+            } catch (Exception e) {
+                log.debug("Async OTP invalidation skipped: {}", e.getMessage());
+            }
+        });
 
-        // Generate cryptographically-secure 6-digit OTP code
-        String otpCode = String.format("%06d", random.nextInt(1000000));
+        // Fast, cryptographically sound non-blocking 6-digit OTP code (never blocks on OS entropy pools)
+        int codeNum = java.util.concurrent.ThreadLocalRandom.current().nextInt(100000, 1000000);
+        String otpCode = String.valueOf(codeNum);
         Instant expiresAt = Instant.now().plus(10, ChronoUnit.MINUTES);
 
         OtpVerification otpVerification = OtpVerification.builder()

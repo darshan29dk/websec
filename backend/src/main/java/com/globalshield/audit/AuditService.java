@@ -19,6 +19,26 @@ public class AuditService {
     private static final Logger log = LoggerFactory.getLogger(AuditService.class);
 
     private final AuditEventRepository auditEventRepository;
+    private final java.util.concurrent.ExecutorService auditExecutor = java.util.concurrent.Executors.newFixedThreadPool(2);
+
+    public void logEventAsync(
+            UUID actorUserId,
+            String actorEmail,
+            AuditEventType eventType,
+            String resourceType,
+            String resourceId,
+            String action,
+            String details,
+            String ipAddress,
+            String userAgent) {
+        auditExecutor.submit(() -> {
+            try {
+                logEvent(actorUserId, actorEmail, eventType, resourceType, resourceId, action, details, ipAddress, userAgent);
+            } catch (Exception e) {
+                log.warn("Async audit logging error: {}", e.getMessage());
+            }
+        });
+    }
 
     @Transactional
     public void logEvent(

@@ -23,6 +23,7 @@ public class UserPrincipal implements UserDetails {
     private final UserRole role;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
+    private final User user;
 
     public static UserPrincipal create(User user) {
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
@@ -33,7 +34,8 @@ public class UserPrincipal implements UserDetails {
                 user.getDisplayName(),
                 user.getRole(),
                 user.isEnabled(),
-                Collections.singletonList(authority)
+                Collections.singletonList(authority),
+                user
         );
     }
 

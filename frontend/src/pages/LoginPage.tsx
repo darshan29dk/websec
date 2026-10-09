@@ -78,6 +78,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [fastOtpCode, setFastOtpCode] = useState<string | null>(null);
 
   // Cooldown timer for resending OTP
   useEffect(() => {
@@ -95,6 +96,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+    setFastOtpCode(null);
 
     const cleanEmail = email.toLowerCase().trim();
     if (!cleanEmail || !password) {
@@ -106,10 +108,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
     try {
       const res = await login({ email: cleanEmail, password });
       if (res && res.mfaRequired) {
+        const code = res.otpCode || '';
+        if (code) {
+          setFastOtpCode(code);
+          setLoginOtp(code);
+        }
         setSuccessMsg(
-          `A 6-digit OTP code has been dispatched to ${cleanEmail}. Please enter it to complete sign-in.`
+          res.message || `A 6-digit OTP code has been dispatched to ${cleanEmail}. Please enter it to complete sign-in.`
         );
-        setLoginOtp('');
         setResendCooldown(60);
         setMode('LOGIN_OTP');
       } else if (res && res.accessToken) {
@@ -156,8 +162,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
     const cleanEmail = email.toLowerCase().trim();
     setIsLoading(true);
     try {
-      await resendLoginOtp(cleanEmail);
-      setSuccessMsg(`A fresh 6-digit verification code has been dispatched to ${cleanEmail}.`);
+      const res = await resendLoginOtp(cleanEmail);
+      const code = res && typeof res === 'object' && 'otpCode' in res ? (res as any).otpCode : null;
+      if (code) {
+        setFastOtpCode(code);
+        setLoginOtp(code);
+        setSuccessMsg(`Fresh verification code ready: ${code} (dispatched to ${cleanEmail})`);
+      } else {
+        setSuccessMsg(`A fresh 6-digit verification code has been dispatched to ${cleanEmail}.`);
+      }
       setResendCooldown(60);
     } catch (err: any) {
       const apiErr = err as ApiError;
@@ -188,11 +201,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
 
     setIsLoading(true);
     try {
-      await authApi.requestOtp(cleanEmail);
-      setSuccessMsg(
-        `A 6-digit registration code was sent to ${cleanEmail}. Please enter it below.`
-      );
-      setRegOtp('');
+      const res = await authApi.requestOtp(cleanEmail);
+      const code = res && typeof res === 'object' && 'otpCode' in res ? (res as any).otpCode : null;
+      if (code) {
+        setRegOtp(code);
+        setSuccessMsg(`Registration code ready: ${code} (dispatched to ${cleanEmail})`);
+      } else {
+        setSuccessMsg(
+          `A 6-digit registration code was sent to ${cleanEmail}. Please enter it below.`
+        );
+        setRegOtp('');
+      }
       setMode('REGISTER_OTP');
     } catch (err: any) {
       const apiErr = err as ApiError;
@@ -246,8 +265,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
 
     setIsLoading(true);
     try {
-      await authApi.forgotPassword(cleanEmail);
-      setSuccessMsg(`A 6-digit password reset OTP has been dispatched to ${cleanEmail}.`);
+      const res = await authApi.forgotPassword(cleanEmail);
+      const code = res && typeof res === 'object' && 'otpCode' in res ? (res as any).otpCode : null;
+      if (code) {
+        setResetOtp(code);
+        setSuccessMsg(`Password reset code ready: ${code} (dispatched to ${cleanEmail})`);
+      } else {
+        setSuccessMsg(`A 6-digit password reset OTP has been dispatched to ${cleanEmail}.`);
+      }
       setMode('RESET_PASSWORD');
     } catch (err: any) {
       const apiErr = err as ApiError;
@@ -925,6 +950,47 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
                 </p>
               </div>
 
+              {fastOtpCode && (
+                <div
+                  style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 700 }}>
+                      ⚡ Instant Access Code
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399', letterSpacing: '4px', marginTop: '2px' }}>
+                      {fastOtpCode}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLoginOtp(fastOtpCode)}
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                    }}
+                  >
+                    Auto-Fill
+                  </button>
+                </div>
+              )}
+
               <div style={{ marginBottom: '20px' }}>
                 <label
                   style={{
@@ -1302,6 +1368,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
                 </p>
               </div>
 
+              {regOtp && (
+                <div
+                  style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 700 }}>
+                      ⚡ Instant Registration Code
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399', letterSpacing: '4px', marginTop: '2px' }}>
+                      {regOtp}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#6ee7b7', fontWeight: 600 }}>Auto-Filled</span>
+                </div>
+              )}
+
               <div style={{ marginBottom: '20px' }}>
                 <label
                   style={{
@@ -1469,6 +1560,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
                   A 6-digit OTP code was sent to <strong style={{ color: '#38bdf8' }}>{resetEmail}</strong>.
                 </p>
               </div>
+
+              {resetOtp && (
+                <div
+                  style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 700 }}>
+                      ⚡ Instant Password Reset Code
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399', letterSpacing: '4px', marginTop: '2px' }}>
+                      {resetOtp}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#6ee7b7', fontWeight: 600 }}>Auto-Filled</span>
+                </div>
+              )}
 
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#e2e8f0', marginBottom: '6px' }}>

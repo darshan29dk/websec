@@ -3,12 +3,12 @@ import { AuthResponse, LoginRequest, RegisterRequest, VerifyLoginOtpRequest } fr
 import { User } from '../../types/user';
 
 export const authApi = {
-  requestOtp: async (email: string): Promise<void> => {
-    await ApiClient.post<void>('/auth/request-otp', { email });
+  requestOtp: async (email: string): Promise<{ otpCode?: string } | void> => {
+    return await ApiClient.post<{ otpCode?: string }>('/auth/request-otp', { email });
   },
 
-  forgotPassword: async (email: string): Promise<void> => {
-    await ApiClient.post<void>('/auth/forgot-password', { email });
+  forgotPassword: async (email: string): Promise<{ otpCode?: string } | void> => {
+    return await ApiClient.post<{ otpCode?: string }>('/auth/forgot-password', { email });
   },
 
   resetPassword: async (payload: { email: string; otp: string; newPassword: string }): Promise<void> => {
@@ -42,8 +42,8 @@ export const authApi = {
     return data;
   },
 
-  resendLoginOtp: async (email: string): Promise<void> => {
-    await ApiClient.post<void>('/auth/resend-login-otp', { email });
+  resendLoginOtp: async (email: string): Promise<{ otpCode?: string } | void> => {
+    return await ApiClient.post<{ otpCode?: string }>('/auth/resend-login-otp', { email });
   },
 
   logout: async (): Promise<void> => {

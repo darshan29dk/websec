@@ -23,4 +23,5 @@ public class AuthResponse {
     private boolean mfaRequired = false;
     private String message;
     private String email;
+    private String otpCode;
 }

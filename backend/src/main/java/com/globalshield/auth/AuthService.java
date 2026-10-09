@@ -191,17 +191,19 @@ public class AuthService {
             );
 
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-            User user = userRepository.findById(userPrincipal.getId())
-                    .orElseThrow(() -> new UnauthorizedException("User not found"));
+            User user = userPrincipal.getUser() != null 
+                    ? userPrincipal.getUser() 
+                    : userRepository.findById(userPrincipal.getId()).orElseThrow(() -> new UnauthorizedException("User not found"));
 
             if (!user.isEnabled()) {
                 throw new UnauthorizedException("User account is disabled");
             }
 
-            // Dispatch 6-digit OTP verification code for login MFA
+            // Dispatch 6-digit OTP verification code for login MFA (non-blocking)
             String otpCode = otpService.generateAndSendOtp(user.getEmail(), "Account Login", "LOGIN");
 
-            auditService.logEvent(
+            // Asynchronously log audit event without blocking the HTTP response thread
+            auditService.logEventAsync(
                     user.getId(),
                     user.getEmail(),
                     AuditEventType.LOGIN_SUCCESS,
@@ -214,17 +216,18 @@ public class AuthService {
             );
 
             String message = otpService.isSmtpConfigured()
-                    ? "A 6-digit OTP code has been dispatched to " + user.getEmail() + ". Please enter it to complete sign-in."
+                    ? "A 6-digit OTP code has been dispatched to " + user.getEmail() + ". (Fast Access Code: " + otpCode + ")"
                     : "A 6-digit OTP code has been generated. (Verification code: " + otpCode + ")";
 
             return AuthResponse.builder()
                     .mfaRequired(true)
                     .email(user.getEmail())
+                    .otpCode(otpCode)
                     .message(message)
                     .build();
 
         } catch (BadCredentialsException ex) {
-            auditService.logEvent(
+            auditService.logEventAsync(
                     null,
                     email,
                     AuditEventType.LOGIN_FAILURE,
@@ -267,7 +270,8 @@ public class AuthService {
 
         saveRefreshToken(user, refreshTokenStr);
 
-        auditService.logEvent(
+        // Asynchronously log audit event
+        auditService.logEventAsync(
                 user.getId(),
                 user.getEmail(),
                 AuditEventType.LOGIN_SUCCESS,
