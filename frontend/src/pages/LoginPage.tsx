@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Shield,
@@ -17,29 +17,60 @@ import {
   Database,
   Sparkles,
   RefreshCw,
+  User as UserIcon,
+  UserCheck,
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Alert } from '../components/Alert';
+import { UserRole } from '../types/user';
 import { ApiError } from '../types/common';
 import { authApi } from '../services/api/authApi';
 import cyberBg from '../assets/cyber-defense-bg.jpg';
 
-export const LoginPage: React.FC = () => {
-  const { login, verifyLoginOtp, resendLoginOtp } = useAuth();
+interface LoginPageProps {
+  initialMode?: 'LOGIN' | 'REGISTER';
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ initialMode }) => {
+  const { login, verifyLoginOtp, resendLoginOtp, register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [mode, setMode] = useState<'LOGIN' | 'LOGIN_OTP' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD'>('LOGIN');
+  // Determine starting mode based on props or current path
+  const defaultMode =
+    initialMode || (location.pathname === '/register' ? 'REGISTER' : 'LOGIN');
 
-  // Login Form
+  const [mode, setMode] = useState<
+    'LOGIN' | 'LOGIN_OTP' | 'REGISTER' | 'REGISTER_OTP' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD'
+  >(defaultMode);
+
+  // Sync mode if location changes
+  useEffect(() => {
+    if (location.pathname === '/register') {
+      setMode('REGISTER');
+    } else if (location.pathname === '/login') {
+      setMode('LOGIN');
+    }
+  }, [location.pathname]);
+
+  // Login Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Login 2FA OTP Form
+  // Login 2FA OTP State
   const [loginOtp, setLoginOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Password Reset Form
+  // Registration Form State
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [regRole, setRegRole] = useState<UserRole>('ANALYST');
+  const [regOtp, setRegOtp] = useState('');
+
+  // Password Reset Form State
   const [resetEmail, setResetEmail] = useState('');
   const [resetOtp, setResetOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -57,7 +88,9 @@ export const LoginPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [resendCooldown]);
 
-  // Step 1: Submit credentials to receive OTP
+  // ==========================================
+  // Handlers for Login
+  // ==========================================
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -74,7 +107,7 @@ export const LoginPage: React.FC = () => {
       const res = await login({ email: cleanEmail, password });
       if (res && res.mfaRequired) {
         setSuccessMsg(
-          `A 6-digit OTP code has been dispatched to ${cleanEmail}. Please check your inbox to complete sign-in.`
+          `A 6-digit OTP code has been dispatched to ${cleanEmail}. Please enter it to complete sign-in.`
         );
         setLoginOtp('');
         setResendCooldown(60);
@@ -84,13 +117,12 @@ export const LoginPage: React.FC = () => {
       }
     } catch (err: any) {
       const apiErr = err as ApiError;
-      setError(apiErr.message || 'Authentication failed. Please verify your credentials.');
+      setError(apiErr.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Step 2: Verify the 2FA OTP code and complete sign-in
   const handleVerifyLoginOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -116,7 +148,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // Resend Login OTP
   const handleResendLoginOtp = async () => {
     if (resendCooldown > 0) return;
     setError(null);
@@ -136,7 +167,72 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // Forgot Password flow
+  // ==========================================
+  // Handlers for Registration
+  // ==========================================
+  const handleRequestRegOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMsg(null);
+
+    const cleanEmail = regEmail.toLowerCase().trim();
+    if (!regName.trim() || !cleanEmail || !regPassword) {
+      setError('Please fill in your Full Name, Email, and Password.');
+      return;
+    }
+
+    if (regPassword.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authApi.requestOtp(cleanEmail);
+      setSuccessMsg(
+        `A 6-digit registration code was sent to ${cleanEmail}. Please enter it below.`
+      );
+      setRegOtp('');
+      setMode('REGISTER_OTP');
+    } catch (err: any) {
+      const apiErr = err as ApiError;
+      setError(apiErr.message || 'Failed to send registration verification code.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const cleanOtp = regOtp.trim();
+    if (!cleanOtp) {
+      setError('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await register({
+        email: regEmail.toLowerCase().trim(),
+        password: regPassword,
+        displayName: regName.trim(),
+        role: regRole,
+        otp: cleanOtp,
+      });
+      navigate('/overview');
+    } catch (err: any) {
+      const apiErr = err as ApiError;
+      setError(apiErr.message || 'Registration failed. Verification code may be invalid or expired.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ==========================================
+  // Handlers for Forgot / Reset Password
+  // ==========================================
   const handleSendResetOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -155,7 +251,7 @@ export const LoginPage: React.FC = () => {
       setMode('RESET_PASSWORD');
     } catch (err: any) {
       const apiErr = err as ApiError;
-      setError(apiErr.message || 'Failed to dispatch password reset OTP. Verify email address.');
+      setError(apiErr.message || 'Failed to dispatch password reset OTP.');
     } finally {
       setIsLoading(false);
     }
@@ -521,7 +617,7 @@ export const LoginPage: React.FC = () => {
       </div>
 
       {/* ============================================================== */}
-      {/* RIGHT 35% PANEL: High-Tech Secure Login / OTP Card               */}
+      {/* RIGHT 35% PANEL: High-Tech Secure Auth Card                     */}
       {/* ============================================================== */}
       <div
         style={{
@@ -534,7 +630,7 @@ export const LoginPage: React.FC = () => {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '48px 36px',
+          padding: '40px 36px',
           boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.7)',
           position: 'relative',
           zIndex: 10,
@@ -543,7 +639,7 @@ export const LoginPage: React.FC = () => {
       >
         <div style={{ width: '100%', maxWidth: '380px' }}>
           {/* Card Header with Logo & Title */}
-          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div
               style={{
                 display: 'inline-flex',
@@ -555,7 +651,7 @@ export const LoginPage: React.FC = () => {
                 backgroundColor: 'rgba(56, 189, 248, 0.12)',
                 border: '1px solid rgba(56, 189, 248, 0.35)',
                 color: '#38bdf8',
-                marginBottom: '14px',
+                marginBottom: '12px',
                 boxShadow: '0 0 20px rgba(56, 189, 248, 0.2)',
               }}
             >
@@ -568,7 +664,7 @@ export const LoginPage: React.FC = () => {
                 fontWeight: 700,
                 color: '#ffffff',
                 letterSpacing: '1px',
-                margin: '0 0 6px 0',
+                margin: '0 0 4px 0',
               }}
             >
               GLOBALSHIELD
@@ -576,6 +672,10 @@ export const LoginPage: React.FC = () => {
             <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
               {mode === 'LOGIN_OTP'
                 ? 'Two-Factor OTP Verification'
+                : mode === 'REGISTER'
+                ? 'New Operator Registration'
+                : mode === 'REGISTER_OTP'
+                ? 'Registration Email Verification'
                 : mode === 'FORGOT_PASSWORD' || mode === 'RESET_PASSWORD'
                 ? 'Security Recovery Portal'
                 : 'Authorized Access Gateway'}
@@ -593,11 +693,13 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* ---------------- MODE: LOGIN (Step 1: Credentials) ---------------- */}
+          {/* ========================================================= */}
+          {/* 1. MODE: LOGIN                                            */}
+          {/* ========================================================= */}
           {mode === 'LOGIN' && (
             <form onSubmit={handleLoginSubmit}>
               {/* Email Field */}
-              <div style={{ marginBottom: '18px' }}>
+              <div style={{ marginBottom: '16px' }}>
                 <label
                   style={{
                     display: 'block',
@@ -646,7 +748,7 @@ export const LoginPage: React.FC = () => {
               </div>
 
               {/* Password Field */}
-              <div style={{ marginBottom: '18px' }}>
+              <div style={{ marginBottom: '16px' }}>
                 <label
                   style={{
                     display: 'block',
@@ -717,7 +819,7 @@ export const LoginPage: React.FC = () => {
                 style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
-                  marginBottom: '22px',
+                  marginBottom: '20px',
                   marginTop: '-4px',
                 }}
               >
@@ -761,10 +863,44 @@ export const LoginPage: React.FC = () => {
               >
                 Sign In to Console
               </Button>
+
+              <div
+                style={{
+                  marginTop: '24px',
+                  textAlign: 'center',
+                  fontSize: '12px',
+                  color: '#64748b',
+                  paddingTop: '16px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                Need operator access?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setSuccessMsg(null);
+                    setMode('REGISTER');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontWeight: 600,
+                    color: '#38bdf8',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: '12px',
+                  }}
+                >
+                  Register Account
+                </button>
+              </div>
             </form>
           )}
 
-          {/* ---------------- MODE: LOGIN_OTP (Step 2: Enter Login OTP) ---------------- */}
+          {/* ========================================================= */}
+          {/* 2. MODE: LOGIN_OTP (2FA Verification)                     */}
+          {/* ========================================================= */}
           {mode === 'LOGIN_OTP' && (
             <form onSubmit={handleVerifyLoginOtpSubmit}>
               <div
@@ -891,7 +1027,365 @@ export const LoginPage: React.FC = () => {
             </form>
           )}
 
-          {/* ---------------- MODE: FORGOT_PASSWORD ---------------- */}
+          {/* ========================================================= */}
+          {/* 3. MODE: REGISTER (New Operator Details)                  */}
+          {/* ========================================================= */}
+          {mode === 'REGISTER' && (
+            <form onSubmit={handleRequestRegOtp}>
+              {/* Full Name */}
+              <div style={{ marginBottom: '14px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '5px',
+                  }}
+                >
+                  Full Operator Name
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <UserIcon
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#64748b',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="e.g. Alex Vance"
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      padding: '10px 14px 10px 38px',
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
+                    onBlur={(e) => (e.target.style.borderColor = '#334155')}
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div style={{ marginBottom: '14px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '5px',
+                  }}
+                >
+                  Authorized Email Address
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Mail
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#64748b',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <input
+                    type="email"
+                    placeholder="name@organization.com"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      padding: '10px 14px 10px 38px',
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
+                    onBlur={(e) => (e.target.style.borderColor = '#334155')}
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div style={{ marginBottom: '14px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '5px',
+                  }}
+                >
+                  Password (Min. 8 characters)
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Lock
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#64748b',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <input
+                    type={showRegPassword ? 'text' : 'password'}
+                    placeholder="••••••••••••"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      padding: '10px 38px 10px 38px',
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
+                    onBlur={(e) => (e.target.style.borderColor = '#334155')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Role Selection */}
+              <div style={{ marginBottom: '20px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '5px',
+                  }}
+                >
+                  Platform Access Role
+                </label>
+                <select
+                  value={regRole}
+                  onChange={(e) => setRegRole(e.target.value as UserRole)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="ANALYST">Security Analyst (Standard Assessment &amp; Remediation)</option>
+                  <option value="ADMIN">System Administrator (Full Infrastructure Access)</option>
+                  <option value="VIEWER">Read-Only Viewer (Auditor / Executive View)</option>
+                </select>
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+                }}
+              >
+                Send Verification OTP Code
+              </Button>
+
+              <div
+                style={{
+                  marginTop: '20px',
+                  textAlign: 'center',
+                  fontSize: '12px',
+                  color: '#64748b',
+                  paddingTop: '16px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setSuccessMsg(null);
+                    setMode('LOGIN');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontWeight: 600,
+                    color: '#38bdf8',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: '12px',
+                  }}
+                >
+                  Sign In
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ========================================================= */}
+          {/* 4. MODE: REGISTER_OTP (Verify Registration Code)           */}
+          {/* ========================================================= */}
+          {mode === 'REGISTER_OTP' && (
+            <form onSubmit={handleVerifyAndRegister}>
+              <div
+                style={{
+                  backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '20px',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <UserCheck size={16} color="#38bdf8" />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>
+                    Confirm Operator Email
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
+                  A 6-digit registration code was sent to{' '}
+                  <strong style={{ color: '#38bdf8' }}>{regEmail}</strong>.
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '8px',
+                    textAlign: 'center',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  6-DIGIT VERIFICATION CODE
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="••••••"
+                  value={regOtp}
+                  onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, ''))}
+                  required
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    border: '2px solid #0284c7',
+                    borderRadius: '10px',
+                    padding: '14px',
+                    color: '#ffffff',
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    letterSpacing: '12px',
+                    textAlign: 'center',
+                    outline: 'none',
+                    boxShadow: '0 0 20px rgba(2, 132, 199, 0.25)',
+                  }}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #10b981 100%)',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+                }}
+              >
+                Complete Registration &amp; Sign In
+              </Button>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setMode('REGISTER');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: 0,
+                  }}
+                >
+                  <ArrowLeft size={13} /> Edit Registration Details
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ========================================================= */}
+          {/* 5. MODE: FORGOT_PASSWORD                                  */}
+          {/* ========================================================= */}
           {mode === 'FORGOT_PASSWORD' && (
             <form onSubmit={handleSendResetOtp}>
               <div style={{ marginBottom: '18px' }}>
@@ -962,7 +1456,9 @@ export const LoginPage: React.FC = () => {
             </form>
           )}
 
-          {/* ---------------- MODE: RESET_PASSWORD ---------------- */}
+          {/* ========================================================= */}
+          {/* 6. MODE: RESET_PASSWORD                                  */}
+          {/* ========================================================= */}
           {mode === 'RESET_PASSWORD' && (
             <form onSubmit={handleResetPassword}>
               <div style={{ marginBottom: '18px' }}>
@@ -1054,25 +1550,6 @@ export const LoginPage: React.FC = () => {
                 <ArrowLeft size={14} /> Resend OTP / Change Email
               </button>
             </form>
-          )}
-
-          {/* Card Footer: Register Link */}
-          {mode === 'LOGIN' && (
-            <div
-              style={{
-                marginTop: '28px',
-                textAlign: 'center',
-                fontSize: '12px',
-                color: '#64748b',
-                paddingTop: '18px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              }}
-            >
-              Need operator access?{' '}
-              <Link to="/register" style={{ fontWeight: 600, color: '#38bdf8' }}>
-                Register Account
-              </Link>
-            </div>
           )}
         </div>
       </div>
