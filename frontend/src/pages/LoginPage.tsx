@@ -43,12 +43,6 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const fillAdminCredentials = () => {
-    setEmail('admin@globalshield.internal');
-    setPassword('Admin#2026!Global');
-    setError(null);
-  };
-
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -144,17 +138,17 @@ export const LoginPage: React.FC = () => {
       }}
     >
       {/* ============================================================== */}
-      {/* LEFT 75% SHOWCASE: Hero Background, Logo, Name & Platform Points */}
+      {/* LEFT 65% SHOWCASE: Hero Background, Logo, Name & Platform Points */}
       {/* ============================================================== */}
       <div
         style={{
-          flex: '0 0 75%',
-          width: '75%',
+          flex: '0 0 65%',
+          width: '65%',
           position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          padding: '48px 64px',
+          padding: '48px 56px',
           backgroundImage: `linear-gradient(135deg, rgba(3, 7, 18, 0.94) 0%, rgba(8, 20, 44, 0.82) 40%, rgba(2, 6, 23, 0.95) 100%), url(${cyberBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -251,23 +245,23 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Center Main Presentation: Hero & 5 Key Points */}
-        <div style={{ position: 'relative', zIndex: 2, margin: '36px 0' }}>
-          <div style={{ maxWidth: '880px', marginBottom: '32px' }}>
+        {/* Center Main Presentation: Hero & 4 Key Capability Points */}
+        <div style={{ position: 'relative', zIndex: 2, margin: '32px 0' }}>
+          <div style={{ maxWidth: '820px', marginBottom: '28px' }}>
             <h2
               style={{
-                fontSize: '28px',
+                fontSize: '26px',
                 fontWeight: 700,
                 color: '#f8fafc',
-                lineHeight: 1.3,
-                marginBottom: '12px',
+                lineHeight: 1.35,
+                marginBottom: '10px',
               }}
             >
               Autonomous Security Testing, Web Application Fuzzing &amp; Closed-Loop Defense
             </h2>
             <p
               style={{
-                fontSize: '15px',
+                fontSize: '14.5px',
                 color: '#94a3b8',
                 lineHeight: 1.6,
                 margin: 0,
@@ -282,9 +276,9 @@ export const LoginPage: React.FC = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '18px',
-              maxWidth: '980px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '16px',
+              maxWidth: '900px',
             }}
           >
             {/* Point 1: Autonomous Fuzzing */}
@@ -294,15 +288,14 @@ export const LoginPage: React.FC = () => {
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(56, 189, 248, 0.2)',
                 borderRadius: '12px',
-                padding: '18px 20px',
-                transition: 'all 0.2s ease',
+                padding: '16px 18px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <div
                   style={{
-                    width: '34px',
-                    height: '34px',
+                    width: '32px',
+                    height: '32px',
                     borderRadius: '8px',
                     backgroundColor: 'rgba(56, 189, 248, 0.15)',
                     display: 'flex',
@@ -311,13 +304,13 @@ export const LoginPage: React.FC = () => {
                     color: '#38bdf8',
                   }}
                 >
-                  <Terminal size={18} />
+                  <Terminal size={17} />
                 </div>
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '13.5px', fontWeight: 600, color: '#f8fafc' }}>
                   Autonomous Web &amp; API Fuzzing
                 </h3>
               </div>
-              <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
                 Intelligent heuristic payload mutation, state-aware parameter discovery, and verified vulnerability confirmation.
               </p>
             </div>
@@ -329,14 +322,14 @@ export const LoginPage: React.FC = () => {
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(56, 189, 248, 0.2)',
                 borderRadius: '12px',
-                padding: '18px 20px',
+                padding: '16px 18px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <div
                   style={{
-                    width: '34px',
-                    height: '34px',
+                    width: '32px',
+                    height: '32px',
                     borderRadius: '8px',
                     backgroundColor: 'rgba(16, 185, 129, 0.15)',
                     display: 'flex',
@@ -345,13 +338,13 @@ export const LoginPage: React.FC = () => {
                     color: '#10b981',
                   }}
                 >
-                  <Cpu size={18} />
+                  <Cpu size={17} />
                 </div>
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '13.5px', fontWeight: 600, color: '#f8fafc' }}>
                   25-Tool Security Ecosystem
                 </h3>
               </div>
-              <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
                 Unified orchestration across OWASP ZAP, Nuclei, Nmap, Nikto, Burp Suite, SQLMap, Gobuster, and 18+ integrations.
               </p>
             </div>
@@ -363,14 +356,14 @@ export const LoginPage: React.FC = () => {
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(56, 189, 248, 0.2)',
                 borderRadius: '12px',
-                padding: '18px 20px',
+                padding: '16px 18px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <div
                   style={{
-                    width: '34px',
-                    height: '34px',
+                    width: '32px',
+                    height: '32px',
                     borderRadius: '8px',
                     backgroundColor: 'rgba(234, 179, 8, 0.15)',
                     display: 'flex',
@@ -379,13 +372,13 @@ export const LoginPage: React.FC = () => {
                     color: '#eab308',
                   }}
                 >
-                  <Activity size={18} />
+                  <Activity size={17} />
                 </div>
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '13.5px', fontWeight: 600, color: '#f8fafc' }}>
                   Threat Detection &amp; SOC Forensics
                 </h3>
               </div>
-              <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
                 High-frequency target health monitoring, Suricata/Zeek network telemetry, and forensic timeline reconstruction.
               </p>
             </div>
@@ -397,14 +390,14 @@ export const LoginPage: React.FC = () => {
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(56, 189, 248, 0.2)',
                 borderRadius: '12px',
-                padding: '18px 20px',
+                padding: '16px 18px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <div
                   style={{
-                    width: '34px',
-                    height: '34px',
+                    width: '32px',
+                    height: '32px',
                     borderRadius: '8px',
                     backgroundColor: 'rgba(139, 92, 246, 0.15)',
                     display: 'flex',
@@ -413,13 +406,13 @@ export const LoginPage: React.FC = () => {
                     color: '#a78bfa',
                   }}
                 >
-                  <RotateCcw size={18} />
+                  <RotateCcw size={17} />
                 </div>
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '13.5px', fontWeight: 600, color: '#f8fafc' }}>
                   Closed-Loop Retesting &amp; Remediation
                 </h3>
               </div>
-              <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
                 Three-mode remediation engine (Advisory, Guided, Automated) with regression tracking and posture validation.
               </p>
             </div>
@@ -431,488 +424,455 @@ export const LoginPage: React.FC = () => {
           style={{
             position: 'relative',
             zIndex: 2,
-            paddingTop: '20px',
+            paddingTop: '18px',
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
-            gap: '24px',
+            gap: '20px',
             fontSize: '12px',
             color: '#64748b',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Database size={15} color="#10b981" />
+            <Database size={14} color="#10b981" />
             <span>Supabase Cloud PostgreSQL Active</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <CheckCircle2 size={15} color="#38bdf8" />
+            <CheckCircle2 size={14} color="#38bdf8" />
             <span>OWASP Top 10 &amp; CWE Compliant</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={15} color="#a78bfa" />
-            <span>Zero-Trust Authorization &amp; Scope Enforcement</span>
+            <Sparkles size={14} color="#a78bfa" />
+            <span>Zero-Trust Scope Enforcement</span>
           </div>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* RIGHT 25% PANEL: High-Tech Secure Login Card                     */}
+      {/* RIGHT 35% PANEL: High-Tech Secure Login Card                     */}
       {/* ============================================================== */}
       <div
         style={{
-          flex: '0 0 25%',
-          width: '25%',
+          flex: '0 0 35%',
+          width: '35%',
           minWidth: '380px',
-          maxWidth: '460px',
           backgroundColor: '#080e1b',
           borderLeft: '1px solid rgba(56, 189, 248, 0.2)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          padding: '40px 32px',
+          alignItems: 'center',
+          padding: '48px 36px',
           boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.7)',
           position: 'relative',
           zIndex: 10,
           overflowY: 'auto',
         }}
       >
-        {/* Card Header with Logo & Title */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              backgroundColor: 'rgba(56, 189, 248, 0.12)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              color: '#38bdf8',
-              marginBottom: '14px',
-              boxShadow: '0 0 20px rgba(56, 189, 248, 0.2)',
-            }}
-          >
-            <Shield size={28} />
-          </div>
-
-          <h2
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              color: '#ffffff',
-              letterSpacing: '1px',
-              margin: '0 0 6px 0',
-            }}
-          >
-            GLOBALSHIELD
-          </h2>
-          <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
-            Authorized Access Control Gateway
-          </p>
-        </div>
-
-        {/* Quick 1-Click Demo Login Button for instant access */}
-        <div style={{ marginBottom: '20px' }}>
-          <button
-            type="button"
-            onClick={fillAdminCredentials}
-            style={{
-              width: '100%',
-              padding: '9px 12px',
-              backgroundColor: 'rgba(56, 189, 248, 0.08)',
-              border: '1px dashed rgba(56, 189, 248, 0.35)',
-              borderRadius: '8px',
-              color: '#38bdf8',
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.16)';
-              e.currentTarget.style.borderColor = '#38bdf8';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.08)';
-              e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.35)';
-            }}
-          >
-            <Sparkles size={14} />
-            <span>Auto-fill Admin Demo Credentials</span>
-          </button>
-        </div>
-
-        {error && (
-          <div style={{ marginBottom: '16px' }}>
-            <Alert type="error" message={error} />
-          </div>
-        )}
-        {successMsg && (
-          <div style={{ marginBottom: '16px' }}>
-            <Alert type="info" message={successMsg} />
-          </div>
-        )}
-
-        {/* ---------------- MODE: LOGIN ---------------- */}
-        {mode === 'LOGIN' && (
-          <form onSubmit={handleLoginSubmit}>
-            {/* Email Field */}
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#e2e8f0',
-                  marginBottom: '6px',
-                  letterSpacing: '0.3px',
-                }}
-              >
-                Authorized Email Address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#64748b',
-                    pointerEvents: 'none',
-                  }}
-                />
-                <input
-                  type="email"
-                  placeholder="admin@globalshield.internal"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                    border: '1px solid #334155',
-                    borderRadius: '8px',
-                    padding: '10px 14px 10px 38px',
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
-                  onBlur={(e) => (e.target.style.borderColor = '#334155')}
-                />
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#e2e8f0',
-                  marginBottom: '6px',
-                  letterSpacing: '0.3px',
-                }}
-              >
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#64748b',
-                    pointerEvents: 'none',
-                  }}
-                />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                    border: '1px solid #334155',
-                    borderRadius: '8px',
-                    padding: '10px 38px 10px 38px',
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
-                  onBlur={(e) => (e.target.style.borderColor = '#334155')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
+        <div style={{ width: '100%', maxWidth: '380px' }}>
+          {/* Card Header with Logo & Title */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                marginBottom: '20px',
-                marginTop: '-4px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '56px',
+                height: '56px',
+                borderRadius: '14px',
+                backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                color: '#38bdf8',
+                marginBottom: '14px',
+                boxShadow: '0 0 20px rgba(56, 189, 248, 0.2)',
               }}
             >
+              <Shield size={30} />
+            </div>
+
+            <h2
+              style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#ffffff',
+                letterSpacing: '1px',
+                margin: '0 0 6px 0',
+              }}
+            >
+              GLOBALSHIELD
+            </h2>
+            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
+              Authorized Access Control Gateway
+            </p>
+          </div>
+
+          {error && (
+            <div style={{ marginBottom: '16px' }}>
+              <Alert type="error" message={error} />
+            </div>
+          )}
+          {successMsg && (
+            <div style={{ marginBottom: '16px' }}>
+              <Alert type="info" message={successMsg} />
+            </div>
+          )}
+
+          {/* ---------------- MODE: LOGIN ---------------- */}
+          {mode === 'LOGIN' && (
+            <form onSubmit={handleLoginSubmit}>
+              {/* Email Field */}
+              <div style={{ marginBottom: '18px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '6px',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  Authorized Email Address
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Mail
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#64748b',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <input
+                    type="email"
+                    placeholder="name@organization.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      padding: '11px 14px 11px 38px',
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
+                    onBlur={(e) => (e.target.style.borderColor = '#334155')}
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div style={{ marginBottom: '18px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '6px',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  Password
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Lock
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#64748b',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      padding: '11px 38px 11px 38px',
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
+                    onBlur={(e) => (e.target.style.borderColor = '#334155')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  marginBottom: '22px',
+                  marginTop: '-4px',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setSuccessMsg(null);
+                    setResetEmail(email || '');
+                    setMode('FORGOT_PASSWORD');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#38bdf8',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    padding: 0,
+                  }}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  letterSpacing: '0.3px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+                }}
+              >
+                Sign In to Console
+              </Button>
+            </form>
+          )}
+
+          {/* ---------------- MODE: FORGOT_PASSWORD ---------------- */}
+          {mode === 'FORGOT_PASSWORD' && (
+            <form onSubmit={handleSendResetOtp}>
+              <div style={{ marginBottom: '18px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
+                  Reset Password via OTP
+                </h3>
+                <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+                  Enter your email address to receive a 6-digit verification code.
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#e2e8f0', marginBottom: '6px' }}>
+                  Registered Email Address
+                </label>
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    padding: '11px 14px',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isLoading}
+                style={{ width: '100%', padding: '12px', borderRadius: '8px' }}
+              >
+                <Mail size={16} style={{ marginRight: '8px' }} />
+                Send Reset Code
+              </Button>
+
               <button
                 type="button"
                 onClick={() => {
                   setError(null);
-                  setSuccessMsg(null);
-                  setResetEmail(email || '');
+                  setMode('LOGIN');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '12px',
+                  marginTop: '16px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                }}
+              >
+                <ArrowLeft size={14} /> Back to Sign In
+              </button>
+            </form>
+          )}
+
+          {/* ---------------- MODE: RESET_PASSWORD ---------------- */}
+          {mode === 'RESET_PASSWORD' && (
+            <form onSubmit={handleResetPassword}>
+              <div style={{ marginBottom: '18px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
+                  Enter Reset OTP &amp; New Password
+                </h3>
+                <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
+                  A 6-digit OTP code was sent to <strong style={{ color: '#38bdf8' }}>{resetEmail}</strong>.
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#e2e8f0', marginBottom: '6px' }}>
+                  6-Digit OTP Code
+                </label>
+                <input
+                  type="text"
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    padding: '11px 14px',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#e2e8f0', marginBottom: '6px' }}>
+                  New Password (Min. 8 characters)
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    padding: '11px 14px',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isLoading}
+                style={{ width: '100%', padding: '12px', borderRadius: '8px' }}
+              >
+                <KeyRound size={16} style={{ marginRight: '8px' }} />
+                Reset &amp; Sign In
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
                   setMode('FORGOT_PASSWORD');
                 }}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#38bdf8',
+                  color: '#94a3b8',
                   fontSize: '12px',
+                  marginTop: '16px',
                   cursor: 'pointer',
-                  fontWeight: 500,
-                  padding: 0,
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
                 }}
               >
-                Forgot Password?
+                <ArrowLeft size={14} /> Resend OTP / Change Email
               </button>
-            </div>
+            </form>
+          )}
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={isLoading}
+          {/* Card Footer: Register Link */}
+          {mode === 'LOGIN' && (
+            <div
               style={{
-                width: '100%',
-                padding: '11px',
-                borderRadius: '8px',
-                fontWeight: 600,
-                fontSize: '14px',
-                letterSpacing: '0.3px',
-                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
-              }}
-            >
-              Sign In to Console
-            </Button>
-          </form>
-        )}
-
-        {/* ---------------- MODE: FORGOT_PASSWORD ---------------- */}
-        {mode === 'FORGOT_PASSWORD' && (
-          <form onSubmit={handleSendResetOtp}>
-            <div style={{ marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
-                Reset Password via OTP
-              </h3>
-              <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
-                Enter your email address to receive a 6-digit verification code.
-              </p>
-            </div>
-
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#e2e8f0', marginBottom: '6px' }}>
-                Registered Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="name@example.com"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                required
-                autoFocus
-                style={{
-                  width: '100%',
-                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  color: '#ffffff',
-                  fontSize: '13px',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={isLoading}
-              style={{ width: '100%', padding: '11px', borderRadius: '8px' }}
-            >
-              <Mail size={16} style={{ marginRight: '8px' }} />
-              Send Reset Code
-            </Button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setMode('LOGIN');
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#94a3b8',
+                marginTop: '28px',
+                textAlign: 'center',
                 fontSize: '12px',
-                marginTop: '16px',
-                cursor: 'pointer',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
+                color: '#64748b',
+                paddingTop: '18px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
               }}
             >
-              <ArrowLeft size={14} /> Back to Sign In
-            </button>
-          </form>
-        )}
-
-        {/* ---------------- MODE: RESET_PASSWORD ---------------- */}
-        {mode === 'RESET_PASSWORD' && (
-          <form onSubmit={handleResetPassword}>
-            <div style={{ marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
-                Enter Reset OTP &amp; New Password
-              </h3>
-              <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
-                A 6-digit OTP code was sent to <strong style={{ color: '#38bdf8' }}>{resetEmail}</strong>.
-              </p>
+              Need operator access?{' '}
+              <Link to="/register" style={{ fontWeight: 600, color: '#38bdf8' }}>
+                Register Account
+              </Link>
             </div>
-
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#e2e8f0', marginBottom: '6px' }}>
-                6-Digit OTP Code
-              </label>
-              <input
-                type="text"
-                placeholder="123456"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                required
-                autoFocus
-                style={{
-                  width: '100%',
-                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  color: '#ffffff',
-                  fontSize: '13px',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#e2e8f0', marginBottom: '6px' }}>
-                New Password (Min. 8 characters)
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••••••"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  color: '#ffffff',
-                  fontSize: '13px',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={isLoading}
-              style={{ width: '100%', padding: '11px', borderRadius: '8px' }}
-            >
-              <KeyRound size={16} style={{ marginRight: '8px' }} />
-              Reset &amp; Sign In
-            </Button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setMode('FORGOT_PASSWORD');
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#94a3b8',
-                fontSize: '12px',
-                marginTop: '16px',
-                cursor: 'pointer',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-              }}
-            >
-              <ArrowLeft size={14} /> Resend OTP / Change Email
-            </button>
-          </form>
-        )}
-
-        {/* Card Footer: Register Link */}
-        {mode === 'LOGIN' && (
-          <div
-            style={{
-              marginTop: '24px',
-              textAlign: 'center',
-              fontSize: '12px',
-              color: '#64748b',
-              paddingTop: '16px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            Need operator access?{' '}
-            <Link to="/register" style={{ fontWeight: 600, color: '#38bdf8' }}>
-              Register Account
-            </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
