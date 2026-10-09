@@ -305,7 +305,7 @@ public class DashboardService {
         // 8. Recent verified security activity
         List<GlobalDashboardChartsDto.RecentSecurityActivityItem> recentActivity = new ArrayList<>();
         List<AuditEvent> recentAudits = auditEventRepository.findAll(
-                PageRequest.of(0, 8, Sort.by(Sort.Direction.DESC, "timestamp"))
+                PageRequest.of(0, 8, Sort.by(Sort.Direction.DESC, "createdAt"))
         ).getContent();
 
         for (AuditEvent event : recentAudits) {
@@ -313,7 +313,7 @@ public class DashboardService {
                     .eventType(event.getEventType() != null ? event.getEventType().name() : "SECURITY_EVENT")
                     .description(event.getDetails() != null ? event.getDetails() : event.getAction())
                     .targetName(event.getResourceType() + " #" + (event.getResourceId() != null && event.getResourceId().length() > 8 ? event.getResourceId().substring(0, 8) : event.getResourceId()))
-                    .timestamp(event.getTimestamp() != null ? event.getTimestamp().toString() : "")
+                    .timestamp(event.getCreatedAt() != null ? event.getCreatedAt().toString() : "")
                     .build());
         }
 

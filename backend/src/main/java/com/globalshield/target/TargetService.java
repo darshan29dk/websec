@@ -320,7 +320,7 @@ public class TargetService {
         Optional<MonitoringConfiguration> monOpt = monitoringRepository.findByTargetId(targetId);
         boolean monEnabled = monOpt.map(MonitoringConfiguration::isEnabled).orElse(false);
         String monFreq = monOpt.map(m -> m.getFrequency() != null ? m.getFrequency().name() : "DAILY").orElse(null);
-        String monStatus = monOpt.map(m -> m.getStatus() != null ? m.getStatus().name() : "ACTIVE").orElse("NOT_CONFIGURED");
+        String monStatus = monOpt.map(m -> m.getLastStatus() != null ? m.getLastStatus().name() : "ACTIVE").orElse("NOT_CONFIGURED");
 
         Optional<SecurityPostureSnapshot> postureOpt = postureRepository.findTopByTargetIdOrderByCalculatedAtDesc(targetId);
         Integer postureScore = postureOpt.map(SecurityPostureSnapshot::getOverallScore).orElse(riskEval.getRiskScore());
