@@ -20,7 +20,7 @@ public class TargetNetworkPolicy {
 
     private final boolean labMode;
 
-    public TargetNetworkPolicy(@Value("${aegis.security.lab-mode:false}") boolean labMode) {
+    public TargetNetworkPolicy(@Value("${globalshield.security.lab-mode:${GLOBALSHIELD_LAB_MODE:${aegis.security.lab-mode:false}}}") boolean labMode) {
         this.labMode = labMode;
     }
 

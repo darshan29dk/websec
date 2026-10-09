@@ -27,6 +27,7 @@ export const Sidebar: React.FC = () => {
         { path: '/overview', label: 'Overview', icon: LayoutDashboard },
         { path: '/targets', label: 'Targets', icon: TargetIcon },
         { path: '/assessments', label: 'Assessments', icon: Activity },
+        { path: '/fuzzing', label: 'Web Fuzzing', icon: Terminal },
         { path: '/attack-surface', label: 'Attack Surface', icon: Search },
         { path: '/findings', label: 'Findings', icon: Lock },
       ],

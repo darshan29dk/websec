@@ -65,4 +65,29 @@ public class RemediationController {
         String username = auth != null ? auth.getName() : "system";
         return ResponseEntity.ok(defenseService.updateTaskStatus(id, request, username));
     }
+
+    @PostMapping("/plans/{id}/approve")
+    public ResponseEntity<RemediationPlanDto> approvePlan(
+            @PathVariable UUID id,
+            Authentication auth) {
+        String username = auth != null ? auth.getName() : "security-lead";
+        return ResponseEntity.ok(defenseService.approveRemediationPlan(id, username));
+    }
+
+    @PostMapping("/plans/{id}/reject")
+    public ResponseEntity<RemediationPlanDto> rejectPlan(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String reason,
+            Authentication auth) {
+        String username = auth != null ? auth.getName() : "security-lead";
+        return ResponseEntity.ok(defenseService.rejectRemediationPlan(id, username, reason));
+    }
+
+    @PostMapping("/plans/{id}/execute-automated")
+    public ResponseEntity<RemediationPlanDto> executeAutomatedRemediation(
+            @PathVariable UUID id,
+            Authentication auth) {
+        String username = auth != null ? auth.getName() : "system";
+        return ResponseEntity.ok(defenseService.executeAutomatedRemediation(id, username));
+    }
 }

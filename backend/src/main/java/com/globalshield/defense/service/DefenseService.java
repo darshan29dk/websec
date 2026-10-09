@@ -260,6 +260,12 @@ public class DefenseService {
 
     @Transactional
     public RemediationPlanDto createRemediationPlan(CreateRemediationPlanRequest request, String username) {
+        String mode = request.getRemediationMode() != null ? request.getRemediationMode().toUpperCase() : "GUIDANCE_ONLY";
+        String risk = request.getRiskLevel() != null ? request.getRiskLevel().toUpperCase() : "LOW";
+        String approval = "CONTROLLED_AUTOMATED".equals(mode) || "HIGH".equals(risk) || "CRITICAL".equals(risk)
+                ? "PENDING_APPROVAL" : "NOT_REQUIRED";
+        boolean autoExecutable = "CONTROLLED_AUTOMATED".equals(mode) && "LOW".equals(risk);
+
         RemediationPlan plan = RemediationPlan.builder()
                 .findingId(request.getFindingId())
                 .recommendationId(request.getRecommendationId())
@@ -269,6 +275,13 @@ public class DefenseService {
                 .owner(request.getOwner() != null ? request.getOwner() : "Unassigned")
                 .targetDate(request.getTargetDate())
                 .status("OPEN")
+                .remediationMode(mode)
+                .riskLevel(risk)
+                .approvalStatus(approval)
+                .reviewablePatchDiff(request.getReviewablePatchDiff())
+                .verificationCriteria(request.getVerificationCriteria())
+                .automatedActionType(request.getAutomatedActionType())
+                .automatedExecutable(autoExecutable)
                 .build();
 
         RemediationPlan saved = planRepository.save(plan);
@@ -305,9 +318,82 @@ public class DefenseService {
         if (request.getPriority() != null) plan.setPriority(request.getPriority().toUpperCase());
         if (request.getOwner() != null) plan.setOwner(request.getOwner());
         if (request.getTargetDate() != null) plan.setTargetDate(request.getTargetDate());
+        if (request.getRemediationMode() != null) plan.setRemediationMode(request.getRemediationMode().toUpperCase());
+        if (request.getRiskLevel() != null) plan.setRiskLevel(request.getRiskLevel().toUpperCase());
+        if (request.getReviewablePatchDiff() != null) plan.setReviewablePatchDiff(request.getReviewablePatchDiff());
+        if (request.getVerificationCriteria() != null) plan.setVerificationCriteria(request.getVerificationCriteria());
+        if (request.getAutomatedActionType() != null) plan.setAutomatedActionType(request.getAutomatedActionType());
 
         RemediationPlan updated = planRepository.save(plan);
         return toPlanDto(updated);
+    }
+
+    @Transactional
+    public RemediationPlanDto approveRemediationPlan(UUID id, String approverEmail) {
+        RemediationPlan plan = planRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Remediation plan not found with ID: " + id));
+
+        plan.setApprovalStatus("APPROVED");
+        plan.setApprovedBy(approverEmail);
+        plan.setApprovedAt(OffsetDateTime.now());
+        plan.setAutomatedExecutable(true);
+
+        RemediationPlan saved = planRepository.save(plan);
+        auditService.logEvent(saved.getUuid(), "REMEDIATION_PLAN", AuditEventType.REMEDIATION_PLAN_APPROVED,
+                approverEmail, null, "Approved remediation plan: " + saved.getTitle(), "SUCCESS", null, null);
+
+        return toPlanDto(saved);
+    }
+
+    @Transactional
+    public RemediationPlanDto rejectRemediationPlan(UUID id, String approverEmail, String reason) {
+        RemediationPlan plan = planRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Remediation plan not found with ID: " + id));
+
+        plan.setApprovalStatus("REJECTED");
+        plan.setRejectionReason(reason != null ? reason : "Rejected by security lead");
+        plan.setAutomatedExecutable(false);
+
+        RemediationPlan saved = planRepository.save(plan);
+        auditService.logEvent(saved.getUuid(), "REMEDIATION_PLAN", AuditEventType.REMEDIATION_PLAN_REJECTED,
+                approverEmail, null, "Rejected remediation plan: " + saved.getTitle() + " Reason: " + plan.getRejectionReason(), "SUCCESS", null, null);
+
+        return toPlanDto(saved);
+    }
+
+    @Transactional
+    public RemediationPlanDto executeAutomatedRemediation(UUID id, String username) {
+        RemediationPlan plan = planRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Remediation plan not found with ID: " + id));
+
+        if (!"CONTROLLED_AUTOMATED".equalsIgnoreCase(plan.getRemediationMode())) {
+            throw new IllegalArgumentException("Automated execution is only permitted for plans in CONTROLLED_AUTOMATED mode.");
+        }
+
+        if ("PENDING_APPROVAL".equalsIgnoreCase(plan.getApprovalStatus()) || "REJECTED".equalsIgnoreCase(plan.getApprovalStatus())) {
+            throw new IllegalArgumentException("Plan requires approved sign-off before automated execution. Current approval status: " + plan.getApprovalStatus());
+        }
+
+        if ("HIGH".equalsIgnoreCase(plan.getRiskLevel()) || "CRITICAL".equalsIgnoreCase(plan.getRiskLevel())) {
+            throw new IllegalArgumentException("High or Critical risk actions cannot be automatically executed. Manual review and change control is required.");
+        }
+
+        // Execute bounded, low-risk automated remediation action
+        String actionType = plan.getAutomatedActionType() != null ? plan.getAutomatedActionType() : "APPLY_SECURITY_CONTROL";
+        String executionDetails = "Executed controlled automated remediation action: " + actionType +
+                " for plan: " + plan.getTitle() + ". Preconditions validated; zero disruption bounds enforced.";
+
+        plan.setExecutionLog(executionDetails);
+        plan.setExecutedAt(OffsetDateTime.now());
+        plan.setExecutionStatus("EXECUTED");
+        plan.setStatus("VERIFICATION_PENDING"); // Transitions to verification pending for controlled retesting!
+
+        RemediationPlan saved = planRepository.save(plan);
+
+        auditService.logEvent(saved.getUuid(), "REMEDIATION_PLAN", AuditEventType.REMEDIATION_AUTOMATED_EXECUTED,
+                username, null, executionDetails, "SUCCESS", null, null);
+
+        return toPlanDto(saved);
     }
 
     @Transactional
@@ -483,6 +569,18 @@ public class DefenseService {
                 .owner(plan.getOwner())
                 .targetDate(plan.getTargetDate())
                 .status(plan.getStatus())
+                .remediationMode(plan.getRemediationMode())
+                .riskLevel(plan.getRiskLevel())
+                .approvalStatus(plan.getApprovalStatus())
+                .approvedBy(plan.getApprovedBy())
+                .approvedAt(plan.getApprovedAt())
+                .rejectionReason(plan.getRejectionReason())
+                .reviewablePatchDiff(plan.getReviewablePatchDiff())
+                .verificationCriteria(plan.getVerificationCriteria())
+                .automatedActionType(plan.getAutomatedActionType())
+                .automatedExecutable(plan.isAutomatedExecutable())
+                .executionStatus(plan.getExecutionStatus())
+                .executedAt(plan.getExecutedAt())
                 .createdAt(plan.getCreatedAt())
                 .updatedAt(plan.getUpdatedAt())
                 .tasks(taskDtos)

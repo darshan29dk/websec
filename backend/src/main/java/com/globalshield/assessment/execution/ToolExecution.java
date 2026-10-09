@@ -25,6 +25,9 @@ public class ToolExecution {
     @JoinColumn(name = "assessment_id", nullable = false)
     private SecurityAssessment assessment;
 
+    @Column(name = "tool_id")
+    private UUID toolId;
+
     @Column(name = "tool_name", nullable = false)
     private String toolName;
 
@@ -53,6 +56,18 @@ public class ToolExecution {
 
     @Column(name = "stderr_output", columnDefinition = "TEXT")
     private String stderrOutput;
+
+    @Column(name = "stdout_reference")
+    private String stdoutReference;
+
+    @Column(name = "stderr_reference")
+    private String stderrReference;
+
+    @Column(name = "scope_reference")
+    private String scopeReference;
+
+    @Column(name = "authorization_reference")
+    private String authorizationReference;
 
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;

@@ -30,6 +30,12 @@ class GlobalShieldIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private com.globalshield.auth.OtpService otpService;
+
+    @Autowired
+    private com.globalshield.auth.repository.OtpVerificationRepository otpRepository;
+
     @Test
     @DisplayName("Health endpoint should return UP status and 200 OK")
     void testHealthEndpoint() throws Exception {
@@ -51,12 +57,19 @@ class GlobalShieldIntegrationTest {
     void testEndToEndPhase1Flow() throws Exception {
         String testEmail = "admin_" + System.currentTimeMillis() + "@aegis.local";
 
+        // Generate OTP for registration
+        otpService.generateAndSendOtp(testEmail, "Registration", "REGISTRATION");
+        String otpCode = otpRepository.findTopByEmailAndPurposeAndUsedFalseOrderByCreatedAtDesc(testEmail, "REGISTRATION")
+                .map(com.globalshield.auth.entity.OtpVerification::getOtpCode)
+                .orElse("123456");
+
         // 1. Register Admin User
         RegisterRequest registerReq = RegisterRequest.builder()
                 .email(testEmail)
                 .password("AdminSecurePass123!")
                 .displayName("Admin Integrator")
                 .role(UserRole.ADMIN)
+                .otp(otpCode)
                 .build();
 
         MvcResult regResult = mockMvc.perform(post("/api/v1/auth/register")

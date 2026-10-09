@@ -21,6 +21,18 @@ public class RemediationPlanDto {
     private String owner;
     private OffsetDateTime targetDate;
     private String status;
+    private String remediationMode;
+    private String riskLevel;
+    private String approvalStatus;
+    private String approvedBy;
+    private OffsetDateTime approvedAt;
+    private String rejectionReason;
+    private String reviewablePatchDiff;
+    private String verificationCriteria;
+    private String automatedActionType;
+    private boolean automatedExecutable;
+    private String executionStatus;
+    private OffsetDateTime executedAt;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private List<RemediationTaskDto> tasks;

@@ -11,12 +11,14 @@ import { TargetDetailPage } from './pages/TargetDetailPage';
 import { CreateAssessmentPage } from './pages/CreateAssessmentPage';
 import { AssessmentsPage } from './pages/AssessmentsPage';
 import { AssessmentDetailPage } from './pages/AssessmentDetailPage';
+import { FuzzingWorkspacePage } from './pages/FuzzingWorkspacePage';
 import { AttackSurfacePage } from './pages/AttackSurfacePage';
 import { FindingsPage } from './pages/FindingsPage';
 import { FindingDetailPage } from './pages/FindingDetailPage';
 import { IncidentsPage } from './pages/IncidentsPage';
 import { IncidentDetailPage } from './pages/IncidentDetailPage';
 import { InvestigationsPage } from './pages/InvestigationsPage';
+import { InvestigationDetailPage } from './pages/InvestigationDetailPage';
 import { ForensicsPage } from './pages/ForensicsPage';
 import { ForensicDetailPage } from './pages/ForensicDetailPage';
 import { AiAnalystPage } from './pages/AiAnalystPage';
@@ -90,13 +92,15 @@ export const App: React.FC = () => {
             <Route path="assessments" element={<AssessmentsPage />} />
             <Route path="assessments/new" element={<CreateAssessmentPage />} />
             <Route path="assessments/:id" element={<AssessmentDetailPage />} />
+            <Route path="fuzzing" element={<FuzzingWorkspacePage />} />
+            <Route path="fuzzing/:id" element={<FuzzingWorkspacePage />} />
             <Route path="attack-surface" element={<AttackSurfacePage />} />
             <Route path="findings" element={<FindingsPage />} />
             <Route path="findings/:id" element={<FindingDetailPage />} />
             <Route path="incidents" element={<IncidentsPage />} />
             <Route path="incidents/:id" element={<IncidentDetailPage />} />
             <Route path="investigations" element={<InvestigationsPage />} />
-            <Route path="investigations/:id" element={<InvestigationsPage />} />
+            <Route path="investigations/:id" element={<InvestigationDetailPage />} />
             <Route path="forensics" element={<ForensicsPage />} />
             <Route path="forensics/:id" element={<ForensicDetailPage />} />
             <Route path="ai" element={<AiAnalystPage />} />

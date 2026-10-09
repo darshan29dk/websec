@@ -47,17 +47,13 @@ export const RegisterPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const generatedOtp = await authApi.requestOtp(cleanEmail);
-      if (generatedOtp) {
-        setSuccessMsg(`A 6-digit verification OTP code has been dispatched via SMTP to ${cleanEmail}. (Verification Code: ${generatedOtp})`);
-        setOtp(generatedOtp);
-      } else {
-        setSuccessMsg(`A 6-digit verification OTP code has been dispatched via SMTP to ${cleanEmail}. Please check your inbox.`);
-      }
+      await authApi.requestOtp(cleanEmail);
+      setSuccessMsg(`A 6-digit verification code has been sent to ${cleanEmail}. Please check your inbox (and spam folder).`);
+      setOtp('');
       setStep('OTP');
     } catch (err: any) {
       const apiErr = err as ApiError;
-      setError(apiErr.message || 'Failed to dispatch verification OTP to your email.');
+      setError(apiErr.message || 'Failed to send verification code. Please try again.');
     } finally {
       setIsLoading(false);
     }

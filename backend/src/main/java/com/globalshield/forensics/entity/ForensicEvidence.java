@@ -66,6 +66,23 @@ public class ForensicEvidence {
     @Column(nullable = false)
     private String provenance;
 
+    @Column(name = "file_reference", length = 512)
+    private String fileReference;
+
+    @Column(name = "hash_algorithm", length = 32)
+    @Builder.Default
+    private String hashAlgorithm = "SHA-256";
+
+    @Column(name = "acquisition_method", length = 128)
+    private String acquisitionMethod;
+
+    @Column(name = "chain_of_custody_reference", length = 255)
+    private String chainOfCustodyReference;
+
+    @Column(name = "analysis_status", length = 32)
+    @Builder.Default
+    private String analysisStatus = "PENDING";
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

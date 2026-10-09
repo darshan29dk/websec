@@ -80,6 +80,18 @@ public class SecurityEvent {
     @Column(name = "raw_reference", length = 512)
     private String rawReference;
 
+    @Column(name = "source_system", length = 100)
+    private String sourceSystem;
+
+    @Column(length = 20)
+    private String severity = "INFO";
+
+    @Column(name = "user_identifier_if_available")
+    private String userIdentifierIfAvailable;
+
+    @Column(name = "asset_id")
+    private UUID assetId;
+
     @Column(name = "normalized_data", columnDefinition = "TEXT")
     private String normalizedData;
 
@@ -272,6 +284,34 @@ public class SecurityEvent {
     }
     public void setNormalizedData(String normalizedData) {
         this.normalizedData = normalizedData;
+    }
+
+    public String getSourceSystem() {
+        return sourceSystem;
+    }
+    public void setSourceSystem(String sourceSystem) {
+        this.sourceSystem = sourceSystem;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+    public void setSeverity(String severity) {
+        this.severity = severity;
+    }
+
+    public String getUserIdentifierIfAvailable() {
+        return userIdentifierIfAvailable;
+    }
+    public void setUserIdentifierIfAvailable(String userIdentifierIfAvailable) {
+        this.userIdentifierIfAvailable = userIdentifierIfAvailable;
+    }
+
+    public UUID getAssetId() {
+        return assetId;
+    }
+    public void setAssetId(UUID assetId) {
+        this.assetId = assetId;
     }
 
     public OffsetDateTime getCreatedAt() {

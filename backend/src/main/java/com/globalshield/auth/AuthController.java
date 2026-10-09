@@ -27,9 +27,11 @@ public class AuthController {
 
     @PostMapping("/request-otp")
     @Operation(summary = "Request registration OTP", description = "Sends a 6-digit OTP code to the provided email address via SMTP")
-    public ResponseEntity<ApiResponse<String>> requestOtp(@Valid @RequestBody OtpRequest request) {
-        String otpCode = authService.requestRegistrationOtp(request.getEmail());
-        return ResponseEntity.ok(ApiResponse.success("Verification OTP code sent to " + request.getEmail() + " via SMTP.", otpCode));
+    public ResponseEntity<ApiResponse<Void>> requestOtp(@Valid @RequestBody OtpRequest request) {
+        authService.requestRegistrationOtp(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(
+                "A 6-digit verification code has been sent to " + request.getEmail() + ". Please check your inbox (and spam folder).",
+                null));
     }
 
     @PostMapping("/register")
@@ -46,9 +48,11 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     @Operation(summary = "Request password reset OTP", description = "Generates and emails a password reset OTP code via SMTP to registered email")
-    public ResponseEntity<ApiResponse<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        String otpCode = authService.requestForgotPasswordOtp(request.getEmail());
-        return ResponseEntity.ok(ApiResponse.success("Password reset OTP code sent to " + request.getEmail() + " via SMTP.", otpCode));
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestForgotPasswordOtp(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(
+                "A password reset code has been sent to " + request.getEmail() + ". Please check your inbox (and spam folder).",
+                null));
     }
 
     @PostMapping("/reset-password")

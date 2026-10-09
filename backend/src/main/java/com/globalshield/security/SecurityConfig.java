@@ -55,6 +55,16 @@ public class SecurityConfig {
                         // Assessment endpoints
                         .requestMatchers(HttpMethod.GET, "/api/v1/assessments/**", "/api/v1/assessment-profiles").hasAnyRole("ADMIN", "ANALYST", "VIEWER")
                         .requestMatchers(HttpMethod.POST, "/api/v1/assessments/**").hasAnyRole("ADMIN", "ANALYST")
+                        // Fuzzing endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/fuzzing/**").hasAnyRole("ADMIN", "ANALYST", "VIEWER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/fuzzing/**").hasAnyRole("ADMIN", "ANALYST")
+                        // Local execution agent endpoints (agent worker communications via X-Agent-Key header)
+                        .requestMatchers("/api/v1/agents/heartbeat", "/api/v1/agents/jobs/poll", "/api/v1/agents/jobs/*/result").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/agents/**").hasAnyRole("ADMIN", "ANALYST", "VIEWER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/agents/**").hasAnyRole("ADMIN", "ANALYST")
+                        // Notification endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/notifications/**").hasAnyRole("ADMIN", "ANALYST", "VIEWER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/notifications/**").hasAnyRole("ADMIN", "ANALYST")
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 );

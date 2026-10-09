@@ -24,13 +24,13 @@ public class OtpService {
     private final SecureRandom random = new SecureRandom();
 
     @Transactional
-    public String generateAndSendOtp(String email, String purposeTitle, String purposeKey) {
+    public void generateAndSendOtp(String email, String purposeTitle, String purposeKey) {
         String cleanEmail = email.toLowerCase().trim();
 
         // Invalidate any previous unused OTPs for this email and purpose
         otpRepository.invalidatePreviousOtps(cleanEmail, purposeKey);
 
-        // Generate 6-digit OTP code
+        // Generate cryptographically-secure 6-digit OTP code
         String otpCode = String.format("%06d", random.nextInt(1000000));
         Instant expiresAt = Instant.now().plus(10, ChronoUnit.MINUTES);
 
@@ -44,10 +44,9 @@ public class OtpService {
 
         otpRepository.save(otpVerification);
 
-        // Send email via SMTP
+        // Send email via SMTP — code never returned to caller
         emailService.sendOtpEmail(cleanEmail, otpCode, purposeTitle);
-        log.info("Generated OTP code for email {} with purpose {}", cleanEmail, purposeKey);
-        return otpCode;
+        log.info("OTP dispatched via email for {} purpose={}", cleanEmail, purposeKey);
     }
 
     @Transactional

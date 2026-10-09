@@ -56,11 +56,18 @@ export const AssessmentsPage: React.FC = () => {
             Assessment lifecycle & queued profile execution records
           </p>
         </div>
-        <Link to="/assessments/new">
-          <Button variant="primary" icon={<Plus size={16} />}>
-            Create Assessment
-          </Button>
-        </Link>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link to="/fuzzing">
+            <Button variant="outline">
+              Web Fuzzing Workspace
+            </Button>
+          </Link>
+          <Link to="/assessments/new">
+            <Button variant="primary" icon={<Plus size={16} />}>
+              Create Assessment
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card style={{ marginBottom: '20px', padding: '16px' }}>

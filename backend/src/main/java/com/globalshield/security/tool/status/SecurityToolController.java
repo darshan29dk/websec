@@ -26,6 +26,12 @@ public class SecurityToolController {
         return ResponseEntity.ok(ApiResponse.success("Tool health checked successfully", status));
     }
 
+    @GetMapping("/{toolName}")
+    public ResponseEntity<ApiResponse<SecurityToolStatus>> getToolByName(@PathVariable String toolName) {
+        SecurityToolStatus status = toolService.getToolByName(toolName);
+        return ResponseEntity.ok(ApiResponse.success("Tool details retrieved successfully", status));
+    }
+
     @PostMapping("/check-all")
     public ResponseEntity<ApiResponse<List<SecurityToolStatus>>> recheckAllTools() {
         List<SecurityToolStatus> statuses = toolService.initializeAndCheckAllTools();

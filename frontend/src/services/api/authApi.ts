@@ -3,12 +3,12 @@ import { AuthResponse, LoginRequest, RegisterRequest } from '../../types/auth';
 import { User } from '../../types/user';
 
 export const authApi = {
-  requestOtp: async (email: string): Promise<string> => {
-    return await ApiClient.post<string>('/auth/request-otp', { email });
+  requestOtp: async (email: string): Promise<void> => {
+    await ApiClient.post<void>('/auth/request-otp', { email });
   },
 
-  forgotPassword: async (email: string): Promise<string> => {
-    return await ApiClient.post<string>('/auth/forgot-password', { email });
+  forgotPassword: async (email: string): Promise<void> => {
+    await ApiClient.post<void>('/auth/forgot-password', { email });
   },
 
   resetPassword: async (payload: { email: string; otp: string; newPassword: string }): Promise<void> => {

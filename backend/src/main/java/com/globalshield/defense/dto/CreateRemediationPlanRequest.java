@@ -14,4 +14,9 @@ public class CreateRemediationPlanRequest {
     private String priority;
     private String owner;
     private OffsetDateTime targetDate;
+    private String remediationMode; // GUIDANCE_ONLY, REVIEWABLE_ASSISTED_PATCH, CONTROLLED_AUTOMATED
+    private String riskLevel; // LOW, MEDIUM, HIGH, CRITICAL
+    private String reviewablePatchDiff;
+    private String verificationCriteria;
+    private String automatedActionType;
 }

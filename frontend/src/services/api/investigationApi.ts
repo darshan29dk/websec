@@ -51,6 +51,10 @@ export const investigationApi = {
     return client.patch<Investigation>(`/investigations/${id}/status`, { status, conclusion });
   },
 
+  concludeInvestigation: async (id: string, conclusion: InvestigationConclusion): Promise<Investigation> => {
+    return client.patch<Investigation>(`/investigations/${id}/status`, { status: 'COMPLETED', conclusion });
+  },
+
   getTimeline: async (id: string): Promise<TimelineEvent[]> => {
     return client.get<TimelineEvent[]>(`/investigations/${id}/timeline`);
   },

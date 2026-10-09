@@ -11,7 +11,10 @@ import com.globalshield.assessment.execution.ToolExecutionStatus;
 import com.globalshield.assessment.result.*;
 import com.globalshield.audit.AuditEventType;
 import com.globalshield.audit.AuditService;
+import com.globalshield.security.policy.AuthorizationValidator;
+import com.globalshield.security.policy.ScopeValidator;
 import com.globalshield.security.policy.TargetNetworkPolicy;
+import com.globalshield.security.policy.ToolPolicyValidator;
 import com.globalshield.security.tool.*;
 import com.globalshield.target.SecurityTarget;
 import com.globalshield.target.TargetStatus;
@@ -38,6 +41,9 @@ public class AssessmentOrchestrator {
     private final AssessmentEndpointRepository endpointRepository;
     private final AssessmentObservationRepository observationRepository;
     private final TargetNetworkPolicy networkPolicy;
+    private final ScopeValidator scopeValidator;
+    private final AuthorizationValidator authorizationValidator;
+    private final ToolPolicyValidator toolPolicyValidator;
     private final List<ToolAdapter> toolAdapters;
     private final AuditService auditService;
     private final com.globalshield.attacksurface.service.AttackSurfaceService attackSurfaceService;
@@ -86,22 +92,10 @@ public class AssessmentOrchestrator {
         }
 
         try {
-            networkPolicy.validateTargetNetworkAccess(target);
+            scopeValidator.validateScope(target);
+            authorizationValidator.validateAuthorization(target);
         } catch (Exception e) {
-            failAssessment(assessment, "Target network validation failed: " + e.getMessage(), requestingUserId, requestingUserEmail);
-            return;
-        }
-
-        // Check active authorization
-        if (target.getAuthorizations() == null || target.getAuthorizations().isEmpty()) {
-            failAssessment(assessment, "Target has no valid authorization registered", requestingUserId, requestingUserEmail);
-            return;
-        }
-
-        boolean hasValidAuth = target.getAuthorizations().stream()
-                .anyMatch(auth -> auth.isValid());
-        if (!hasValidAuth) {
-            failAssessment(assessment, "Target authorization is expired, unconfirmed, or invalid", requestingUserId, requestingUserEmail);
+            failAssessment(assessment, "Target scope/authorization validation failed: " + e.getMessage(), requestingUserId, requestingUserEmail);
             return;
         }
 
@@ -207,12 +201,38 @@ public class AssessmentOrchestrator {
         String toolName = adapter.getToolName();
         log.info("Executing tool adapter {} for stage {}", toolName, adapter.getStage());
 
+        SecurityTarget target = assessment.getTarget();
+        // Policy validation check
+        try {
+            toolPolicyValidator.validateToolExecutionPolicy(toolName, assessment.getProfile(), target);
+        } catch (Exception e) {
+            log.warn("Tool {} blocked by policy for assessment {}: {}", toolName, assessment.getId(), e.getMessage());
+            ToolExecution blockedExecution = ToolExecution.builder()
+                    .assessment(assessment)
+                    .toolName(toolName)
+                    .stage(adapter.getStage())
+                    .status(ToolExecutionStatus.BLOCKED)
+                    .startedAt(Instant.now())
+                    .completedAt(Instant.now())
+                    .errorMessage("Policy Validation: " + e.getMessage())
+                    .scopeReference(target != null ? target.getPrimaryUrl() : null)
+                    .build();
+            toolExecutionRepository.save(blockedExecution);
+            return true;
+        }
+
+        String authRef = (target != null && target.getAuthorizations() != null && !target.getAuthorizations().isEmpty())
+                ? target.getAuthorizations().get(0).getId().toString()
+                : null;
+
         ToolExecution execution = ToolExecution.builder()
                 .assessment(assessment)
                 .toolName(toolName)
                 .stage(adapter.getStage())
                 .status(ToolExecutionStatus.RUNNING)
                 .startedAt(Instant.now())
+                .scopeReference(target != null ? target.getPrimaryUrl() : null)
+                .authorizationReference(authRef)
                 .build();
         toolExecutionRepository.save(execution);
 
@@ -301,15 +321,30 @@ public class AssessmentOrchestrator {
         if ("PASSIVE".equalsIgnoreCase(profileName)) {
             return List.of(
                     AssessmentStage.TARGET_VALIDATION,
+                    AssessmentStage.DNS_DISCOVERY,
                     AssessmentStage.HTTP_SECURITY_ANALYSIS,
                     AssessmentStage.TECHNOLOGY_DISCOVERY,
                     AssessmentStage.RESULT_NORMALIZATION,
                     AssessmentStage.FINALIZATION
             );
-        } else {
-            // STANDARD_AUTHORIZED or COMPREHENSIVE_AUTHORIZED
+        } else if ("COMPREHENSIVE_AUTHORIZED".equalsIgnoreCase(profileName)) {
             return List.of(
                     AssessmentStage.TARGET_VALIDATION,
+                    AssessmentStage.DNS_DISCOVERY,
+                    AssessmentStage.PORT_DISCOVERY,
+                    AssessmentStage.TECHNOLOGY_DISCOVERY,
+                    AssessmentStage.HTTP_SECURITY_ANALYSIS,
+                    AssessmentStage.WEB_SERVER_ASSESSMENT,
+                    AssessmentStage.VULNERABILITY_ASSESSMENT,
+                    AssessmentStage.NETWORK_TELEMETRY,
+                    AssessmentStage.RESULT_NORMALIZATION,
+                    AssessmentStage.FINALIZATION
+            );
+        } else {
+            // STANDARD_AUTHORIZED
+            return List.of(
+                    AssessmentStage.TARGET_VALIDATION,
+                    AssessmentStage.DNS_DISCOVERY,
                     AssessmentStage.PORT_DISCOVERY,
                     AssessmentStage.TECHNOLOGY_DISCOVERY,
                     AssessmentStage.HTTP_SECURITY_ANALYSIS,

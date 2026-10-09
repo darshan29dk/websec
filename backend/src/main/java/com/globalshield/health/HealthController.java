@@ -87,7 +87,7 @@ public class HealthController {
 
         HealthResponse healthResponse = HealthResponse.builder()
                 .status(isUp ? "UP" : "DOWN")
-                .applicationName("AEGIS Web Security Platform")
+                .applicationName("GlobalShield Enterprise Security Platform")
                 .version("1.0.0-SNAPSHOT")
                 .timestamp(Instant.now())
                 .components(components)

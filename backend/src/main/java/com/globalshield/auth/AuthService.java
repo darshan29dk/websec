@@ -43,7 +43,7 @@ public class AuthService {
     }
 
     @Transactional
-    public String requestRegistrationOtp(String emailStr) {
+    public void requestRegistrationOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
             throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
@@ -53,11 +53,11 @@ public class AuthService {
             throw new DuplicateResourceException("User with email '" + email + "' already exists");
         }
 
-        return otpService.generateAndSendOtp(email, "Account Registration", "REGISTRATION");
+        otpService.generateAndSendOtp(email, "Account Registration", "REGISTRATION");
     }
 
     @Transactional
-    public String requestForgotPasswordOtp(String emailStr) {
+    public void requestForgotPasswordOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
             throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
@@ -70,7 +70,7 @@ public class AuthService {
             throw new BadRequestException("User account is disabled.");
         }
 
-        return otpService.generateAndSendOtp(email, "Password Reset", "PASSWORD_RESET");
+        otpService.generateAndSendOtp(email, "Password Reset", "PASSWORD_RESET");
     }
 
     @Transactional

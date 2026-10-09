@@ -49,6 +49,49 @@ public class RemediationPlan {
     @Column(nullable = false, length = 32)
     private String status = "OPEN"; // OPEN, IN_PROGRESS, BLOCKED, IMPLEMENTED, CANCELLED, VERIFICATION_PENDING, CLOSED
 
+    @Builder.Default
+    @Column(name = "remediation_mode", nullable = false, length = 32)
+    private String remediationMode = "GUIDANCE_ONLY"; // GUIDANCE_ONLY, REVIEWABLE_ASSISTED_PATCH, CONTROLLED_AUTOMATED
+
+    @Builder.Default
+    @Column(name = "risk_level", nullable = false, length = 32)
+    private String riskLevel = "LOW"; // LOW, MEDIUM, HIGH, CRITICAL
+
+    @Builder.Default
+    @Column(name = "approval_status", nullable = false, length = 32)
+    private String approvalStatus = "NOT_REQUIRED"; // NOT_REQUIRED, PENDING_APPROVAL, APPROVED, REJECTED
+
+    @Column(name = "approved_by")
+    private String approvedBy;
+
+    @Column(name = "approved_at")
+    private OffsetDateTime approvedAt;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "reviewable_patch_diff", columnDefinition = "TEXT")
+    private String reviewablePatchDiff;
+
+    @Column(name = "verification_criteria", columnDefinition = "TEXT")
+    private String verificationCriteria;
+
+    @Column(name = "automated_action_type", length = 64)
+    private String automatedActionType;
+
+    @Builder.Default
+    @Column(name = "is_automated_executable", nullable = false)
+    private boolean automatedExecutable = false;
+
+    @Column(name = "execution_log", columnDefinition = "TEXT")
+    private String executionLog;
+
+    @Column(name = "executed_at")
+    private OffsetDateTime executedAt;
+
+    @Column(name = "execution_status", length = 32)
+    private String executionStatus;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 

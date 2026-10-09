@@ -1,0 +1,13 @@
+package com.globalshield.security.tool;
+
+public enum ToolIntegrationType {
+    EXECUTABLE_SCANNER,
+    EXTERNAL_API,
+    MANAGED_SECURITY_PLATFORM,
+    PACKET_ANALYSIS,
+    TELEMETRY_SOURCE,
+    IDS_ENGINE,
+    SIEM_CONNECTOR,
+    FORENSICS_TOOL,
+    REVERSE_ENGINEERING_TOOL
+}

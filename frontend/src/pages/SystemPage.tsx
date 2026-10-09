@@ -58,7 +58,8 @@ export const SystemPage: React.FC = () => {
   }, []);
 
   const availableToolsCount = tools.filter((t) => t.status === 'AVAILABLE').length;
-  const unavailableToolsCount = tools.length - availableToolsCount;
+  const notConfiguredCount = tools.filter((t) => t.status === 'NOT_CONFIGURED').length;
+  const unavailableToolsCount = tools.filter((t) => t.status === 'NOT_AVAILABLE' || t.status === 'FAILED').length;
   const activeMonitorsCount = monitoringConfigs.filter((m) => m.enabled).length;
 
   return (
@@ -171,12 +172,12 @@ export const SystemPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Security Tools Health (Requirement 9) */}
+        {/* Security Tools Health */}
         <Card
-          title="Security Tool Binaries"
+          title="25-Tool Security Ecosystem"
           action={
-            <Link to="/system/tools" style={{ fontSize: '12px', fontWeight: 600 }}>
-              Manage Tools →
+            <Link to="/security-tools" style={{ fontSize: '12px', fontWeight: 600 }}>
+              Security Tool Center →
             </Link>
           }
         >
@@ -184,8 +185,8 @@ export const SystemPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Terminal size={20} color="var(--accent-primary)" />
               <div>
-                <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-heading)' }}>Scanning Binaries</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Allowlisted CLI Execution</div>
+                <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-heading)' }}>Security Tool Registry</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Recon, Web, IDS, SIEM, Forensics</div>
               </div>
             </div>
             <StatusBadge status={availableToolsCount > 0 ? 'ACTIVE' : 'WARNING'} />
@@ -193,18 +194,24 @@ export const SystemPage: React.FC = () => {
 
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Operational Tools</span>
-              <span style={{ fontWeight: 700, color: '#15803d' }}>{availableToolsCount} Ready</span>
+              <span style={{ color: 'var(--text-muted)' }}>Operational / Available</span>
+              <span style={{ fontWeight: 700, color: '#15803d' }}>{availableToolsCount} Verified</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Unavailable in Host PATH</span>
-              <span style={{ fontWeight: 600, color: unavailableToolsCount > 0 ? '#b45309' : 'var(--text-muted)' }}>
-                {unavailableToolsCount} Pending
+              <span style={{ color: 'var(--text-muted)' }}>Configuration Required</span>
+              <span style={{ fontWeight: 600, color: '#b45309' }}>
+                {notConfiguredCount} Pending API/URL
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Total Integrated Adapters</span>
-              <span>{tools.length} Managed</span>
+              <span style={{ color: 'var(--text-muted)' }}>Not in Host PATH</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
+                {unavailableToolsCount} Not Installed
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Total Ecosystem Adapters</span>
+              <span style={{ fontWeight: 600 }}>{tools.length} Registered</span>
             </div>
           </div>
         </Card>
