@@ -154,6 +154,7 @@ class AuthServiceTest {
         when(mockAuth.getPrincipal()).thenReturn(principal);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(mockAuth);
         when(userRepository.findById(sampleUser.getId())).thenReturn(Optional.of(sampleUser));
+        when(otpService.generateAndSendOtp(any(), any(), any())).thenReturn("123456");
 
         AuthResponse response = authService.login(request, "127.0.0.1", "JUnit");
 

@@ -24,7 +24,7 @@ public class OtpService {
     private final SecureRandom random = new SecureRandom();
 
     @Transactional
-    public void generateAndSendOtp(String email, String purposeTitle, String purposeKey) {
+    public String generateAndSendOtp(String email, String purposeTitle, String purposeKey) {
         String cleanEmail = email.toLowerCase().trim();
 
         // Invalidate any previous unused OTPs for this email and purpose
@@ -44,9 +44,14 @@ public class OtpService {
 
         otpRepository.save(otpVerification);
 
-        // Send email via SMTP — code never returned to caller
+        // Send email via SMTP (non-blocking async)
         emailService.sendOtpEmail(cleanEmail, otpCode, purposeTitle);
-        log.info("OTP dispatched via email for {} purpose={}", cleanEmail, purposeKey);
+        log.info("OTP generated for {} purpose={}", cleanEmail, purposeKey);
+        return otpCode;
+    }
+
+    public boolean isSmtpConfigured() {
+        return emailService.isSmtpConfigured();
     }
 
     @Transactional

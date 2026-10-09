@@ -42,6 +42,9 @@ spring:
           starttls:
             enable: true
             required: true
+          connectiontimeout: 3000
+          timeout: 3000
+          writetimeout: 3000
 
 management:
   endpoints:

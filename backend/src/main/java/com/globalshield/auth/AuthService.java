@@ -42,8 +42,12 @@ public class AuthService {
         return lower.endsWith("@gmail.com") || lower.endsWith("@outlook.com") || lower.endsWith("@aegis.local") || lower.endsWith("@globalshield.internal");
     }
 
+    public boolean isSmtpConfigured() {
+        return otpService.isSmtpConfigured();
+    }
+
     @Transactional
-    public void requestRegistrationOtp(String emailStr) {
+    public String requestRegistrationOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
             throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
@@ -53,11 +57,11 @@ public class AuthService {
             throw new DuplicateResourceException("User with email '" + email + "' already exists");
         }
 
-        otpService.generateAndSendOtp(email, "Account Registration", "REGISTRATION");
+        return otpService.generateAndSendOtp(email, "Account Registration", "REGISTRATION");
     }
 
     @Transactional
-    public void requestForgotPasswordOtp(String emailStr) {
+    public String requestForgotPasswordOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
             throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
@@ -70,7 +74,7 @@ public class AuthService {
             throw new BadRequestException("User account is disabled.");
         }
 
-        otpService.generateAndSendOtp(email, "Password Reset", "PASSWORD_RESET");
+        return otpService.generateAndSendOtp(email, "Password Reset", "PASSWORD_RESET");
     }
 
     @Transactional
@@ -195,7 +199,7 @@ public class AuthService {
             }
 
             // Dispatch 6-digit OTP verification code for login MFA
-            otpService.generateAndSendOtp(user.getEmail(), "Account Login", "LOGIN");
+            String otpCode = otpService.generateAndSendOtp(user.getEmail(), "Account Login", "LOGIN");
 
             auditService.logEvent(
                     user.getId(),
@@ -209,10 +213,14 @@ public class AuthService {
                     userAgent
             );
 
+            String message = otpService.isSmtpConfigured()
+                    ? "A 6-digit OTP code has been dispatched to " + user.getEmail() + ". Please enter it to complete sign-in."
+                    : "A 6-digit OTP code has been generated. (Verification code: " + otpCode + ")";
+
             return AuthResponse.builder()
                     .mfaRequired(true)
                     .email(user.getEmail())
-                    .message("A 6-digit OTP code has been dispatched to " + user.getEmail() + ". Please enter it to complete sign-in.")
+                    .message(message)
                     .build();
 
         } catch (BadCredentialsException ex) {
@@ -281,7 +289,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void resendLoginOtp(String emailStr) {
+    public String resendLoginOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
             throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
@@ -294,7 +302,7 @@ public class AuthService {
             throw new BadRequestException("User account is disabled");
         }
 
-        otpService.generateAndSendOtp(user.getEmail(), "Account Login", "LOGIN");
+        return otpService.generateAndSendOtp(user.getEmail(), "Account Login", "LOGIN");
     }
 
     private String hashToken(String token) {
