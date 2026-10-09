@@ -1,11 +1,14 @@
 import { User, UserRole } from './user';
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresInMs: number;
-  user: User;
+  accessToken?: string;
+  refreshToken?: string;
+  tokenType?: string;
+  expiresInMs?: number;
+  user?: User;
+  mfaRequired?: boolean;
+  message?: string;
+  email?: string;
 }
 
 export interface RefreshTokenResponse {
@@ -26,4 +29,9 @@ export interface RegisterRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+export interface VerifyLoginOtpRequest {
+  email: string;
+  otp: string;
 }

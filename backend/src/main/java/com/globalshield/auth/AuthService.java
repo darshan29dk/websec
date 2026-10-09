@@ -39,14 +39,14 @@ public class AuthService {
     private boolean isAuthorizedEmailDomain(String email) {
         if (email == null) return false;
         String lower = email.toLowerCase().trim();
-        return lower.endsWith("@gmail.com") || lower.endsWith("@outlook.com") || lower.endsWith("@aegis.local");
+        return lower.endsWith("@gmail.com") || lower.endsWith("@outlook.com") || lower.endsWith("@aegis.local") || lower.endsWith("@globalshield.internal");
     }
 
     @Transactional
     public void requestRegistrationOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
-            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+            throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
         }
 
         if (userRepository.existsByEmail(email)) {
@@ -60,7 +60,7 @@ public class AuthService {
     public void requestForgotPasswordOtp(String emailStr) {
         String email = emailStr.toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
-            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+            throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
         }
 
         User user = userRepository.findByEmail(email)
@@ -77,7 +77,7 @@ public class AuthService {
     public void resetPassword(ResetPasswordRequest request) {
         String email = request.getEmail().toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
-            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+            throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
         }
 
         User user = userRepository.findByEmail(email)
@@ -111,7 +111,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request, String ipAddress, String userAgent) {
         String email = request.getEmail().toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
-            throw new BadRequestException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized.");
+            throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
         }
 
         if (userRepository.existsByEmail(email)) {
@@ -178,7 +178,7 @@ public class AuthService {
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
         String email = request.getEmail().toLowerCase().trim();
         if (!isAuthorizedEmailDomain(email)) {
-            throw new UnauthorizedException("Access denied. Only @gmail.com and @outlook.com email addresses are authorized to log in.");
+            throw new UnauthorizedException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
         }
 
         try {
@@ -194,13 +194,8 @@ public class AuthService {
                 throw new UnauthorizedException("User account is disabled");
             }
 
-            user.setLastLoginAt(Instant.now());
-            userRepository.save(user);
-
-            String accessToken = tokenProvider.generateAccessToken(authentication);
-            String refreshTokenStr = tokenProvider.generateRefreshToken(user.getId());
-
-            saveRefreshToken(user, refreshTokenStr);
+            // Dispatch 6-digit OTP verification code for login MFA
+            otpService.generateAndSendOtp(user.getEmail(), "Account Login", "LOGIN");
 
             auditService.logEvent(
                     user.getId(),
@@ -208,17 +203,16 @@ public class AuthService {
                     AuditEventType.LOGIN_SUCCESS,
                     "User",
                     user.getId().toString(),
-                    "LOGIN_SUCCESS",
-                    "User authenticated successfully",
+                    "LOGIN_OTP_DISPATCHED",
+                    "Credentials verified. Login OTP dispatched via email.",
                     ipAddress,
                     userAgent
             );
 
             return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshTokenStr)
-                    .expiresInMs(tokenProvider.getJwtAccessExpirationMs())
-                    .user(UserResponse.fromEntity(user))
+                    .mfaRequired(true)
+                    .email(user.getEmail())
+                    .message("A 6-digit OTP code has been dispatched to " + user.getEmail() + ". Please enter it to complete sign-in.")
                     .build();
 
         } catch (BadCredentialsException ex) {
@@ -235,6 +229,72 @@ public class AuthService {
             );
             throw ex;
         }
+    }
+
+    @Transactional
+    public AuthResponse verifyLoginOtp(VerifyLoginOtpRequest request, String ipAddress, String userAgent) {
+        String email = request.getEmail().toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new UnauthorizedException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
+        }
+
+        // Verify OTP code for LOGIN purpose
+        otpService.verifyOtp(email, request.getOtp(), "LOGIN");
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException("User not found with email " + email));
+
+        if (!user.isEnabled()) {
+            throw new UnauthorizedException("User account is disabled");
+        }
+
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+
+        UserPrincipal principal = UserPrincipal.create(user);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+
+        String accessToken = tokenProvider.generateAccessToken(authentication);
+        String refreshTokenStr = tokenProvider.generateRefreshToken(user.getId());
+
+        saveRefreshToken(user, refreshTokenStr);
+
+        auditService.logEvent(
+                user.getId(),
+                user.getEmail(),
+                AuditEventType.LOGIN_SUCCESS,
+                "User",
+                user.getId().toString(),
+                "LOGIN_SUCCESS",
+                "User authenticated successfully via 2FA OTP verification",
+                ipAddress,
+                userAgent
+        );
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshTokenStr)
+                .expiresInMs(tokenProvider.getJwtAccessExpirationMs())
+                .user(UserResponse.fromEntity(user))
+                .mfaRequired(false)
+                .build();
+    }
+
+    @Transactional
+    public void resendLoginOtp(String emailStr) {
+        String email = emailStr.toLowerCase().trim();
+        if (!isAuthorizedEmailDomain(email)) {
+            throw new BadRequestException("Access denied. Authorized domains: @gmail.com, @outlook.com, @globalshield.internal");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No registered user found with email " + email));
+
+        if (!user.isEnabled()) {
+            throw new BadRequestException("User account is disabled");
+        }
+
+        otpService.generateAndSendOtp(user.getEmail(), "Account Login", "LOGIN");
     }
 
     private String hashToken(String token) {

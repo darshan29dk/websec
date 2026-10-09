@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -15,7 +15,8 @@ import {
   RotateCcw,
   CheckCircle2,
   Database,
-  Sparkles
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Alert } from '../components/Alert';
@@ -24,25 +25,39 @@ import { authApi } from '../services/api/authApi';
 import cyberBg from '../assets/cyber-defense-bg.jpg';
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, verifyLoginOtp, resendLoginOtp } = useAuth();
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState<'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD'>('LOGIN');
+  const [mode, setMode] = useState<'LOGIN' | 'LOGIN_OTP' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD'>('LOGIN');
 
   // Login Form
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Login 2FA OTP Form
+  const [loginOtp, setLoginOtp] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   // Password Reset Form
   const [resetEmail, setResetEmail] = useState('');
-  const [otp, setOtp] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  // Cooldown timer for resending OTP
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  // Step 1: Submit credentials to receive OTP
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -56,8 +71,17 @@ export const LoginPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await login({ email: cleanEmail, password });
-      navigate('/overview');
+      const res = await login({ email: cleanEmail, password });
+      if (res && res.mfaRequired) {
+        setSuccessMsg(
+          `A 6-digit OTP code has been dispatched to ${cleanEmail}. Please check your inbox to complete sign-in.`
+        );
+        setLoginOtp('');
+        setResendCooldown(60);
+        setMode('LOGIN_OTP');
+      } else if (res && res.accessToken) {
+        navigate('/overview');
+      }
     } catch (err: any) {
       const apiErr = err as ApiError;
       setError(apiErr.message || 'Authentication failed. Please verify your credentials.');
@@ -66,6 +90,53 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  // Step 2: Verify the 2FA OTP code and complete sign-in
+  const handleVerifyLoginOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMsg(null);
+
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanOtp = loginOtp.trim();
+
+    if (!cleanOtp) {
+      setError('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await verifyLoginOtp({ email: cleanEmail, otp: cleanOtp });
+      navigate('/overview');
+    } catch (err: any) {
+      const apiErr = err as ApiError;
+      setError(apiErr.message || 'OTP verification failed. Invalid or expired code.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Resend Login OTP
+  const handleResendLoginOtp = async () => {
+    if (resendCooldown > 0) return;
+    setError(null);
+    setSuccessMsg(null);
+
+    const cleanEmail = email.toLowerCase().trim();
+    setIsLoading(true);
+    try {
+      await resendLoginOtp(cleanEmail);
+      setSuccessMsg(`A fresh 6-digit verification code has been dispatched to ${cleanEmail}.`);
+      setResendCooldown(60);
+    } catch (err: any) {
+      const apiErr = err as ApiError;
+      setError(apiErr.message || 'Failed to dispatch new OTP code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Forgot Password flow
   const handleSendResetOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -95,7 +166,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
     setSuccessMsg(null);
 
-    if (!otp || !newPassword) {
+    if (!resetOtp || !newPassword) {
       setError('Please enter both the 6-digit OTP code and your new password.');
       return;
     }
@@ -109,8 +180,8 @@ export const LoginPage: React.FC = () => {
     try {
       await authApi.resetPassword({
         email: resetEmail.toLowerCase().trim(),
-        otp: otp.trim(),
-        newPassword
+        otp: resetOtp.trim(),
+        newPassword,
       });
       setSuccessMsg('Password reset successfully. Please sign in with your new credentials.');
       setEmail(resetEmail);
@@ -444,13 +515,13 @@ export const LoginPage: React.FC = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sparkles size={14} color="#a78bfa" />
-            <span>Zero-Trust Scope Enforcement</span>
+            <span>Multi-Factor OTP Protected</span>
           </div>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* RIGHT 35% PANEL: High-Tech Secure Login Card                     */}
+      {/* RIGHT 35% PANEL: High-Tech Secure Login / OTP Card               */}
       {/* ============================================================== */}
       <div
         style={{
@@ -472,7 +543,7 @@ export const LoginPage: React.FC = () => {
       >
         <div style={{ width: '100%', maxWidth: '380px' }}>
           {/* Card Header with Logo & Title */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
             <div
               style={{
                 display: 'inline-flex',
@@ -503,7 +574,11 @@ export const LoginPage: React.FC = () => {
               GLOBALSHIELD
             </h2>
             <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
-              Authorized Access Control Gateway
+              {mode === 'LOGIN_OTP'
+                ? 'Two-Factor OTP Verification'
+                : mode === 'FORGOT_PASSWORD' || mode === 'RESET_PASSWORD'
+                ? 'Security Recovery Portal'
+                : 'Authorized Access Gateway'}
             </p>
           </div>
 
@@ -518,7 +593,7 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* ---------------- MODE: LOGIN ---------------- */}
+          {/* ---------------- MODE: LOGIN (Step 1: Credentials) ---------------- */}
           {mode === 'LOGIN' && (
             <form onSubmit={handleLoginSubmit}>
               {/* Email Field */}
@@ -689,6 +764,133 @@ export const LoginPage: React.FC = () => {
             </form>
           )}
 
+          {/* ---------------- MODE: LOGIN_OTP (Step 2: Enter Login OTP) ---------------- */}
+          {mode === 'LOGIN_OTP' && (
+            <form onSubmit={handleVerifyLoginOtpSubmit}>
+              <div
+                style={{
+                  backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '20px',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <KeyRound size={16} color="#38bdf8" />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>
+                    Enter Security Code
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
+                  A 6-digit OTP code has been sent to{' '}
+                  <strong style={{ color: '#38bdf8' }}>{email}</strong>.
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#e2e8f0',
+                    marginBottom: '8px',
+                    textAlign: 'center',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  6-DIGIT OTP VERIFICATION CODE
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="••••••"
+                  value={loginOtp}
+                  onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ''))}
+                  required
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    border: '2px solid #0284c7',
+                    borderRadius: '10px',
+                    padding: '14px',
+                    color: '#ffffff',
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    letterSpacing: '12px',
+                    textAlign: 'center',
+                    outline: 'none',
+                    boxShadow: '0 0 20px rgba(2, 132, 199, 0.25)',
+                  }}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #10b981 100%)',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+                }}
+              >
+                Verify Code &amp; Sign In
+              </Button>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '18px' }}>
+                <button
+                  type="button"
+                  onClick={handleResendLoginOtp}
+                  disabled={resendCooldown > 0 || isLoading}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: resendCooldown > 0 ? '#64748b' : '#38bdf8',
+                    fontSize: '12px',
+                    cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: 0,
+                  }}
+                >
+                  <RefreshCw size={13} />
+                  {resendCooldown > 0 ? `Resend Code (${resendCooldown}s)` : 'Resend Code'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setSuccessMsg(null);
+                    setMode('LOGIN');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: 0,
+                  }}
+                >
+                  <ArrowLeft size={13} /> Change Account
+                </button>
+              </div>
+            </form>
+          )}
+
           {/* ---------------- MODE: FORGOT_PASSWORD ---------------- */}
           {mode === 'FORGOT_PASSWORD' && (
             <form onSubmit={handleSendResetOtp}>
@@ -779,8 +981,8 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="text"
                   placeholder="123456"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  value={resetOtp}
+                  onChange={(e) => setResetOtp(e.target.value)}
                   required
                   autoFocus
                   style={{

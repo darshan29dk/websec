@@ -2,13 +2,15 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '../types/user';
 import { authApi } from '../services/api/authApi';
 import { ApiClient } from '../services/api/client';
-import { LoginRequest, RegisterRequest } from '../types/auth';
+import { AuthResponse, LoginRequest, RegisterRequest, VerifyLoginOtpRequest } from '../types/auth';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<AuthResponse>;
+  verifyLoginOtp: (payload: VerifyLoginOtpRequest) => Promise<AuthResponse>;
+  resendLoginOtp: (email: string) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -55,21 +57,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (credentials: LoginRequest) => {
+  const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
     setIsLoading(true);
     try {
       const response = await authApi.login(credentials);
-      setUser(response.user);
+      if (response.user) {
+        setUser(response.user);
+      }
+      return response;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const verifyLoginOtp = async (payload: VerifyLoginOtpRequest): Promise<AuthResponse> => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.verifyLoginOtp(payload);
+      if (response.user) {
+        setUser(response.user);
+      }
+      return response;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendLoginOtp = async (email: string): Promise<void> => {
+    await authApi.resendLoginOtp(email);
   };
 
   const register = async (data: RegisterRequest) => {
     setIsLoading(true);
     try {
       const response = await authApi.register(data);
-      setUser(response.user);
+      if (response.user) {
+        setUser(response.user);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isLoading,
         login,
+        verifyLoginOtp,
+        resendLoginOtp,
         register,
         logout,
         refreshUser,
@@ -111,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');

@@ -140,4 +140,48 @@ class AuthServiceTest {
         assertThrows(BadCredentialsException.class, () -> authService.login(request, "127.0.0.1", "JUnit"));
         verify(auditService).logEvent(eq(null), eq("analyst@aegis.local"), any(), any(), eq(null), any(), any(), any(), any());
     }
+
+    @Test
+    @DisplayName("Should successfully authenticate credentials and dispatch login OTP")
+    void testSuccessfulLoginDispatchesOtp() {
+        LoginRequest request = LoginRequest.builder()
+                .email("analyst@aegis.local")
+                .password("SecurePass123!")
+                .build();
+
+        Authentication mockAuth = mock(Authentication.class);
+        com.globalshield.security.UserPrincipal principal = com.globalshield.security.UserPrincipal.create(sampleUser);
+        when(mockAuth.getPrincipal()).thenReturn(principal);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(mockAuth);
+        when(userRepository.findById(sampleUser.getId())).thenReturn(Optional.of(sampleUser));
+
+        AuthResponse response = authService.login(request, "127.0.0.1", "JUnit");
+
+        assertNotNull(response);
+        assertTrue(response.isMfaRequired());
+        assertEquals("analyst@aegis.local", response.getEmail());
+        verify(otpService).generateAndSendOtp(eq("analyst@aegis.local"), eq("Account Login"), eq("LOGIN"));
+    }
+
+    @Test
+    @DisplayName("Should successfully verify login OTP and issue access token")
+    void testSuccessfulVerifyLoginOtp() {
+        VerifyLoginOtpRequest request = VerifyLoginOtpRequest.builder()
+                .email("analyst@aegis.local")
+                .otp("654321")
+                .build();
+
+        when(userRepository.findByEmail("analyst@aegis.local")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.save(any())).thenReturn(sampleUser);
+        when(tokenProvider.generateAccessToken(any())).thenReturn("valid_login_access_token");
+        when(tokenProvider.generateRefreshToken(any())).thenReturn("valid_login_refresh_token");
+
+        AuthResponse response = authService.verifyLoginOtp(request, "127.0.0.1", "JUnit");
+
+        assertNotNull(response);
+        assertFalse(response.isMfaRequired());
+        assertEquals("valid_login_access_token", response.getAccessToken());
+        assertEquals("valid_login_refresh_token", response.getRefreshToken());
+        verify(otpService).verifyOtp(eq("analyst@aegis.local"), eq("654321"), eq("LOGIN"));
+    }
 }

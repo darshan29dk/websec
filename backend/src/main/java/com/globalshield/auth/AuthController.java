@@ -63,7 +63,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "User login", description = "Authenticates user credentials and returns JWT access and refresh tokens")
+    @Operation(summary = "User login", description = "Validates credentials and dispatches 6-digit MFA OTP to user email")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
@@ -71,7 +71,26 @@ public class AuthController {
         String ipAddress = IpUtil.getClientIp(httpRequest);
         String userAgent = IpUtil.getUserAgent(httpRequest);
         AuthResponse response = authService.login(request, ipAddress, userAgent);
-        return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+        return ResponseEntity.ok(ApiResponse.success(response.getMessage() != null ? response.getMessage() : "Verification OTP sent", response));
+    }
+
+    @PostMapping("/verify-login-otp")
+    @Operation(summary = "Verify login OTP", description = "Verifies 6-digit login OTP and returns JWT access & refresh tokens")
+    public ResponseEntity<ApiResponse<AuthResponse>> verifyLoginOtp(
+            @Valid @RequestBody VerifyLoginOtpRequest request,
+            HttpServletRequest httpRequest) {
+
+        String ipAddress = IpUtil.getClientIp(httpRequest);
+        String userAgent = IpUtil.getUserAgent(httpRequest);
+        AuthResponse response = authService.verifyLoginOtp(request, ipAddress, userAgent);
+        return ResponseEntity.ok(ApiResponse.success("Login verified successfully", response));
+    }
+
+    @PostMapping("/resend-login-otp")
+    @Operation(summary = "Resend login OTP", description = "Dispatches a fresh 6-digit login OTP to the registered user email")
+    public ResponseEntity<ApiResponse<Void>> resendLoginOtp(@Valid @RequestBody OtpRequest request) {
+        authService.resendLoginOtp(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("A fresh login OTP has been sent to " + request.getEmail(), null));
     }
 
     @PostMapping("/refresh")

@@ -1,5 +1,5 @@
 import { ApiClient } from './client';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../../types/auth';
+import { AuthResponse, LoginRequest, RegisterRequest, VerifyLoginOtpRequest } from '../../types/auth';
 import { User } from '../../types/user';
 
 export const authApi = {
@@ -17,16 +17,33 @@ export const authApi = {
 
   register: async (request: RegisterRequest): Promise<AuthResponse> => {
     const data = await ApiClient.post<AuthResponse>('/auth/register', request);
-    ApiClient.setTokens(data.accessToken, data.refreshToken);
-    localStorage.setItem('aegis_user', JSON.stringify(data.user));
+    if (data.accessToken && data.refreshToken) {
+      ApiClient.setTokens(data.accessToken, data.refreshToken);
+      localStorage.setItem('aegis_user', JSON.stringify(data.user));
+    }
     return data;
   },
 
   login: async (request: LoginRequest): Promise<AuthResponse> => {
     const data = await ApiClient.post<AuthResponse>('/auth/login', request);
-    ApiClient.setTokens(data.accessToken, data.refreshToken);
-    localStorage.setItem('aegis_user', JSON.stringify(data.user));
+    if (data.accessToken && data.refreshToken) {
+      ApiClient.setTokens(data.accessToken, data.refreshToken);
+      localStorage.setItem('aegis_user', JSON.stringify(data.user));
+    }
     return data;
+  },
+
+  verifyLoginOtp: async (payload: VerifyLoginOtpRequest): Promise<AuthResponse> => {
+    const data = await ApiClient.post<AuthResponse>('/auth/verify-login-otp', payload);
+    if (data.accessToken && data.refreshToken) {
+      ApiClient.setTokens(data.accessToken, data.refreshToken);
+      localStorage.setItem('aegis_user', JSON.stringify(data.user));
+    }
+    return data;
+  },
+
+  resendLoginOtp: async (email: string): Promise<void> => {
+    await ApiClient.post<void>('/auth/resend-login-otp', { email });
   },
 
   logout: async (): Promise<void> => {

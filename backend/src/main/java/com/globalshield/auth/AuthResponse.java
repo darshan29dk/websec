@@ -18,4 +18,9 @@ public class AuthResponse {
     private String tokenType = "Bearer";
     private long expiresInMs;
     private UserResponse user;
+
+    @Builder.Default
+    private boolean mfaRequired = false;
+    private String message;
+    private String email;
 }
