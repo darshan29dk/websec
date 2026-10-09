@@ -21,6 +21,14 @@ services:
         value: Dk#5822..com
       - key: JWT_SECRET
         value: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - key: SPRING_MAIL_HOST
+        value: smtp.gmail.com
+      - key: SPRING_MAIL_PORT
+        value: "587"
+      - key: SPRING_MAIL_USERNAME
+        value: darshanreddy5822@gmail.com
+      - key: SPRING_MAIL_PASSWORD
+        sync: false
 
   # ----------------------------------------------------
   # Frontend Static Site (React 19 + Vite)
