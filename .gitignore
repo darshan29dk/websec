@@ -1,5 +1,6 @@
-# Java & Maven
-target/
+# Java & Maven build output
+backend/target/
+/target/
 *.class
 *.jar
 *.war
