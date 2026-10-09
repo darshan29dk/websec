@@ -1,9 +1,13 @@
 package com.globalshield.target;
 
+import com.globalshield.attacksurface.dto.WebEndpointResponse;
 import com.globalshield.common.ApiResponse;
 import com.globalshield.common.IpUtil;
 import com.globalshield.common.PageResponse;
 import com.globalshield.security.UserPrincipal;
+import com.globalshield.target.dto.BulkImportRequestDto;
+import com.globalshield.target.dto.BulkImportResponseDto;
+import com.globalshield.target.dto.TargetDashboardOverviewDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -131,4 +135,35 @@ public class TargetController {
         List<TargetScopeResponse> response = targetService.getScopes(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @PostMapping("/bulk-import")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST')")
+    @Operation(summary = "Bulk import targets", description = "Bulk import multiple website targets from CSV or structured entries without automatic scanning")
+    public ResponseEntity<ApiResponse<BulkImportResponseDto>> bulkImport(
+            @RequestBody BulkImportRequestDto request,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            HttpServletRequest httpRequest) {
+
+        String ipAddress = IpUtil.getClientIp(httpRequest);
+        String userAgent = IpUtil.getUserAgent(httpRequest);
+        BulkImportResponseDto response = targetService.bulkImportTargets(request, currentUser, ipAddress, userAgent);
+        return ResponseEntity.ok(ApiResponse.success("Bulk import processed", response));
+    }
+
+    @GetMapping("/{id}/dashboard")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST', 'VIEWER')")
+    @Operation(summary = "Get target security dashboard", description = "Return website-specific security overview, risk evaluation with critical override, and attack surface metrics")
+    public ResponseEntity<ApiResponse<TargetDashboardOverviewDto>> getTargetDashboard(@PathVariable UUID id) {
+        TargetDashboardOverviewDto response = targetService.getTargetDashboard(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{id}/endpoints")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST', 'VIEWER')")
+    @Operation(summary = "Get discovered endpoints for target", description = "Return all endpoints, URLs, and routes discovered under this target")
+    public ResponseEntity<ApiResponse<List<WebEndpointResponse>>> getTargetEndpoints(@PathVariable UUID id) {
+        List<WebEndpointResponse> response = targetService.getTargetEndpoints(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }
+

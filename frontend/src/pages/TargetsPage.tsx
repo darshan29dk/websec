@@ -8,7 +8,8 @@ import { Table } from '../components/Table';
 import { StatusBadge } from '../components/StatusBadge';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
-import { Plus, Search, Eye, Edit2, ShieldAlert, Power } from 'lucide-react';
+import { BulkImportModal } from '../components/BulkImportModal';
+import { Plus, Search, Eye, Edit2, ShieldAlert, Power, Upload } from 'lucide-react';
 
 export const TargetsPage: React.FC = () => {
   const [targetPage, setTargetPage] = useState<PageResponse<Target> | null>(null);
@@ -16,6 +17,7 @@ export const TargetsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   const fetchTargets = async () => {
     setIsLoading(true);
@@ -64,12 +66,18 @@ export const TargetsPage: React.FC = () => {
             Manage registered web applications & target authorizations
           </p>
         </div>
-        <Link to="/targets/new">
-          <Button variant="primary" icon={<Plus size={16} />}>
-            Add Target
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Button variant="secondary" icon={<Upload size={16} />} onClick={() => setIsBulkImportOpen(true)}>
+            Bulk Import
           </Button>
-        </Link>
+          <Link to="/targets/new">
+            <Button variant="primary" icon={<Plus size={16} />}>
+              Add Website
+            </Button>
+          </Link>
+        </div>
       </div>
+
 
       <Card style={{ marginBottom: '20px', padding: '16px' }}>
         <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
@@ -207,6 +215,16 @@ export const TargetsPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        onSuccess={() => {
+          setPage(0);
+          fetchTargets();
+        }}
+      />
     </div>
   );
 };
+

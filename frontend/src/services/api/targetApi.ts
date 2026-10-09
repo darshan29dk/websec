@@ -73,4 +73,17 @@ export const targetApi = {
   getScopes: (targetId: string): Promise<TargetScope[]> => {
     return ApiClient.get<TargetScope[]>(`/targets/${targetId}/scope`);
   },
+
+  bulkImport: (request: any): Promise<any> => {
+    return ApiClient.post<any>('/targets/bulk-import', request);
+  },
+
+  getTargetDashboard: (targetId: string): Promise<any> => {
+    return ApiClient.get<any>(`/targets/${targetId}/dashboard`);
+  },
+
+  getTargetEndpoints: (targetId: string): Promise<any[]> => {
+    return ApiClient.get<any[]>(`/targets/${targetId}/endpoints`);
+  },
 };
+

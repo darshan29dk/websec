@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Role restricted audit logs
                         .requestMatchers("/api/v1/audit/**").hasAnyRole("ADMIN", "ANALYST")
+                        // Dashboard endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/dashboard/**").hasAnyRole("ADMIN", "ANALYST", "VIEWER")
                         // Target endpoints
                         .requestMatchers(HttpMethod.GET, "/api/v1/targets/**").hasAnyRole("ADMIN", "ANALYST", "VIEWER")
                         .requestMatchers(HttpMethod.POST, "/api/v1/targets/**").hasAnyRole("ADMIN", "ANALYST")
